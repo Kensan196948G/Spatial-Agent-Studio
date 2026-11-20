@@ -1,14 +1,15 @@
 {
+  "ui": "V2.1 static shell",
   "base": "https://spatial-agent-studio-preview.pages.dev",
   "api": "https://sas-api.mirai-dx-platform.com",
-  "startedAt": "2026-11-20T02:24:22.652Z",
+  "startedAt": "2026-11-20T03:33:34.557Z",
   "health": {
     "status": 200,
     "body": {
       "ok": true,
       "db": "up",
       "version": "0.1.0",
-      "time": "2026-11-20T02:24:22.890Z",
+      "time": "2026-11-20T03:33:34.780Z",
       "aiMode": "demo-deterministic"
     }
   },
@@ -21,7 +22,7 @@
     {
       "name": "api health",
       "ok": true,
-      "detail": "{\"ok\":true,\"db\":\"up\",\"version\":\"0.1.0\",\"time\":\"2026-11-20T02:24:22.890Z\",\"aiMode\":\"demo-deterministic\"}"
+      "detail": "{\"ok\":true,\"db\":\"up\",\"version\":\"0.1.0\",\"time\":\"2026-11-20T03:33:34.780Z\",\"aiMode\":\"demo-deterministic\"}"
     },
     {
       "name": "cors preflight",
@@ -29,26 +30,37 @@
       "detail": "{\"status\":204,\"allowOrigin\":\"https://spatial-agent-studio-preview.pages.dev\",\"allowHeaders\":\"content-type, authorization\"}"
     },
     {
-      "name": "login → dashboard",
+      "name": "login → V2.1 dashboard",
       "ok": true,
-      "detail": "https://spatial-agent-studio-preview.pages.dev/"
+      "detail": "sites=5 nav=9"
     },
     {
-      "name": "3D site workspace",
+      "name": "site selection → 3D viewer",
       "ok": true,
-      "detail": "https://spatial-agent-studio-preview.pages.dev/sites/site-a"
+      "detail": "site-b / △△橋 下部工 ─ Spatial Agent Studio"
     },
     {
-      "name": "audit hash chain",
+      "name": "light/dark toggle",
       "ok": true,
-      "detail": "rows=11"
+      "detail": "light → dark"
+    },
+    {
+      "name": "approvals page",
+      "ok": true,
+      "detail": "history=1"
+    },
+    {
+      "name": "audit pane",
+      "ok": true,
+      "detail": "rows=17"
     }
   ],
   "screenshots": [
-    "preview-dashboard.png",
-    "preview-site.png",
-    "preview-audit.png"
+    "preview-v21-dashboard.png",
+    "preview-v21-site.png",
+    "preview-v21-approvals.png",
+    "preview-v21-audit.png"
   ],
-  "finishedAt": "2026-11-20T02:24:28.322Z",
+  "finishedAt": "2026-11-20T03:33:50.448Z",
   "ok": true
 }

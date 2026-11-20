@@ -21,7 +21,7 @@ test('V2.1 UI: ログイン→ホーム（実データ・5現場・9画面）', 
   await expect(page.locator('#sites .site')).toHaveCount(5);
   await expect(page.locator('#nav .nb[data-pg="dash"]')).toHaveClass(/on/);
   await expect(page.locator('#themeBtn')).toBeVisible();
-  await expect(page.locator('#sasUserLabel')).toContainText('manager@example.com');
+  await expect(page.locator('#roleName')).toContainText('現場代理人');
 });
 
 test('V2.1 UI: 現場カードから現場Bを選択して3Dビューへ', async ({ page }) => {
