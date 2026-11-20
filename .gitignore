@@ -24,3 +24,6 @@ logs/
 # database dumps
 *.dump
 *.sql.gz
+
+# local CI run summaries (evidence is the GitHub commit status)
+docs/progress/evidence/ci-local-*.json

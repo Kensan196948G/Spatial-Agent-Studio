@@ -22,6 +22,7 @@
     "test:unit": "vitest run tests/unit",
     "test:api": "pnpm run db:test:reset && vitest run tests/api",
     "test:e2e": "pnpm run db:test:reset && pnpm run build && playwright test",
+    "ci:local": "node scripts/ci-local.mjs",
     "db:migrate": "tsx scripts/db.ts migrate",
     "db:seed": "tsx scripts/db.ts seed",
     "db:verify": "tsx scripts/db.ts verify",
