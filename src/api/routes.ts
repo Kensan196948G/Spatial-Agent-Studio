@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import type { Pool } from 'pg';
 import { z } from 'zod';
 import type { AppConfig } from './config';
+import { accessRoleSummary, resolveAccessRoles } from './config';
 import { appendAudit, verifyAuditChain } from './audit';
 import { TASK_LABEL, buildRun } from './agent';
 import {
@@ -322,8 +323,7 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
       return sendError(reply, 400, 'INVALID_BODY', 'メールアドレスを指定してください。');
     }
     const email = parsed.data.email.toLowerCase();
-    const domain = email.split('@')[1] || '';
-    const roles = config.accessRoles[email] ?? config.accessRoleDomains[domain];
+    const roles = resolveAccessRoles(config, email);
     if (!roles || roles.length === 0) {
       await audit(pool, 'SYSTEM', 'ACCESS_ROLE_UNMAPPED', 'Accessメールにロールが未設定');
       return sendError(
@@ -736,8 +736,7 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
         uptimeSec: Math.round(process.uptime()),
         session: { ttlHours: config.sessionTtlHours, cookieSecure: config.cookieSecure },
         access: {
-          mappedAddresses: Object.keys(config.accessRoles).length,
-          mappedDomains: Object.keys(config.accessRoleDomains).length,
+          ...accessRoleSummary(config),
           roles: ['field', 'agent', 'hq', 'it'],
         },
         db: { up: true, name: row.database },

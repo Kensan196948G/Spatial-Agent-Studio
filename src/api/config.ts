@@ -1,8 +1,11 @@
+import fs from 'node:fs';
 import path from 'node:path';
 
 export type RoleKey = 'field' | 'agent' | 'hq' | 'it';
 
 export const ROLE_KEYS: RoleKey[] = ['field', 'agent', 'hq', 'it'];
+
+export type RoleMap = Record<string, RoleKey[]>;
 
 export type AppConfig = {
   port: number;
@@ -17,6 +20,8 @@ export type AppConfig = {
   accessRoles: Record<string, RoleKey[]>;
   /** メールドメイン → 許可ロール（個別指定が無い場合のフォールバック）。 */
   accessRoleDomains: Record<string, RoleKey[]>;
+  /** 割当ファイル（1行1件）。指定時はこのファイルが env より優先される。 */
+  accessRolesFile?: string;
 };
 
 /**
@@ -68,6 +73,81 @@ function loadDotEnv(): void {
   }
 }
 
+/**
+ * ロール割当ファイルの形式（1行1件）。
+ *   email,role1,role2,...
+ *   @domain,role1,role2,...   ← ドメイン単位のフォールバック
+ * `#` 始まりの行と空行は無視する。メールは小文字に正規化して扱う。
+ */
+export function parseRoleLines(raw: string): RoleMap {
+  const out: RoleMap = {};
+  for (const line of raw.split(/\r?\n/)) {
+    const text = line.trim();
+    if (!text || text.startsWith('#')) continue;
+    const [emailPart, ...roleParts] = text.split(',');
+    const key = (emailPart || '').trim().toLowerCase();
+    if (!key.includes('@')) continue;
+    const roles = roleParts
+      .map((r) => r.trim().toLowerCase())
+      .filter((r): r is RoleKey => ROLE_KEYS.includes(r as RoleKey));
+    if (roles.length > 0) out[key] = roles;
+  }
+  return out;
+}
+
+const fileCache = new Map<string, { mtimeMs: number; size: number; map: RoleMap }>();
+
+/** 割当ファイルを読む。更新時刻が変わったときだけ再読込する（編集後は再起動不要）。 */
+export function readRoleFile(file: string): RoleMap | null {
+  try {
+    const st = fs.statSync(file);
+    const cached = fileCache.get(file);
+    if (cached && cached.mtimeMs === st.mtimeMs && cached.size === st.size) return cached.map;
+    const map = parseRoleLines(fs.readFileSync(file, 'utf8'));
+    fileCache.set(file, { mtimeMs: st.mtimeMs, size: st.size, map });
+    return map;
+  } catch {
+    return null;
+  }
+}
+
+/** email に許可されたロール。ファイルがあれば個別指定 → ドメイン → env の順で解決する。 */
+export function resolveAccessRoles(config: AppConfig, email: string): RoleKey[] | undefined {
+  const key = email.trim().toLowerCase();
+  const domain = key.split('@')[1] || '';
+  if (config.accessRolesFile) {
+    const fromFile = readRoleFile(config.accessRolesFile);
+    if (fromFile) {
+      const hit = fromFile[key] ?? fromFile[`@${domain}`];
+      if (hit) return hit;
+    }
+  }
+  return config.accessRoles[key] ?? config.accessRoleDomains[domain];
+}
+
+export function accessRoleSummary(config: AppConfig): {
+  mode: 'file' | 'env';
+  mappedAddresses: number;
+  mappedDomains: number;
+} {
+  if (config.accessRolesFile) {
+    const fromFile = readRoleFile(config.accessRolesFile);
+    if (fromFile) {
+      const keys = Object.keys(fromFile);
+      return {
+        mode: 'file',
+        mappedAddresses: keys.filter((k) => !k.startsWith('@')).length,
+        mappedDomains: keys.filter((k) => k.startsWith('@')).length,
+      };
+    }
+  }
+  return {
+    mode: 'env',
+    mappedAddresses: Object.keys(config.accessRoles).length,
+    mappedDomains: Object.keys(config.accessRoleDomains).length,
+  };
+}
+
 export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
   loadDotEnv();
   const nodeEnv = overrides.nodeEnv ?? process.env.NODE_ENV ?? 'development';
@@ -98,5 +178,6 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     accessRoles: overrides.accessRoles ?? parseAccessRoles(process.env.SAS_ACCESS_ROLES),
     accessRoleDomains:
       overrides.accessRoleDomains ?? parseAccessRoleDomains(process.env.SAS_ACCESS_ROLE_DOMAINS),
+    accessRolesFile: overrides.accessRolesFile ?? (process.env.SAS_ACCESS_ROLES_FILE || undefined),
   };
 }
