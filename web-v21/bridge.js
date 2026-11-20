@@ -719,8 +719,26 @@
           </div>
           <p style="font-size:11px;color:var(--tx3);margin-top:10px">テーマはこの端末に保存されます（再読込後も維持）。</p>
         </div>
+        <div class="card"><h3>${ic('brain')}AI要約（${info.ai && info.ai.live ? '実LLM' : 'デモ'}）</h3>
+          <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+            <label class="sas-field" style="margin:0;min-width:220px"><span>現場</span><select id="stAiSite">${state.sites
+              .map((s) => `<option value="${esc(s.id)}">${esc(s.code || s.id)} ${esc(s.name)}</option>`)
+              .join('')}</select></label>
+            <label class="sas-field" style="margin:0"><span>タスク</span><select id="stAiTask">
+              <option value="asbuilt">盛土 出来形管理</option>
+              <option value="safety">重機 安全離隔チェック</option>
+            </select></label>
+            <button class="mini" id="stAiRun">${ic('spark')}AI要約を生成</button>
+          </div>
+          <div id="stAiOut" style="margin-top:10px;font-size:12px;line-height:1.7;color:var(--tx2)">「AI要約を生成」で、計算エンジンの結果をAIが文章化します（数値・判定はAIが作りません）。</div>
+          <div style="margin-top:6px;font-size:11px;color:var(--tx3)">プロバイダ: ${esc(
+            info.ai ? `${info.ai.provider} / ${info.ai.model}${info.ai.live ? '' : '（デモ）'}` : '—',
+          )} ／ 本日 ${info.ai ? `${info.ai.tokensToday}/${info.ai.budget} tokens（${info.ai.callsToday}回）` : '—'}</div>
+        </div>
         <div class="card"><h3>${ic('info')}この環境について</h3>
-          <p style="font-size:12px;line-height:1.7;color:var(--tx2)">プレビュー環境です。AIは決定的なデモエンジンで、外部LLMへは接続しません。データは検証用で、現場・人物・数値はすべて架空です。本番昇格時は実LLM・SSO・外部連携の設計が必要です。</p>
+          <p style="font-size:12px;line-height:1.7;color:var(--tx2)">${info.ai && info.ai.live
+            ? '本番構成です。AIは実LLM（ゲートウェイ経由）で、数値・判定は決定的な計算エンジンが算出します。データの取扱いは組織の合意に従ってください。'
+            : 'プレビュー環境です。AIは決定的なデモエンジンで、外部LLMへは接続しません（キー設定で実LLMへ切替可能）。現場・人物・数値はすべて架空です。'}</p>
           <div style="margin-top:8px"><button class="mini" data-goto="governance">${ic('lock')}統制（ポリシー）を開く</button></div>
         </div>
       </div>`;
@@ -733,6 +751,32 @@
       $('#stThemeNow').textContent = `現在：${t === 'light' ? 'ライト' : 'ダーク'}`;
     });
     $('#stVerify').addEventListener('click', loadSettingsPage);
+    const aiBtn = $('#stAiRun');
+    if (aiBtn) {
+      aiBtn.addEventListener('click', async () => {
+        const out = $('#stAiOut');
+        const siteId = ($('#stAiSite') || {}).value || '';
+        const task = ($('#stAiTask') || {}).value || 'asbuilt';
+        if (!siteId) return;
+        aiBtn.disabled = true;
+        out.textContent = '生成中…';
+        try {
+          const res = await api('/ai/narrate', {
+            method: 'POST',
+            body: JSON.stringify({ siteId, task }),
+          });
+          const notes = (res.narration.notes || []).map((n) => `<li>${esc(n)}</li>`).join('');
+          const usage = (res.meta.usage.inputTokens || 0) + (res.meta.usage.outputTokens || 0);
+          out.innerHTML = `<b style="color:var(--tx)">${esc(res.narration.headline)}</b><ul style="margin:6px 0 0 18px">${notes}</ul><div style="margin-top:6px;font-size:11px;color:var(--tx3)">${esc(
+            res.meta.provider,
+          )} / ${esc(res.meta.model)}${res.meta.live ? '' : '（デモ）'}・${usage} tokens・${Number(res.meta.latencyMs) || 0}ms</div>`;
+        } catch (err) {
+          out.innerHTML = `<span style="color:var(--rd)">${esc(err.code || 'AI_ERROR')}: ${esc(err.message || '')}</span>`;
+        } finally {
+          aiBtn.disabled = false;
+        }
+      });
+    }
   }
 
   async function loadSettingsPage() {

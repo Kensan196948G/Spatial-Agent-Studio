@@ -140,3 +140,6 @@
 | 2026-11-20 16:47 | **A8（準備）** 本番API unit | `spatial-agent-studio-prod.service`（port 7460・未起動） |
 | 2026-11-20 16:47 | **A4（追加）** 本番APIホスト | `sas-api-prod` のトンネルingress＋DNS（再起動で反映） |
 | 2026-11-20 16:48 | **E（草案）** 非機能目標 | [nonfunctional-targets.md](nonfunctional-targets.md)（承認待ち） |
+| 2026-11-20 16:55 | **C10** 画面からAI要約を呼ぶ導線 | システム設定に「AI要約」カード（現場/タスク選択→生成）。数値は計算エンジン |
+| 2026-11-20 16:55 | **E2（準備）** 負荷試験スクリプト | `scripts/load-test.mjs`（実測: 5並列・986rps・p95 13ms・エラー0） |
+| 2026-11-20 16:55 | **D5** インシデント対応手順 | [incident-runbook.md](incident-runbook.md)（検知→初動→再起動→ロールバック→証跡→訓練） |
