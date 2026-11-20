@@ -68,6 +68,20 @@
 | D4 | ログ保全（監査CSV・保持期間） | 日次保全の手順と実行 | AI+人 | |
 | D5 | インシデント対応（停止・切戻し・連絡） | 手順書と1回の訓練 | AI+人 | |
 
+## 4.5 重要: 稼働中APIが古い（要再起動）
+
+2026-11-20 20:55 実測：APIプロセス（pid 2155466）は **16:03:53 起動**で、その後の実装
+（AIゲートウェイ `POST /api/ai/narrate` = 16:35、CORSへの本番pages.dev追加）より前のコードで動いている。
+
+| 症状 | 実測 |
+| :-- | :-- |
+| `POST /api/ai/narrate` | **404**（ソースには存在。プロセスが古い） |
+| CORS（`https://spatial-agent-studio.pages.dev`） | **404/拒否**（本番カスタムドメインは204でOK） |
+| `/api/system/info` の `ai` フィールド | 未反映 |
+
+→ `systemctl --user restart spatial-agent-studio.service` の**1回で解消**（人）。
+再起動後、`POST /api/ai/narrate` 200・本番pages.devのCORS 204・設定画面のAI欄を確認する。
+
 ## 5. 非機能（本番の受入条件）
 
 | ID | 作業 | 受け入れ条件 | 実行者 | 状態 |
