@@ -35,6 +35,7 @@ function baseConfig(over: Partial<Config> = {}): AppConfig {
     demoLogin: true,
     requireOriginAuth: false,
     accessEmailLogin: true,
+    requireAccessJwt: false,
     ...over,
   };
 }

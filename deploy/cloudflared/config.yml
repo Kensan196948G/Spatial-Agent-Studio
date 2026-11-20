@@ -2,6 +2,9 @@ tunnel: 5290da16-d855-4b5b-9eac-0d2d566bfc39
 credentials-file: /home/kensan/.cloudflared/5290da16-d855-4b5b-9eac-0d2d566bfc39.json
 
 ingress:
+  # 本番WebUI（Access配下・APIと同一オリジン。Pagesの同一ホスト名は外す）
+  - hostname: spatial-agent-studio.mirai-dx-platform.com
+    service: http://127.0.0.1:7460
   # プレビュー用（既存）
   - hostname: sas-api.mirai-dx-platform.com
     service: http://127.0.0.1:7450

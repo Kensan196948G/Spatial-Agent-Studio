@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { loadAiConfig, type AiConfig } from './ai/provider';
+import type { AccessJwtConfig } from './access-jwt';
 
 export type RoleKey = 'field' | 'agent' | 'hq' | 'it';
 
@@ -31,6 +32,10 @@ export type AppConfig = {
   requireOriginAuth: boolean;
   /** /api/auth/access（Accessメールでのセッション発行）を許可するか。本番は false。 */
   accessEmailLogin: boolean;
+  /** Access JWT を必須にするか（本番は true）。teamDomain/aud が揃っている場合のみ有効。 */
+  requireAccessJwt: boolean;
+  /** Access JWT の検証設定（未設定なら JWT 検証は行わない）。 */
+  accessJwt?: AccessJwtConfig;
 };
 
 /**
@@ -194,5 +199,15 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
       overrides.requireOriginAuth ?? (process.env.SAS_REQUIRE_ORIGIN_AUTH ?? 'false') === 'true',
     accessEmailLogin:
       overrides.accessEmailLogin ?? (process.env.SAS_ACCESS_EMAIL_LOGIN ?? 'true') !== 'false',
+    requireAccessJwt:
+      overrides.requireAccessJwt ?? (process.env.SAS_REQUIRE_ACCESS_JWT ?? 'false') === 'true',
+    accessJwt:
+      overrides.accessJwt ??
+      (process.env.SAS_ACCESS_TEAM_DOMAIN && process.env.SAS_ACCESS_AUD
+        ? {
+            teamDomain: process.env.SAS_ACCESS_TEAM_DOMAIN,
+            aud: process.env.SAS_ACCESS_AUD,
+          }
+        : undefined),
   };
 }

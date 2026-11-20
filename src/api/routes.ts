@@ -16,6 +16,7 @@ import {
   setSessionCookie,
 } from './auth';
 import { verifyPassword } from './password';
+import { AccessJwtError, verifyAccessJwt } from './access-jwt';
 import { AiGateway, AiPolicyError } from './ai/gateway';
 import { createAiProvider } from './ai/provider';
 import {
@@ -350,22 +351,43 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
     if (!isAllowedOrigin(req, config)) {
       return sendError(reply, 403, 'ORIGIN_FORBIDDEN', '許可されていないOriginです。');
     }
-    // Accessのメールを本文から受け取る方式は、Access未検証のクライアントでも
-    // 任意のメールとしてセッションを発行できてしまう。本番では無効化する。
-    if (!config.accessEmailLogin) {
-      await audit(pool, 'SYSTEM', 'ACCESS_EMAIL_LOGIN_DISABLED', 'Accessメールログインは無効です');
-      return sendError(
-        reply,
-        503,
-        'ACCESS_EMAIL_LOGIN_DISABLED',
-        'この環境ではAccessメールによるログインは無効です。',
-      );
+    // Access の JWT を検証して email を得る（本番の正規経路）。
+    // 本文のメールは Access 未検証でも任意の人物になれてしまうため、既定では使わない。
+    let email: string;
+    if (config.requireAccessJwt) {
+      const jwtConfig = config.accessJwt;
+      if (!jwtConfig) {
+        return sendError(reply, 503, 'ACCESS_JWT_NOT_CONFIGURED', 'Access JWT の設定がありません。');
+      }
+      const token = req.headers['cf-access-jwt-assertion'];
+      if (!token || Array.isArray(token)) {
+        await audit(pool, 'SYSTEM', 'ACCESS_JWT_REQUIRED', 'Access JWTがありません');
+        return sendError(reply, 401, 'ACCESS_JWT_REQUIRED', 'Accessの認証情報がありません。');
+      }
+      try {
+        email = (await verifyAccessJwt(token, jwtConfig)).email;
+      } catch (error) {
+        const code = error instanceof AccessJwtError ? error.code : 'ACCESS_JWT_INVALID';
+        await audit(pool, 'SYSTEM', 'ACCESS_JWT_REJECTED', `Access JWT検証失敗: ${code}`);
+        return sendError(reply, 401, code, 'Accessの認証情報を検証できませんでした。');
+      }
+    } else {
+      // 互換モード（プレビュー/開発）。本番では SAS_ACCESS_EMAIL_LOGIN=false で無効化する。
+      if (!config.accessEmailLogin) {
+        await audit(pool, 'SYSTEM', 'ACCESS_EMAIL_LOGIN_DISABLED', 'Accessメールログインは無効です');
+        return sendError(
+          reply,
+          503,
+          'ACCESS_EMAIL_LOGIN_DISABLED',
+          'この環境ではAccessメールによるログインは無効です。',
+        );
+      }
+      const parsed = accessSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return sendError(reply, 400, 'INVALID_BODY', 'メールアドレスを指定してください。');
+      }
+      email = parsed.data.email.toLowerCase();
     }
-    const parsed = accessSchema.safeParse(req.body);
-    if (!parsed.success) {
-      return sendError(reply, 400, 'INVALID_BODY', 'メールアドレスを指定してください。');
-    }
-    const email = parsed.data.email.toLowerCase();
     const roles = resolveAccessRoles(config, email);
     if (!roles || roles.length === 0) {
       await audit(pool, 'SYSTEM', 'ACCESS_ROLE_UNMAPPED', 'Accessメールにロールが未設定');
