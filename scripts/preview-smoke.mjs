@@ -8,6 +8,11 @@
  *
  * Usage:
  *   PREVIEW_URL=https://... node scripts/preview-smoke.mjs
+ *
+ * Cloudflare Access（pages.dev を Access で閉じた後）:
+ *   CF_ACCESS_CLIENT_ID / CF_ACCESS_CLIENT_SECRET を設定すると、
+ *   API 呼び出しとブラウザの全リクエストにサービストークンのヘッダーを付ける。
+ *   トークンは Zero Trust → Access → Service Auth で発行（リポジトリへは置かない）。
  */
 import { chromium } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -15,6 +20,12 @@ import { join } from 'node:path';
 
 const BASE = process.env.PREVIEW_URL ?? 'https://spatial-agent-studio-preview.pages.dev';
 const API = process.env.PREVIEW_API_URL ?? 'https://sas-api.mirai-dx-platform.com';
+const ACCESS_ID = process.env.CF_ACCESS_CLIENT_ID ?? '';
+const ACCESS_SECRET = process.env.CF_ACCESS_CLIENT_SECRET ?? '';
+const accessHeaders =
+  ACCESS_ID && ACCESS_SECRET
+    ? { 'CF-Access-Client-Id': ACCESS_ID, 'CF-Access-Client-Secret': ACCESS_SECRET }
+    : {};
 const OUT = join(process.cwd(), 'docs', 'progress', 'evidence');
 mkdirSync(OUT, { recursive: true });
 
@@ -34,7 +45,7 @@ function check(name, ok, detail) {
   console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail ? ` — ${detail}` : ''}`);
 }
 
-const healthRes = await fetch(`${API}/api/health`);
+const healthRes = await fetch(`${API}/api/health`, { headers: accessHeaders });
 result.health = { status: healthRes.status, body: await healthRes.json() };
 check(
   'api health',
@@ -45,6 +56,7 @@ check(
 const preflight = await fetch(`${API}/api/bootstrap`, {
   method: 'OPTIONS',
   headers: {
+    ...accessHeaders,
     origin: BASE,
     'access-control-request-method': 'GET',
     'access-control-request-headers': 'authorization',
@@ -62,9 +74,21 @@ check(
 );
 
 const browser = await chromium.launch({ headless: true });
-const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+const context = await browser.newContext({
+  viewport: { width: 1440, height: 1000 },
+  extraHTTPHeaders: accessHeaders,
+});
+const page = await context.newPage();
 try {
   await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+  if (/cloudflareaccess\.com/.test(page.url())) {
+    check(
+      'cloudflare access bypass',
+      false,
+      'Access のログイン画面へリダイレクトされました。CF_ACCESS_CLIENT_ID / CF_ACCESS_CLIENT_SECRET を設定してください',
+    );
+    throw new Error('blocked by Cloudflare Access (service token required)');
+  }
   // Access 通過後はアプリ独自のログイン画面なしで自動サインインする
   await page.locator('body[data-page="dash"]').waitFor({ timeout: 30_000 });
   await page.locator('#boot').waitFor({ state: 'hidden', timeout: 30_000 });
