@@ -6,6 +6,7 @@ import { existsSync } from 'node:fs';
 import type { AppConfig } from './config';
 import { createPool } from './db';
 import { registerRoutes } from './routes';
+import { isAllowedOriginValue } from './auth';
 
 export async function buildApp(config: AppConfig): Promise<FastifyInstance> {
   const app = Fastify({
@@ -41,7 +42,7 @@ export async function buildApp(config: AppConfig): Promise<FastifyInstance> {
   ]);
   await app.register(cors, {
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.has(origin)) {
+      if (!origin || isAllowedOriginValue(origin, allowedOrigins)) {
         callback(null, true);
         return;
       }

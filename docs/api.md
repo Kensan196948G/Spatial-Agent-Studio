@@ -131,6 +131,8 @@ POST /api/approvals/:id/decision
 ## CORS / セキュリティヘッダー
 
 - 許可Origin：`APP_ORIGIN`、`CORS_ORIGINS`（カンマ区切り）、localhost:5174/7440。
+- Cloudflare Pages のデプロイ別サブドメイン（`<hash>.<project>.pages.dev`）も、
+  設定済みPagesプロジェクト配下であれば許可（例：`45b9e8ff.spatial-agent-studio-preview.pages.dev`）。
 - `credentials: true`、許可ヘッダー `content-type, authorization`。
 - すべてのAPI応答に `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`。
 - `NODE_ENV=production` では HSTS と CSP を付与。

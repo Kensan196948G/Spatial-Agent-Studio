@@ -90,6 +90,20 @@ describe('Spatial Agent Studio API', () => {
     );
     expect(String(preflight.headers['access-control-allow-headers'])).toContain('authorization');
 
+    const hashPreflight = await app.inject({
+      method: 'OPTIONS',
+      url: '/api/bootstrap',
+      headers: {
+        origin: 'https://45b9e8ff.spatial-agent-studio-preview.pages.dev',
+        'access-control-request-method': 'GET',
+        'access-control-request-headers': 'authorization',
+      },
+    });
+    expect(hashPreflight.statusCode).toBe(204);
+    expect(hashPreflight.headers['access-control-allow-origin']).toBe(
+      'https://45b9e8ff.spatial-agent-studio-preview.pages.dev',
+    );
+
     const blocked = await app.inject({
       method: 'OPTIONS',
       url: '/api/bootstrap',
