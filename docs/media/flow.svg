@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 180" width="1200" height="180" role="img" aria-label="撮影 → 3DGS → AI → 人の承認 → 連携">
+  <defs>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#38e1ff"/><stop offset=".5" stop-color="#8b7bff"/><stop offset="1" stop-color="#ffb547"/>
+    </linearGradient>
+    <style><![CDATA[
+      .node{animation:bob 5s ease-in-out infinite}
+      .n2{animation-delay:-1s}.n3{animation-delay:-2s}.n4{animation-delay:-3s}.n5{animation-delay:-4s}
+      @keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+      .dot{animation:travel 3.2s linear infinite}
+      .d2{animation-delay:.8s}.d3{animation-delay:1.6s}.d4{animation-delay:2.4s}
+      @keyframes travel{0%{offset-distance:0%;opacity:0}8%{opacity:1}92%{opacity:1}100%{offset-distance:100%;opacity:0}}
+      .pulse{animation:halo 3s ease-in-out infinite}
+      @keyframes halo{0%,100%{opacity:.25}50%{opacity:.8}}
+      .label{font-family:system-ui,'Hiragino Sans','Noto Sans JP','IPAGothic',sans-serif}
+    ]]></style>
+  </defs>
+  <rect width="1200" height="180" fill="none"/>
+  <path id="path" d="M120 96 H1080" fill="none" stroke="url(#line)" stroke-width="2" stroke-dasharray="6 8" opacity=".5"/>
+  <g fill="none" stroke="#7f8db5" stroke-opacity=".25">
+    <rect x="40" y="52" width="160" height="88" rx="16"/><rect x="280" y="52" width="160" height="88" rx="16"/>
+    <rect x="520" y="52" width="160" height="88" rx="16"/><rect x="760" y="52" width="160" height="88" rx="16"/>
+    <rect x="1000" y="52" width="160" height="88" rx="16"/>
+  </g>
+  <g class="label" text-anchor="middle">
+    <g class="node"><circle cx="120" cy="84" r="18" fill="#0b1430" stroke="#38e1ff"/><text x="120" y="90" font-size="15" fill="#38e1ff">✈</text>
+      <text x="120" y="122" font-size="13" fill="#dbe6ff">撮影</text>
+      <text x="120" y="138" font-size="10" fill="#6b7ba8">ドローン / 360 / LiDAR</text></g>
+    <g class="node n2"><circle cx="360" cy="84" r="18" fill="#0b1430" stroke="#8b7bff"/><text x="360" y="90" font-size="14" fill="#8b7bff">◈</text>
+      <text x="360" y="122" font-size="13" fill="#dbe6ff">3DGS</text>
+      <text x="360" y="138" font-size="10" fill="#6b7ba8">版管理・座標</text></g>
+    <g class="node n3"><circle cx="600" cy="84" r="18" fill="#0b1430" stroke="#38e1ff"/><text x="600" y="90" font-size="14" fill="#38e1ff">✦</text>
+      <text x="600" y="122" font-size="13" fill="#dbe6ff">AI 下書き</text>
+      <text x="600" y="138" font-size="10" fill="#6b7ba8">計測・集計・帳票</text></g>
+    <g class="node n4"><circle cx="840" cy="84" r="18" fill="#0b1430" stroke="#3ee07f"/><text x="840" y="90" font-size="14" fill="#3ee07f">✓</text>
+      <text x="840" y="122" font-size="13" fill="#dbe6ff">人の承認</text>
+      <text x="840" y="138" font-size="10" fill="#6b7ba8">確定は人が行う</text></g>
+    <g class="node n5"><circle cx="1080" cy="84" r="18" fill="#0b1430" stroke="#ffb547"/><text x="1080" y="90" font-size="14" fill="#ffb547">↗</text>
+      <text x="1080" y="122" font-size="13" fill="#dbe6ff">連携・保存</text>
+      <text x="1080" y="138" font-size="10" fill="#6b7ba8">帳票 / 通知 / 原価</text></g>
+  </g>
+  <g>
+    <circle class="dot" r="4" fill="#38e1ff" style="offset-path: path('M120 96 H1080');offset-rotate:0deg"/>
+    <circle class="dot d2" r="4" fill="#8b7bff" style="offset-path: path('M120 96 H1080');offset-rotate:0deg"/>
+    <circle class="dot d3" r="4" fill="#3ee07f" style="offset-path: path('M120 96 H1080');offset-rotate:0deg"/>
+    <circle class="dot d4" r="4" fill="#ffb547" style="offset-path: path('M120 96 H1080');offset-rotate:0deg"/>
+  </g>
+  <text class="label" x="600" y="172" text-anchor="middle" font-size="10.5" fill="#6b7ba8">どの段階でも、判断と確定は人。AIは下書きまで。</text>
+</svg>
