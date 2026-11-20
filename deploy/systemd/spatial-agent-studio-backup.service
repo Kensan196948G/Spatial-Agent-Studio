@@ -1,0 +1,10 @@
+[Unit]
+Description=Spatial Agent Studio — PostgreSQL backup (daily)
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/home/kensan/Projects/Business-Project/Spatial-Agent-Studio
+Environment=BACKUP_KEEP=14
+ExecStart=/home/kensan/Projects/Business-Project/Spatial-Agent-Studio/scripts/backup-db.sh spatial_agent_studio_preview
+Nice=10
