@@ -38,6 +38,43 @@ npx wrangler pages deploy dist/web \
 - `SAS_API_BASE` が空のビルドは同一オリジンAPI向け（ローカル用）。V2.1 UIの `bridge.js` が meta タグ経由でAPIベースを読みます。
 - Pagesのビルド成果物は `dist/web`（V2.1 UI シェル）。
 
+## 2.5 常設化（systemd・人間が実施）
+
+現在のプレビューAPIは `nohup` 起動（単一障害点）。常設化する場合の手順：
+**AIはサービス操作を行わないため、以下の実行は人間が行う。**
+
+```bash
+# 1) 0600 の env ファイル（CORS / DB / Accessロール割当）を用意済みであること
+ls -l ~/.config/spatial-agent-studio/preview-api.env   # -rw------- であること
+
+# 2) unitを配置（リポジトリの deploy/systemd/ からコピー）
+mkdir -p ~/.config/systemd/user
+cp deploy/systemd/spatial-agent-studio.service        ~/.config/systemd/user/
+cp deploy/systemd/spatial-agent-studio-cloudflared.service ~/.config/systemd/user/
+
+# 3) 既存のnohupプロセスを停止（port 7450の実PIDのみ。pkillで一括停止しない）
+ss -ltnp | grep 7450            # pid= を確認
+kill -TERM <pid>                # 表示されたPIDのみ
+
+# 4) 有効化
+systemctl --user daemon-reload
+systemctl --user enable --now spatial-agent-studio.service
+systemctl --user enable --now spatial-agent-studio-cloudflared.service
+
+# 5) 検証
+curl -s http://127.0.0.1:7450/api/health            # {"ok":true,"db":"up"}
+curl -s https://sas-api.mirai-dx-platform.com/api/health
+curl -s -X OPTIONS https://sas-api.mirai-dx-platform.com/api/bootstrap \
+  -H 'Origin: https://spatial-agent-studio-preview.mirai-dx-platform.com' \
+  -H 'Access-Control-Request-Method: GET' -o /dev/null -w '%{http_code}\n'   # 204
+# Accessロール割当（未登録は403）
+```
+
+`spatial-agent-studio.service` は `EnvironmentFile=%h/.config/spatial-agent-studio/preview-api.env` を
+読み、明示値（CORS_ORIGINS・DATABASE_URL等）で上書きする。**unitに実メールアドレスは書かない。**
+
+---
+
 ## 3. APIの起動
 
 ### ローカル確認（開発）
