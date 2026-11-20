@@ -1,0 +1,1772 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spatial Agent Studio 空間AIエージェント・スタジオ（土木業務オートパイロット）Standalone V1.1</title>
+<style>
+:root{
+  --bg:#070b18;--bg2:#0d1430;--panel:rgba(16,24,52,.78);--panel2:rgba(22,32,68,.72);
+  --line:rgba(120,160,255,.16);--line2:rgba(120,160,255,.28);
+  --tx:#e6ecff;--tx2:#9fb0d8;--tx3:#6c7ba4;
+  --cy:#38e1ff;--vi:#8b7bff;--am:#ffb547;--rd:#ff5d6c;--gr:#3ee07f;--pk:#ff7ad9;
+  --cl:#f0956a;--oa:#36d6ad;
+  --r:12px;--font:"Hiragino Sans","Noto Sans JP","Yu Gothic UI","Meiryo",system-ui,sans-serif;
+  --mono:"SFMono-Regular",Consolas,"Menlo","Noto Sans Mono",monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--bg);color:var(--tx);font-family:var(--font);font-size:13px;overflow:hidden}
+button{font-family:inherit;color:inherit;cursor:pointer;border:none;background:none}
+svg.i{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+svg.i.sm{width:14px;height:14px}svg.i.lg{width:24px;height:24px}svg.i.xl{width:34px;height:34px}
+::-webkit-scrollbar{width:7px;height:7px}::-webkit-scrollbar-thumb{background:rgba(140,170,255,.22);border-radius:6px}
+
+/* ---------- boot ---------- */
+#boot{position:fixed;inset:0;z-index:999;background:radial-gradient(ellipse at 50% 40%,#16245a 0%,#070b18 70%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;transition:opacity .8s,visibility .8s}
+#boot.hide{opacity:0;visibility:hidden}
+.bootlogo{position:relative;width:150px;height:150px}
+.bootlogo .orb{position:absolute;inset:0;border-radius:50%;border:1.5px solid rgba(56,225,255,.35);animation:spin 6s linear infinite}
+.bootlogo .orb:nth-child(2){inset:16px;border-color:rgba(139,123,255,.45);animation-duration:4s;animation-direction:reverse;border-style:dashed}
+.bootlogo .orb:nth-child(3){inset:34px;border-color:rgba(255,181,71,.4);animation-duration:9s}
+.bootlogo .dot{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--cy);box-shadow:0 0 14px var(--cy);top:-5px;left:70px}
+.bootlogo .orb:nth-child(2) .dot{background:var(--vi);box-shadow:0 0 14px var(--vi)}
+.bootlogo .orb:nth-child(3) .dot{background:var(--am);box-shadow:0 0 14px var(--am);left:36px}
+.bootlogo .core{position:absolute;inset:52px;display:grid;place-items:center;color:var(--cy);animation:pulse 2s ease-in-out infinite}
+.boot-title{font-size:22px;font-weight:700;letter-spacing:.06em;background:linear-gradient(90deg,var(--cy),var(--vi),var(--am));-webkit-background-clip:text;background-clip:text;color:transparent}
+.boot-sub{color:var(--tx2);font-size:12px;letter-spacing:.2em}
+.boot-bar{width:360px;height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
+.boot-bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cy),var(--vi));box-shadow:0 0 12px var(--cy);transition:width .35s}
+.boot-steps{width:360px;display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--tx3)}
+.boot-steps div{display:flex;align-items:center;gap:8px;opacity:.35;transition:.3s}
+.boot-steps div.on{opacity:1;color:var(--tx)}
+.boot-steps div.ok svg{color:var(--gr)}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{50%{transform:scale(1.12);filter:drop-shadow(0 0 12px var(--cy))}}
+
+/* ---------- layout ---------- */
+.app{display:grid;grid-template-rows:56px 1fr 74px;grid-template-columns:236px 1fr 410px;height:100vh;gap:0}
+header{grid-column:1/4;display:flex;align-items:center;gap:14px;padding:0 16px;background:linear-gradient(180deg,rgba(18,28,64,.95),rgba(10,16,38,.95));border-bottom:1px solid var(--line);position:relative;overflow:hidden}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,var(--cy),var(--vi),var(--am),transparent);background-size:200% 100%;animation:flow 6s linear infinite;opacity:.8}
+@keyframes flow{to{background-position:-200% 0}}
+.logo{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;background:conic-gradient(from 0deg,var(--cy),var(--vi),var(--am),var(--cy));position:relative;animation:spin 12s linear infinite}
+.logo::before{content:"";position:absolute;inset:2px;border-radius:8px;background:#0c1430}
+.logo svg{position:relative;color:var(--cy);animation:spin 12s linear infinite reverse}
+.ttl b{font-size:15px;letter-spacing:.03em}
+.ttl small{display:block;color:var(--tx3);font-size:11px;margin-top:1px}
+.badges{display:flex;gap:6px;margin-left:8px}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:20px;font-size:11px;border:1px solid var(--line2);background:rgba(255,255,255,.03);white-space:nowrap}
+.badge .led{width:7px;height:7px;border-radius:50%;background:var(--gr);box-shadow:0 0 8px var(--gr);animation:blink 2s infinite}
+.badge.gpu .led{background:var(--vi);box-shadow:0 0 8px var(--vi)}
+.badge.warn .led{background:var(--am);box-shadow:0 0 8px var(--am)}
+@keyframes blink{50%{opacity:.35}}
+.hdr-sp{flex:1}
+.hbtn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border-radius:9px;border:1px solid var(--line2);background:rgba(255,255,255,.04);font-size:12px;transition:.2s}
+.hbtn:hover{background:rgba(56,225,255,.12);border-color:var(--cy);box-shadow:0 0 14px rgba(56,225,255,.25)}
+.clock{font-family:var(--mono);color:var(--tx2);font-size:12px;min-width:64px;text-align:right}
+.sparks{position:absolute;inset:0;pointer-events:none}
+.sparks i{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--cy);opacity:0;animation:spark 5s linear infinite}
+@keyframes spark{0%{opacity:0;transform:translateY(20px)}20%{opacity:.9}100%{opacity:0;transform:translateY(-40px)}}
+
+/* ---------- left ---------- */
+.left{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:12px 10px;display:flex;flex-direction:column;gap:14px}
+.sec-h{display:flex;align-items:center;gap:6px;color:var(--tx2);font-size:11px;letter-spacing:.12em;margin:2px 4px 8px}
+.sec-h::after{content:"";flex:1;height:1px;background:var(--line)}
+.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.tool{display:flex;flex-direction:column;align-items:center;gap:4px;padding:9px 2px 7px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.025);font-size:10.5px;color:var(--tx2);transition:.18s;position:relative;overflow:hidden}
+.tool svg{width:21px;height:21px}
+.tool:hover{color:var(--tx);border-color:var(--line2);background:rgba(56,225,255,.07);transform:translateY(-1px)}
+.tool.on{color:#fff;border-color:var(--cy);background:linear-gradient(160deg,rgba(56,225,255,.22),rgba(139,123,255,.18));box-shadow:0 0 16px rgba(56,225,255,.3),inset 0 0 12px rgba(56,225,255,.15)}
+.tool.on svg{color:var(--cy);filter:drop-shadow(0 0 5px var(--cy))}
+.tool.agent-hit::after{content:"";position:absolute;inset:0;border-radius:10px;border:2px solid var(--am);animation:hit .7s ease-out forwards}
+@keyframes hit{from{opacity:1;transform:scale(.9)}to{opacity:0;transform:scale(1.15)}}
+.layers{display:flex;flex-direction:column;gap:3px}
+.layer{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;font-size:12px;color:var(--tx2);transition:.15s;text-align:left;width:100%}
+.layer:hover{background:rgba(255,255,255,.04);color:var(--tx)}
+.layer .sw{width:10px;height:10px;border-radius:3px;flex:none}
+.layer .tg{margin-left:auto;width:28px;height:15px;border-radius:9px;background:rgba(255,255,255,.12);position:relative;transition:.2s;flex:none}
+.layer .tg::after{content:"";position:absolute;top:2px;left:2px;width:11px;height:11px;border-radius:50%;background:#8896be;transition:.2s}
+.layer.on{color:var(--tx)}
+.layer.on .tg{background:rgba(56,225,255,.45)}
+.layer.on .tg::after{left:15px;background:#fff;box-shadow:0 0 6px var(--cy)}
+.results{display:flex;flex-direction:column;gap:6px}
+.res{border:1px solid var(--line);border-radius:9px;padding:7px 9px;background:rgba(255,255,255,.025);font-size:11.5px;animation:slidein .4s ease-out}
+.res .rh{display:flex;align-items:center;gap:6px;color:var(--tx)}
+.res .rv{font-family:var(--mono);color:var(--cy);margin-top:3px;font-size:12px}
+.empty{color:var(--tx3);font-size:11.5px;padding:6px 4px;line-height:1.6}
+@keyframes slidein{from{opacity:0;transform:translateX(-10px)}}
+
+/* ---------- viewport ---------- */
+.vp{position:relative;overflow:hidden;background:
+  radial-gradient(ellipse at 50% -10%,#2b4a8e 0%,#142453 38%,#0a1230 70%,#070b18 100%)}
+.vp::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(120,160,255,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(120,160,255,.05) 1px,transparent 1px);background-size:40px 40px;mask-image:linear-gradient(to bottom,transparent 0%,#000 60%);pointer-events:none}
+.vp canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+#ov{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+#tags{position:absolute;inset:0;pointer-events:none}
+.vp.autopilot{box-shadow:inset 0 0 0 2px rgba(255,181,71,.65),inset 0 0 40px rgba(255,181,71,.18)}
+.vp.autopilot::after{content:"";position:absolute;inset:0;pointer-events:none;border:2px solid transparent;background:linear-gradient(90deg,var(--am),var(--pk),var(--vi),var(--cy),var(--am)) border-box;-webkit-mask:linear-gradient(#000 0 0) padding-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;background-size:300% 100%;animation:flow 3s linear infinite}
+.tag{position:absolute;transform:translate(-50%,-100%);white-space:nowrap;padding:3px 8px 3px 6px;border-radius:7px;font-size:11px;display:flex;align-items:center;gap:5px;background:rgba(8,14,34,.86);border:1px solid currentColor;box-shadow:0 0 12px rgba(0,0,0,.4);backdrop-filter:blur(4px);animation:tagin .35s ease-out}
+.tag span{color:var(--tx)}
+.tag em{font-style:normal;font-family:var(--mono);font-size:10px;opacity:.85}
+@keyframes tagin{from{opacity:0;transform:translate(-50%,-70%) scale(.8)}}
+.pin{position:absolute;transform:translate(-50%,-100%);pointer-events:none}
+.pin .pm{width:26px;height:26px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);display:grid;place-items:center;border:2px solid #fff;box-shadow:0 0 14px currentColor;animation:drop .5s cubic-bezier(.2,1.6,.4,1)}
+.pin .pm svg{transform:rotate(45deg);color:#fff;width:13px;height:13px}
+.pin .pl{position:absolute;left:30px;top:-4px;white-space:nowrap;background:rgba(8,14,34,.9);border:1px solid currentColor;border-radius:7px;padding:3px 8px;font-size:11px;color:var(--tx)}
+@keyframes drop{from{transform:rotate(-45deg) translate(0,-30px);opacity:0}}
+.hud{position:absolute;display:flex;gap:6px;z-index:5}
+.hud.tl{top:10px;left:10px;flex-direction:column;align-items:flex-start}
+.hud.tr{top:10px;right:10px}
+.hud.bl{bottom:10px;left:10px}
+.hud.br{bottom:10px;right:10px;flex-direction:column;align-items:flex-end}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:9px;background:rgba(8,14,34,.72);border:1px solid var(--line2);font-size:11.5px;backdrop-filter:blur(6px)}
+.chip b{font-family:var(--mono);color:var(--cy);font-weight:600}
+.vbtn{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:9px;background:rgba(8,14,34,.72);border:1px solid var(--line2);font-size:11.5px;backdrop-filter:blur(6px);transition:.15s}
+.vbtn:hover,.vbtn.agent-hit{border-color:var(--cy);color:#fff;box-shadow:0 0 12px rgba(56,225,255,.35)}
+#minimap{border-radius:10px;border:1px solid var(--line2);background:rgba(8,14,34,.8);display:block}
+.legend{padding:8px 10px;border-radius:10px;background:rgba(8,14,34,.8);border:1px solid var(--line2);font-size:11px;width:220px;display:none}
+.legend.show{display:block;animation:slidein .4s}
+.legend .bar{height:9px;border-radius:5px;margin:6px 0 3px;background:linear-gradient(90deg,#2a64ff,#30c0ff,#3ee07f,#ffd35a,#ff4040);background-size:100% 100%}
+.legend .lab{display:flex;justify-content:space-between;color:var(--tx2);font-family:var(--mono);font-size:10px}
+#banner{position:absolute;top:52px;left:50%;transform:translate(-50%,-160px);transition:transform .5s cubic-bezier(.2,1.4,.4,1);z-index:6;display:flex;align-items:center;gap:10px;padding:8px 16px;border-radius:30px;background:rgba(20,16,8,.85);border:1px solid var(--am);box-shadow:0 0 24px rgba(255,181,71,.35);font-size:12.5px}
+#banner.show{transform:translate(-50%,0)}
+#banner .ai-dots i{display:inline-block;width:5px;height:5px;margin:0 1.5px;border-radius:50%;background:var(--am);animation:bounce 1s infinite}
+#banner .ai-dots i:nth-child(2){animation-delay:.15s}#banner .ai-dots i:nth-child(3){animation-delay:.3s}
+@keyframes bounce{50%{transform:translateY(-4px);opacity:.4}}
+#flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:7}
+#flash.go{animation:flash .45s ease-out}
+@keyframes flash{0%{opacity:.75}100%{opacity:0}}
+.scanframe{position:absolute;inset:0;pointer-events:none;z-index:4;opacity:0;transition:opacity .3s}
+.scanframe.on{opacity:1}
+.scanframe i{position:absolute;width:34px;height:34px;border:3px solid var(--cy);filter:drop-shadow(0 0 6px var(--cy))}
+.scanframe i:nth-child(1){top:14px;left:14px;border-right:0;border-bottom:0}
+.scanframe i:nth-child(2){top:14px;right:14px;border-left:0;border-bottom:0}
+.scanframe i:nth-child(3){bottom:14px;left:14px;border-right:0;border-top:0}
+.scanframe i:nth-child(4){bottom:14px;right:14px;border-left:0;border-top:0}
+.scanframe .beam{position:absolute;left:0;right:0;height:80px;background:linear-gradient(180deg,transparent,rgba(56,225,255,.22),transparent);border-bottom:1px solid rgba(56,225,255,.7);animation:beam 1.6s linear infinite}
+@keyframes beam{from{top:-80px}to{top:100%}}
+#polyDone{display:none}
+#polyDone.show{display:inline-flex;animation:slidein .3s}
+#section{position:absolute;left:50%;bottom:12px;transform:translate(-50%,140%);width:min(560px,70%);background:rgba(8,14,34,.9);border:1px solid var(--line2);border-radius:12px;padding:10px 12px;z-index:6;transition:transform .45s cubic-bezier(.2,1.2,.4,1);backdrop-filter:blur(8px)}
+#section.show{transform:translate(-50%,0)}
+#section .sh{display:flex;align-items:center;gap:6px;font-size:12px;margin-bottom:6px}
+#section .sh button{margin-left:auto;color:var(--tx3)}
+#section canvas{position:static;width:100%;height:150px}
+
+/* ---------- agent panel ---------- */
+.agent{background:var(--panel);border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
+.ag-top{padding:12px 12px 10px;border-bottom:1px solid var(--line)}
+.ag-title{display:flex;align-items:center;gap:8px;font-weight:700;font-size:13.5px}
+.ag-title .st{margin-left:auto;font-size:11px;font-weight:400;color:var(--tx2);display:flex;align-items:center;gap:5px}
+.ag-title .st i{width:7px;height:7px;border-radius:50%;background:var(--tx3)}
+.ag-title .st.run i{background:var(--am);box-shadow:0 0 8px var(--am);animation:blink .8s infinite}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;margin-top:10px;padding:3px;border-radius:10px;background:rgba(0,0,0,.25);border:1px solid var(--line)}
+.seg button{padding:6px 4px;border-radius:8px;font-size:11.5px;color:var(--tx2);display:flex;align-items:center;justify-content:center;gap:5px;transition:.2s}
+.seg button.on{color:#fff;background:linear-gradient(160deg,rgba(255,255,255,.12),rgba(255,255,255,.04));box-shadow:0 0 0 1px var(--line2)}
+.seg button[data-m=claude].on{box-shadow:0 0 0 1px var(--cl),0 0 12px rgba(240,149,106,.35)}
+.seg button[data-m=openai].on{box-shadow:0 0 0 1px var(--oa),0 0 12px rgba(54,214,173,.35)}
+.seg button[data-m=coop].on{box-shadow:0 0 0 1px var(--vi),0 0 12px rgba(139,123,255,.35)}
+.mdl{margin-top:6px;font-size:10.5px;color:var(--tx3);font-family:var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.loopbox{display:flex;gap:10px;align-items:center;margin-top:10px}
+#loop{width:132px;height:132px;flex:none}
+#loop .node circle{fill:#111a3a;stroke:var(--line2);stroke-width:1.5;transition:.3s}
+#loop .node text{fill:var(--tx3);font-size:9px;text-anchor:middle;font-family:var(--font);transition:.3s}
+#loop .node use{color:var(--tx3);transition:.3s}
+#loop .node.on circle{fill:#1b2a5e;stroke:var(--c);stroke-width:2.5;filter:drop-shadow(0 0 6px var(--c))}
+#loop .node.on text{fill:#fff}
+#loop .node.on use{color:var(--c)}
+#loop .comet{transform-origin:66px 66px;animation:spin 3s linear infinite;animation-play-state:paused}
+#loop.run .comet{animation-play-state:running}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px;flex:1}
+.met{padding:6px 8px;border-radius:9px;border:1px solid var(--line);background:rgba(255,255,255,.025)}
+.met small{display:flex;align-items:center;gap:4px;color:var(--tx3);font-size:10px}
+.met b{display:block;font-family:var(--mono);font-size:15px;margin-top:2px}
+.ctrl{display:flex;gap:6px;margin-top:10px;align-items:center}
+.cbtn{width:32px;height:30px;border-radius:8px;border:1px solid var(--line2);display:grid;place-items:center;background:rgba(255,255,255,.04);transition:.15s}
+.cbtn:hover{border-color:var(--cy);color:var(--cy)}
+.cbtn:disabled{opacity:.35;cursor:not-allowed}
+.spd{display:flex;border:1px solid var(--line2);border-radius:8px;overflow:hidden}
+.spd button{padding:6px 8px;font-size:11px;font-family:var(--mono);color:var(--tx2)}
+.spd button.on{background:rgba(56,225,255,.2);color:#fff}
+.hitl{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:11px;color:var(--tx2)}
+.sw2{width:30px;height:16px;border-radius:9px;background:rgba(255,255,255,.14);position:relative;transition:.2s}
+.sw2::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:#8896be;transition:.2s}
+.sw2.on{background:rgba(62,224,127,.5)}.sw2.on::after{left:16px;background:#fff}
+.tasks{display:grid;grid-template-columns:1fr 1fr;gap:7px;padding:10px 12px;border-bottom:1px solid var(--line)}
+.task{position:relative;text-align:left;padding:9px 10px;border-radius:11px;border:1px solid var(--line);background:linear-gradient(160deg,rgba(255,255,255,.04),rgba(255,255,255,.01));overflow:hidden;transition:.2s}
+.task:hover{border-color:var(--c);box-shadow:0 0 16px color-mix(in srgb,var(--c) 30%,transparent);transform:translateY(-1px)}
+.task .ti{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);margin-bottom:6px}
+.task b{display:block;font-size:12px}
+.task small{display:block;color:var(--tx3);font-size:10.5px;margin-top:2px;line-height:1.4}
+.task .go{position:absolute;right:8px;top:9px;color:var(--c);opacity:.6;transition:.2s}
+.task:hover .go{opacity:1;transform:scale(1.15)}
+.task.running{border-color:var(--c)}
+.task.running::before{content:"";position:absolute;left:0;bottom:0;height:2px;width:40%;background:var(--c);animation:prog 1.2s ease-in-out infinite}
+.task.done .go{color:var(--gr);opacity:1}
+@keyframes prog{0%{left:-40%}100%{left:100%}}
+.ask{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--line)}
+.ask textarea{flex:1;resize:none;height:38px;border-radius:9px;border:1px solid var(--line2);background:rgba(0,0,0,.25);color:var(--tx);padding:8px 10px;font-family:inherit;font-size:12px;outline:none;transition:.2s}
+.ask textarea:focus{border-color:var(--cy);box-shadow:0 0 10px rgba(56,225,255,.25)}
+.ask button{width:40px;border-radius:9px;background:linear-gradient(160deg,var(--cy),var(--vi));color:#071029;display:grid;place-items:center}
+.tabs{display:flex;padding:0 8px;border-bottom:1px solid var(--line)}
+.tabs button{padding:9px 9px;font-size:11.5px;color:var(--tx3);border-bottom:2px solid transparent;display:flex;align-items:center;gap:5px}
+.tabs button.on{color:var(--tx);border-color:var(--cy)}
+.tabs button .n{font-family:var(--mono);font-size:10px;padding:0 5px;border-radius:6px;background:rgba(255,255,255,.08)}
+.pane{flex:1;overflow-y:auto;padding:10px 12px;display:none}
+.pane.on{display:block}
+.msg{display:flex;gap:8px;margin-bottom:9px;animation:slidein .35s ease-out}
+.msg .av{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--c);border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.msg .bd{flex:1;min-width:0}
+.msg .who{font-size:10.5px;color:var(--tx3);display:flex;gap:6px;align-items:center}
+.msg .who b{color:var(--c);font-weight:600}
+.msg .tx{margin-top:2px;line-height:1.6;font-size:12.2px;word-break:break-word}
+.msg.user .tx{background:rgba(56,225,255,.08);border:1px solid rgba(56,225,255,.25);padding:6px 9px;border-radius:9px}
+.caret{display:inline-block;width:7px;height:13px;background:var(--cy);vertical-align:-2px;margin-left:1px;animation:blink .7s infinite}
+.tc{border:1px solid var(--line);border-radius:9px;margin-bottom:8px;overflow:hidden;animation:slidein .3s}
+.tc .tch{display:flex;align-items:center;gap:6px;padding:5px 8px;font-size:11px;background:rgba(255,255,255,.04)}
+.tc .tch b{color:var(--c)}
+.tc .tch em{margin-left:auto;font-style:normal;color:var(--tx3);font-family:var(--mono);font-size:10px}
+.tc pre{margin:0;padding:7px 9px;font-family:var(--mono);font-size:10.5px;line-height:1.5;color:#bcd0ff;white-space:pre-wrap;word-break:break-all;max-height:170px;overflow:auto}
+.tc pre .k{color:#7fd8ff}.tc pre .s{color:#ffcf8a}.tc pre .n{color:#b6ff9e}
+.tc.res pre{color:#a9f3c9;background:rgba(62,224,127,.04)}
+.sg-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:9px;border:1px solid var(--line);margin-bottom:6px;animation:slidein .35s}
+.sg-item .ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;color:var(--c);background:color-mix(in srgb,var(--c) 16%,transparent)}
+.sg-item b{font-size:12px}
+.sg-item small{display:block;color:var(--tx3);font-size:10.5px;font-family:var(--mono)}
+.sg-item .cf{margin-left:auto;text-align:right;font-family:var(--mono);font-size:11px;color:var(--c)}
+.sg-item .cf i{display:block;height:3px;border-radius:2px;background:var(--c);margin-top:3px}
+.rel{font-size:11px;color:var(--tx2);padding:4px 8px;font-family:var(--mono);border-left:2px solid var(--vi);margin:4px 0}
+.au{font-family:var(--mono);font-size:10.5px;padding:5px 7px;border-bottom:1px dashed var(--line);display:grid;grid-template-columns:58px 46px 1fr;gap:6px;animation:slidein .3s}
+.au .t{color:var(--tx3)}
+.au .a{color:var(--c)}
+.au .h{grid-column:3;color:var(--tx3);font-size:9.5px}
+.pane-tools{display:flex;justify-content:flex-end;gap:6px;margin-bottom:8px}
+.mini{font-size:11px;padding:4px 9px;border-radius:7px;border:1px solid var(--line2);display:inline-flex;align-items:center;gap:5px}
+.mini:hover{border-color:var(--cy);color:var(--cy)}
+.guard{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}
+.guard div{display:flex;align-items:center;gap:6px;font-size:11px;padding:5px 7px;border-radius:8px;border:1px solid var(--line);color:var(--tx2)}
+.guard .y svg{color:var(--gr)}.guard .n svg{color:var(--rd)}.guard .q svg{color:var(--am)}
+
+/* ---------- footer ---------- */
+footer{grid-column:1/4;border-top:1px solid var(--line);background:rgba(10,16,38,.95);display:flex;flex-direction:column;padding:6px 12px;gap:5px}
+.tl{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;min-height:34px;align-items:center}
+.tl .st{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border-radius:8px;border:1px solid var(--line);font-size:11px;white-space:nowrap;color:var(--tx2);animation:slidein .3s;position:relative}
+.tl .st svg{color:var(--c)}
+.tl .st.cur{border-color:var(--c);color:#fff;box-shadow:0 0 10px color-mix(in srgb,var(--c) 40%,transparent)}
+.tl .st.cur::after{content:"";position:absolute;left:6px;right:6px;bottom:-1px;height:2px;background:var(--c);animation:blink .8s infinite}
+.tl .arrow{color:var(--tx3);flex:none}
+.tl .ph{color:var(--tx3);font-size:11px;display:flex;gap:6px;align-items:center}
+.con{font-family:var(--mono);font-size:11px;color:var(--tx3);display:flex;gap:10px;align-items:center;white-space:nowrap;overflow:hidden}
+.con b{color:var(--gr);font-weight:400}
+
+/* ---------- cursor ---------- */
+#acur{position:fixed;left:0;top:0;z-index:900;pointer-events:none;opacity:0;transition:opacity .3s;will-change:transform}
+#acur.show{opacity:1}
+#acur svg.ptr{width:26px;height:26px;filter:drop-shadow(0 2px 6px rgba(0,0,0,.6)) drop-shadow(0 0 8px var(--cc))}
+#acur .nm{position:absolute;left:22px;top:22px;padding:2px 8px;border-radius:7px;font-size:10.5px;font-weight:700;color:#0a0f22;background:var(--cc);white-space:nowrap;box-shadow:0 0 12px var(--cc)}
+#acur .act{position:absolute;left:22px;top:42px;padding:2px 7px;border-radius:6px;font-size:10px;font-family:var(--mono);color:var(--cc);background:rgba(8,14,34,.88);border:1px solid var(--cc);white-space:nowrap}
+.ripple{position:fixed;z-index:899;pointer-events:none;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;border:2px solid var(--cc,#ffb547);animation:rip .7s ease-out forwards}
+@keyframes rip{to{transform:scale(5.5);opacity:0}}
+.trail{position:fixed;z-index:898;pointer-events:none;width:6px;height:6px;margin:-3px 0 0 -3px;border-radius:50%;background:var(--cc,#ffb547);animation:fade .6s linear forwards}
+@keyframes fade{to{opacity:0;transform:scale(.2)}}
+
+/* ---------- modal ---------- */
+.modal{position:fixed;inset:0;z-index:950;display:none;place-items:center;background:rgba(3,6,16,.66);backdrop-filter:blur(5px)}
+.modal.show{display:grid;animation:fadein .25s}
+@keyframes fadein{from{opacity:0}}
+.mbox{width:min(720px,92vw);max-height:88vh;overflow:auto;background:linear-gradient(170deg,#121b40,#0b1230);border:1px solid var(--line2);border-radius:16px;box-shadow:0 20px 70px rgba(0,0,0,.6);animation:pop .35s cubic-bezier(.2,1.3,.4,1)}
+@keyframes pop{from{transform:scale(.92) translateY(14px);opacity:0}}
+.mh{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1px solid var(--line);font-weight:700;font-size:14px;position:sticky;top:0;background:#111a3d;z-index:2}
+.mh .x{margin-left:auto;color:var(--tx3)}
+.mb{padding:16px 18px}
+.mf{display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--line)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:1px solid var(--line2);font-size:12.5px;transition:.15s}
+.btn:hover{border-color:var(--cy)}
+.btn.pri{background:linear-gradient(160deg,var(--gr),#22b866);color:#062012;border-color:transparent;font-weight:700}
+.btn.pri:hover{box-shadow:0 0 18px rgba(62,224,127,.5)}
+.btn.dan{border-color:rgba(255,93,108,.6);color:#ffb3bb}
+.btn.dan:hover{background:rgba(255,93,108,.15)}
+.shield{width:58px;height:58px;border-radius:16px;display:grid;place-items:center;background:rgba(255,181,71,.14);color:var(--am);border:1px solid rgba(255,181,71,.5);animation:pulse2 1.6s infinite;flex:none}
+@keyframes pulse2{50%{box-shadow:0 0 0 10px rgba(255,181,71,0),0 0 22px rgba(255,181,71,.5)}0%{box-shadow:0 0 0 0 rgba(255,181,71,.45)}}
+.apv{display:flex;gap:14px;align-items:flex-start}
+.apv h3{font-size:15px;margin-bottom:4px}
+.apv p{color:var(--tx2);line-height:1.6;font-size:12.5px}
+.kv{display:grid;grid-template-columns:130px 1fr;gap:5px 10px;margin-top:12px;font-size:12px}
+.kv dt{color:var(--tx3)}.kv dd{font-family:var(--mono);color:var(--tx)}
+.apimg{width:100%;border-radius:10px;border:1px solid var(--line2);margin-top:12px;display:block}
+.risk{display:inline-flex;align-items:center;gap:5px;padding:2px 9px;border-radius:7px;font-size:11px;background:rgba(255,181,71,.15);color:var(--am);border:1px solid rgba(255,181,71,.4)}
+.rcard{border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:12px;background:rgba(255,255,255,.02)}
+.rcard h4{display:flex;align-items:center;gap:7px;font-size:13px;margin-bottom:8px}
+.rcard h4 .vd{margin-left:auto;font-size:11px;padding:2px 9px;border-radius:7px}
+.vd.ok{background:rgba(62,224,127,.15);color:var(--gr);border:1px solid rgba(62,224,127,.4)}
+.vd.ng{background:rgba(255,93,108,.15);color:#ff9aa5;border:1px solid rgba(255,93,108,.4)}
+.vd.wa{background:rgba(255,181,71,.15);color:var(--am);border:1px solid rgba(255,181,71,.4)}
+.rcard table{width:100%;border-collapse:collapse;font-size:12px}
+.rcard td{padding:4px 6px;border-bottom:1px solid var(--line)}
+.rcard td:first-child{color:var(--tx3);width:44%}
+.rcard td:last-child{font-family:var(--mono)}
+.rcard img{width:100%;border-radius:8px;margin-top:8px;border:1px solid var(--line)}
+.rmeta{font-size:11px;color:var(--tx3);margin-top:6px;font-family:var(--mono)}
+.codetabs{display:flex;gap:6px;margin-bottom:8px}
+.codetabs button{padding:5px 12px;border-radius:8px;border:1px solid var(--line2);font-size:12px;color:var(--tx2)}
+.codetabs button.on{color:#fff;border-color:var(--cy);background:rgba(56,225,255,.12)}
+pre.code{background:#060a1c;border:1px solid var(--line);border-radius:10px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.55;color:#bcd0ff;white-space:pre-wrap;max-height:330px;overflow:auto}
+.note{font-size:11.5px;color:var(--tx2);line-height:1.7;margin-top:10px;padding:9px 12px;border-radius:9px;background:rgba(255,181,71,.07);border:1px solid rgba(255,181,71,.25)}
+.arch{width:100%;height:auto;display:block}
+.arch .flowl{stroke-dasharray:6 6;animation:dash 1s linear infinite}
+@keyframes dash{to{stroke-dashoffset:-12}}
+.arch .nd rect{fill:#121c44;stroke-width:1.5}
+.arch .nd text{fill:#e6ecff;font-size:12px;font-family:var(--font)}
+.arch .nd text.s{fill:#9fb0d8;font-size:10px}
+.arch .pkt{filter:drop-shadow(0 0 5px currentColor)}
+.blist{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.blist div{display:flex;gap:8px;font-size:11.5px;color:var(--tx2);line-height:1.55;padding:8px 10px;border:1px solid var(--line);border-radius:10px}
+.blist div svg{color:var(--cy);margin-top:2px}
+#toasts{position:fixed;bottom:92px;right:424px;z-index:960;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{display:flex;align-items:center;gap:9px;padding:9px 14px;border-radius:11px;background:rgba(10,16,38,.94);border:1px solid var(--c);box-shadow:0 0 18px color-mix(in srgb,var(--c) 35%,transparent);font-size:12px;animation:tin .45s cubic-bezier(.2,1.3,.4,1);max-width:360px}
+.toast svg{color:var(--c)}
+.toast.out{animation:tout .4s forwards}
+@keyframes tin{from{transform:translateX(40px);opacity:0}}
+@keyframes tout{to{transform:translateX(40px);opacity:0}}
+.gal{display:flex;gap:6px;flex-wrap:wrap}
+.gal img{width:66px;height:42px;object-fit:cover;border-radius:6px;border:1px solid var(--line2);animation:slidein .4s}
+@media (max-width:1280px){.app{grid-template-columns:200px 1fr 360px}#toasts{right:374px}}
+
+/* ================= Theme: Light / Dark ================= */
+.jpn{font-size:12px;font-weight:600;margin-left:8px;color:var(--cy);letter-spacing:.04em}
+.boot-jp{font-size:15px;font-weight:700;letter-spacing:.18em;color:var(--tx);margin-top:-12px}
+#themeBtn{width:36px;height:34px;padding:0;justify-content:center;position:relative;overflow:hidden}
+#themeBtn svg{transition:transform .6s cubic-bezier(.2,1.4,.4,1),opacity .4s;position:absolute}
+#themeBtn .sun{transform:rotate(-90deg) scale(.4);opacity:0}
+[data-theme=light] #themeBtn .sun{transform:none;opacity:1;color:#e59400}
+[data-theme=light] #themeBtn .moon{transform:rotate(90deg) scale(.4);opacity:0}
+.theming,.theming *{transition:background-color .45s,color .45s,border-color .45s,fill .45s!important}
+[data-theme=light]{
+  --bg:#eef3fb;--bg2:#e3ebf8;--panel:rgba(255,255,255,.86);--panel2:rgba(255,255,255,.92);
+  --line:rgba(30,60,140,.13);--line2:rgba(30,60,140,.24);
+  --tx:#14213f;--tx2:#3d4d77;--tx3:#6f7ea6;
+  --cy:#0891b2;--vi:#6d5df5;--am:#d48806;--rd:#e2364b;--gr:#16a34a;--pk:#db2777;--cl:#d9733f;--oa:#0f9f7f;
+  color-scheme:light}
+[data-theme=dark]{color-scheme:dark}
+[data-theme=light] body{background:var(--bg)}
+[data-theme=light] #boot{background:radial-gradient(ellipse at 50% 40%,#ffffff 0%,#dfe8f8 75%)}
+[data-theme=light] header{background:linear-gradient(180deg,#ffffff,#f2f6fd)}
+[data-theme=light] .logo::before{background:#fff}
+[data-theme=light] .tool,[data-theme=light] .res,[data-theme=light] .met,[data-theme=light] .task,[data-theme=light] .sg-item,[data-theme=light] .badge,[data-theme=light] .hbtn{background:rgba(255,255,255,.75)}
+[data-theme=light] .tool:hover{background:rgba(8,145,178,.08)}
+[data-theme=light] .tool.on{background:linear-gradient(160deg,rgba(8,145,178,.16),rgba(109,93,245,.12));color:var(--tx)}
+[data-theme=light] .layer .tg,[data-theme=light] .sw2{background:rgba(30,60,140,.16)}
+[data-theme=light] .layer.on .tg{background:rgba(8,145,178,.55)}
+[data-theme=light] .sw2.on{background:rgba(22,163,74,.6)}
+[data-theme=light] .vp{background:radial-gradient(ellipse at 50% -10%,#ffffff 0%,#dbe9ff 40%,#c3d8f5 75%,#b4cbee 100%)}
+[data-theme=light] .vp::before{background-image:linear-gradient(rgba(30,60,140,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(30,60,140,.06) 1px,transparent 1px)}
+[data-theme=light] .tag,[data-theme=light] .pin .pl,[data-theme=light] .chip,[data-theme=light] .vbtn,[data-theme=light] #minimap,[data-theme=light] .legend,[data-theme=light] #section,[data-theme=light] #verBar,[data-theme=light] #acur .act,[data-theme=light] .site .lv{background:rgba(255,255,255,.9);box-shadow:0 2px 10px rgba(20,40,100,.12)}
+[data-theme=light] .tag{filter:saturate(1.2) brightness(.85)}
+[data-theme=light] .tag span,[data-theme=light] .pin .pl{color:var(--tx)}
+[data-theme=light] #banner{background:#fff8e8;color:#5a3a00}
+[data-theme=light] .seg,[data-theme=light] .ask textarea,[data-theme=light] .spd{background:rgba(255,255,255,.85)}
+[data-theme=light] .seg button.on{background:#fff;color:var(--tx)}
+[data-theme=light] .spd button.on{color:var(--tx)}
+[data-theme=light] #loop .node circle{fill:#eef3fb}
+[data-theme=light] #loop .node.on circle{fill:#e3edff}
+[data-theme=light] #loop .node.on text,[data-theme=light] #loopN{fill:var(--tx)}
+[data-theme=light] .tc pre{color:#1e3a8a;background:rgba(30,60,140,.03)}
+[data-theme=light] .tc pre .k{color:#0369a1}[data-theme=light] .tc pre .s{color:#b45309}[data-theme=light] .tc pre .n{color:#15803d}
+[data-theme=light] .tc.res pre{color:#166534;background:rgba(22,163,74,.05)}
+[data-theme=light] .tc .tch,[data-theme=light] .msg .who b,[data-theme=light] .tc .tch b{filter:brightness(.82)}
+[data-theme=light] footer{background:#f4f7fd}
+[data-theme=light] .tl .st.cur{color:var(--tx)}
+[data-theme=light] .mbox{background:linear-gradient(170deg,#ffffff,#f3f7fd)}
+[data-theme=light] .mh{background:#ffffff}
+[data-theme=light] pre.code{background:#f3f6fc;color:#1e3a8a}
+[data-theme=light] .arch .nd rect{fill:#ffffff}
+[data-theme=light] .arch .nd text,[data-theme=light] #gwSvg .gn text{fill:var(--tx)}
+[data-theme=light] .arch .nd text.s,[data-theme=light] #gwSvg .gn text.s{fill:var(--tx2)}
+[data-theme=light] .arch rect[fill="#0f1838"]{fill:#f3f6fc}
+[data-theme=light] .toast{background:rgba(255,255,255,.97);color:var(--tx);box-shadow:0 6px 24px rgba(20,40,100,.18)}
+[data-theme=light] .modal{background:rgba(40,60,110,.35)}
+[data-theme=light] .shield{background:rgba(212,136,6,.1)}
+[data-theme=light] #polyDone,[data-theme=light] #apSwitch{color:var(--gr)!important}
+[data-theme=light] .btn.pri{color:#fff}
+[data-theme=light] .ask button{color:#fff}
+[data-theme=light] .pill{color:color-mix(in srgb,var(--c,#6f7ea6) 68%,#000)}
+[data-theme=light] .kd{filter:brightness(.8)}
+[data-theme=light] .res .rv,[data-theme=light] .res .rh{filter:brightness(.78) saturate(1.2)}
+[data-theme=light] .vd.ok{color:#15803d}[data-theme=light] .vd.ng{color:#be123c}[data-theme=light] .vd.wa{color:#a16207}
+/* V2 parts */
+[data-theme=light] .nav{background:linear-gradient(180deg,#f7faff,#edf2fb)}
+[data-theme=light] .nb.on{color:var(--tx);background:linear-gradient(160deg,rgba(8,145,178,.15),rgba(109,93,245,.1))}
+[data-theme=light] .rmenu{background:linear-gradient(170deg,#ffffff,#f3f7fd);box-shadow:0 20px 50px rgba(20,40,100,.25)}
+[data-theme=light] .rbtn{background:rgba(255,255,255,.8)}
+[data-theme=light] .rbtn .av{background:radial-gradient(circle,#ffffff 58%,transparent 60%),conic-gradient(var(--c),transparent 40%,var(--c))}
+[data-theme=light] .card,[data-theme=light] .kpi{box-shadow:0 4px 18px rgba(20,40,100,.07)}
+[data-theme=light] .kpi .kval,[data-theme=light] .bigv{color:var(--tx)}
+[data-theme=light] .site{background:#fff}
+[data-theme=light] .site canvas{background:radial-gradient(ellipse at 50% 0%,#ffffff,#d6e4fb 85%)}
+[data-theme=light] #trainCv{background:radial-gradient(ellipse at 50% 20%,#ffffff,#d6e4fb 85%)}
+[data-theme=light] .chat .chs{background:rgba(30,60,140,.04)}
+[data-theme=light] .chat .chs div.on{color:var(--tx)}
+[data-theme=light] .gauges text,[data-theme=light] #chDonut text{fill:var(--tx)}
+[data-theme=light] .stack3d .pl{color:var(--tx)}
+[data-theme=light] .stack3d .pl span{text-shadow:0 1px 2px #fff}
+[data-theme=light] .phs .pdot{background:#fff}
+[data-theme=light] .fi,[data-theme=light] .apc,[data-theme=light] .sched,[data-theme=light] .cv,[data-theme=light] .phs,[data-theme=light] .swl,[data-theme=light] .ly,[data-theme=light] .stat{background:rgba(255,255,255,.7)}
+[data-theme=light] .tcard{background:#fff}
+[data-theme=light] input[type=number],[data-theme=light] select,[data-theme=light] textarea{background:#fff!important;color:var(--tx)!important}
+[data-theme=light] .uflow .uf,[data-theme=light] .ly .ln{filter:brightness(.85)}
+[data-theme=light] .vchip.on{color:var(--tx)}
+
+</style>
+<script>(function(){var t=null;try{t=localStorage.getItem('sas-theme')}catch(e){}if(!t){try{t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}catch(e){t='dark'}}document.documentElement.dataset.theme=t})()</script>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute">
+<defs>
+<symbol id="i-cube" viewBox="0 0 24 24"><path d="M12 2 3 7v10l9 5 9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></symbol>
+<symbol id="i-splat" viewBox="0 0 24 24"><circle cx="7" cy="8" r="2.5"/><circle cx="16" cy="7" r="1.8"/><circle cx="12" cy="14" r="3.2"/><circle cx="6" cy="17.5" r="1.5"/><circle cx="18" cy="16" r="2"/></symbol>
+<symbol id="i-gpu" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="12" rx="2"/><rect x="7" y="8" width="6" height="6" rx="1"/><path d="M16 9h2M16 13h2M6 17v3M10 17v3M14 17v3M18 17v3"/></symbol>
+<symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3 3 3 0 0 0-2 5 3 3 0 0 0 2 5 3 3 0 0 0 3 3 2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"/><path d="M15 4a3 3 0 0 1 3 3 3 3 0 0 1 2 5 3 3 0 0 1-2 5 3 3 0 0 1-3 3 2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></symbol>
+<symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+<symbol id="i-hand" viewBox="0 0 24 24"><path d="M9 11V5a1.5 1.5 0 0 1 3 0v5"/><path d="M12 10V8.5a1.5 1.5 0 0 1 3 0V11"/><path d="M15 10.5a1.5 1.5 0 0 1 3 0V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-5-2.7L3.5 14a1.5 1.5 0 0 1 2.5-1.6L9 15"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="M4 12.5 9 17 20 6"/></symbol>
+<symbol id="i-checkc" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></symbol>
+<symbol id="i-ruler" viewBox="0 0 24 24"><path d="M3 17 17 3l4 4L7 21z"/><path d="m7 13 2 2M10 10l1.5 1.5M13 7l2 2"/></symbol>
+<symbol id="i-area" viewBox="0 0 24 24"><path d="M4 7 10 3l10 5-3 12H6z"/><circle cx="4" cy="7" r="1.5"/><circle cx="20" cy="8" r="1.5"/><circle cx="6" cy="20" r="1.5"/></symbol>
+<symbol id="i-volume" viewBox="0 0 24 24"><path d="M12 3 4 7l8 4 8-4z"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4"/></symbol>
+<symbol id="i-section" viewBox="0 0 24 24"><path d="M3 18c3-6 5-9 9-9s6 3 9 9"/><path d="M3 21h18"/><path d="M12 3v18" stroke-dasharray="2 2"/></symbol>
+<symbol id="i-heat" viewBox="0 0 24 24"><path d="M12 3c1 4 5 5 5 10a5 5 0 0 1-10 0c0-3 2-4 2-7 1.5 1 2 2 2 3 1-2 1-4 1-6z"/></symbol>
+<symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></symbol>
+<symbol id="i-hazard" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17v.5"/></symbol>
+<symbol id="i-camera" viewBox="0 0 24 24"><path d="M4 7h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+<symbol id="i-report" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M15 3v4h4M9 12h7M9 15h7M9 18h4"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="M7 4v16l13-8z"/></symbol>
+<symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></symbol>
+<symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/></symbol>
+<symbol id="i-step" viewBox="0 0 24 24"><path d="M6 5v14l9-7z"/><path d="M18 5v14"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+<symbol id="i-exc" viewBox="0 0 24 24"><rect x="2" y="16" width="11" height="4" rx="2"/><path d="M4 16v-4h6v4M10 12l4-7 5 4-2 4"/><path d="M17 13l3 3h-5z"/></symbol>
+<symbol id="i-truck" viewBox="0 0 24 24"><path d="M2 7h11v9H2zM13 10h4l4 3v3h-8z"/><circle cx="6" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+<symbol id="i-worker" viewBox="0 0 24 24"><path d="M7 9a5 5 0 0 1 10 0"/><path d="M5 9h14"/><circle cx="12" cy="12.5" r="2.5"/><path d="M6 21v-1a6 6 0 0 1 12 0v1"/></symbol>
+<symbol id="i-river" viewBox="0 0 24 24"><path d="M2 8c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0M2 13c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0M2 18c2.5-2 4.5-2 7 0s4.5 2 7 0 4.5-2 6 0"/></symbol>
+<symbol id="i-wall" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="M3 10h18M3 15h18M9 5v5M15 10v5M9 15v4"/></symbol>
+<symbol id="i-crack" viewBox="0 0 24 24"><path d="M4 3l4 5-2 3 5 4-2 3 4 3"/><path d="M14 3l2 4 4 1"/></symbol>
+<symbol id="i-tree" viewBox="0 0 24 24"><path d="M12 2 6 11h3l-4 6h14l-4-6h3z"/><path d="M12 17v5"/></symbol>
+<symbol id="i-mountain" viewBox="0 0 24 24"><path d="M2 20 9 8l4 6 3-4 6 10z"/></symbol>
+<symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 20h16"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></symbol>
+<symbol id="i-flow" viewBox="0 0 24 24"><rect x="2" y="4" width="6" height="5" rx="1"/><rect x="16" y="4" width="6" height="5" rx="1"/><rect x="9" y="15" width="6" height="5" rx="1"/><path d="M8 6.5h8M5 9v3h7v3M19 9v3h-7"/></symbol>
+<symbol id="i-send" viewBox="0 0 24 24"><path d="M3 11 21 3l-8 18-2-8z"/><path d="M11 13 21 3"/></symbol>
+<symbol id="i-orbit" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><ellipse cx="12" cy="12" rx="10" ry="4.5"/></symbol>
+<symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+<symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11 12 3l9 8M5 9v12h14V9"/></symbol>
+<symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="i-key" viewBox="0 0 24 24"><circle cx="8" cy="15" r="4"/><path d="m11 12 9-9M16 7l3 3M14 9l2 2"/></symbol>
+<symbol id="i-api" viewBox="0 0 24 24"><path d="m8 7-5 5 5 5M16 7l5 5-5 5M14 4l-4 16"/></symbol>
+<symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 8V3h5M16 3h5v5M21 16v5h-5M8 21H3v-5M3 12h18"/></symbol>
+<symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></symbol>
+<symbol id="i-token" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></symbol>
+<symbol id="i-mask" viewBox="0 0 24 24"><path d="M3 7c3-1 6-1 9 1 3-2 6-2 9-1 0 6-3 10-9 10S3 13 3 7z"/><path d="M8 11h2M14 11h2"/></symbol>
+<symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.5"/></symbol>
+<symbol id="i-office" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="12" rx="1"/><path d="M3 8l9-5 9 5M8 12h2M14 12h2M8 16h2M14 16h2"/></symbol>
+<symbol id="i-design" viewBox="0 0 24 24"><path d="M3 15l9-5 9 5-9 5z"/><path d="M7.5 12.5l9 5M16.5 12.5l-9 5"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></symbol>
+<symbol id="i-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13M3 6h.5M3 12h.5M3 18h.5"/></symbol>
+<symbol id="i-mA" viewBox="0 0 24 24"><path d="M12 2 20.5 7v10L12 22 3.5 17V7z"/><circle cx="12" cy="12" r="3.2"/></symbol>
+<symbol id="i-mB" viewBox="0 0 24 24"><path d="M12 2 22 12 12 22 2 12z"/><rect x="9.2" y="9.2" width="5.6" height="5.6" rx="1"/></symbol>
+<symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+<symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+<symbol id="i-zoom" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4M8 11h6M11 8v6"/></symbol>
+<symbol id="i-drag" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></symbol>
+<symbol id="i-fps" viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></symbol>
+<symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/></symbol>
+<symbol id="i-ptr" viewBox="0 0 24 24"><path d="M4 2l16 9-7 2-3 7z" fill="currentColor" stroke="#0a0f22" stroke-width="1.4"/></symbol>
+<symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></symbol>
+<symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z"/></symbol>
+</defs>
+</svg>
+
+<!-- ============ BOOT ============ -->
+<div id="boot">
+  <div class="bootlogo">
+    <div class="orb"><div class="dot"></div></div>
+    <div class="orb"><div class="dot"></div></div>
+    <div class="orb"><div class="dot"></div></div>
+    <div class="core"><svg class="i xl"><use href="#i-splat"/></svg></div>
+  </div>
+  <div class="boot-title">Spatial Agent Studio</div>
+  <div class="boot-jp">空間AIエージェント・スタジオ</div>
+  <div class="boot-sub" style="letter-spacing:.35em;color:var(--am)">土木業務オートパイロット</div>
+  <div class="boot-sub">3D GAUSSIAN SPLATTING × WebGPU × AUTONOMOUS AI AGENT</div>
+  <div class="boot-bar"><i id="bootBar"></i></div>
+  <div class="boot-steps" id="bootSteps">
+    <div><svg class="i sm"><use href="#i-gpu"/></svg>WebGPU アダプタを検出</div>
+    <div><svg class="i sm"><use href="#i-splat"/></svg>3DGS 現場シーンを生成（ガウシアン・スプラット）</div>
+    <div><svg class="i sm"><use href="#i-cube"/></svg>レンダリングパイプラインを構築</div>
+    <div><svg class="i sm"><use href="#i-brain"/></svg>AIエージェント（オフライン・モック）を初期化</div>
+    <div><svg class="i sm"><use href="#i-shield"/></svg>ガードレール・監査ログを有効化</div>
+  </div>
+</div>
+
+<div class="app">
+<!-- ============ HEADER ============ -->
+<header>
+  <div class="sparks" id="sparks"></div>
+  <div class="logo"><svg class="i"><use href="#i-splat"/></svg></div>
+  <div class="ttl"><b>Spatial Agent Studio<span class="jpn">空間AIエージェント・スタジオ</span></b><small>土木業務オートパイロット ｜ 3DGS × WebGPU × Claude / OpenAI 自律UI操作 ｜ 完全オフライン・サンプル V1.1</small></div>
+  <div class="badges">
+    <span class="badge"><i class="led"></i>OFFLINE</span>
+    <span class="badge gpu" id="bdgGpu"><i class="led"></i><span>Renderer: 検出中</span></span>
+    <span class="badge warn"><i class="led"></i>Human-in-the-Loop</span>
+  </div>
+  <div class="hdr-sp"></div>
+  <button class="hbtn" id="btnArch"><svg class="i sm"><use href="#i-flow"/></svg>アーキテクチャ</button>
+  <button class="hbtn" id="btnApi"><svg class="i sm"><use href="#i-api"/></svg>API連携イメージ</button>
+  <button class="hbtn" id="btnReport"><svg class="i sm"><use href="#i-report"/></svg>レポート</button>
+  <button class="hbtn" id="themeBtn" title="ライト／ダーク切替"><svg class="i moon"><use href="#i-moon"/></svg><svg class="i sun"><use href="#i-sun"/></svg></button>
+  <div class="clock" id="clock">--:--:--</div>
+</header>
+
+<!-- ============ LEFT ============ -->
+<aside class="left">
+  <div>
+    <div class="sec-h"><svg class="i sm"><use href="#i-hand"/></svg>UIツール</div>
+    <div class="tools" id="tools">
+      <button class="tool on" data-tool="select" title="視点操作"><svg class="i"><use href="#i-orbit"/></svg>視点</button>
+      <button class="tool" data-tool="distance" title="2点間距離"><svg class="i"><use href="#i-ruler"/></svg>距離</button>
+      <button class="tool" data-tool="area" title="面積（多角形）"><svg class="i"><use href="#i-area"/></svg>面積</button>
+      <button class="tool" data-tool="volume" title="土量（多角形範囲の体積）"><svg class="i"><use href="#i-volume"/></svg>土量</button>
+      <button class="tool" data-tool="section" title="横断面"><svg class="i"><use href="#i-section"/></svg>断面</button>
+      <button class="tool" data-toggle="heatmap" title="出来形ヒートマップ"><svg class="i"><use href="#i-heat"/></svg>ヒート</button>
+      <button class="tool" data-tool="annotate" title="注記ピン"><svg class="i"><use href="#i-pin"/></svg>注記</button>
+      <button class="tool" data-tool="hazard" title="危険エリア設定"><svg class="i"><use href="#i-hazard"/></svg>危険域</button>
+      <button class="tool" data-tool="capture" title="画面キャプチャ"><svg class="i"><use href="#i-camera"/></svg>撮影</button>
+    </div>
+  </div>
+  <div>
+    <div class="sec-h"><svg class="i sm"><use href="#i-layers"/></svg>レイヤ</div>
+    <div class="layers" id="layers"></div>
+  </div>
+  <div>
+    <div class="sec-h"><svg class="i sm"><use href="#i-mask"/></svg>プライバシー</div>
+    <button class="layer on" id="privToggle"><svg class="i sm"><use href="#i-worker"/></svg>人物の自動匿名化<span class="tg"></span></button>
+    <div class="empty" style="padding-top:2px">作業員のスプラットをぼかし、AIには匿名IDと位置のみを渡します。</div>
+  </div>
+  <div>
+    <div class="sec-h"><svg class="i sm"><use href="#i-list"/></svg>計測・解析結果</div>
+    <div class="results" id="results"><div class="empty">ツールで計測するか、右のAIエージェントにタスクを依頼してください。</div></div>
+  </div>
+  <div>
+    <div class="sec-h"><svg class="i sm"><use href="#i-camera"/></svg>キャプチャ</div>
+    <div class="gal" id="gallery"><div class="empty">未撮影</div></div>
+  </div>
+</aside>
+
+<!-- ============ VIEWPORT ============ -->
+<section class="vp" id="vp">
+  <canvas id="cvGpu"></canvas>
+  <canvas id="cv2d"></canvas>
+  <svg id="ov"></svg>
+  <div id="tags"></div>
+  <div class="scanframe" id="scanframe"><i></i><i></i><i></i><i></i><div class="beam"></div></div>
+  <div id="flash"></div>
+  <div id="banner"><svg class="i"><use href="#i-hand"/></svg><span id="bannerTx">AIがUIを自律操作中</span><span class="ai-dots"><i></i><i></i><i></i></span></div>
+  <div class="hud tl">
+    <span class="chip"><svg class="i sm"><use href="#i-gpu"/></svg><span id="hRend">-</span></span>
+    <span class="chip"><svg class="i sm"><use href="#i-fps"/></svg><b id="hFps">0</b> fps ・ <svg class="i sm"><use href="#i-splat"/></svg><b id="hSpl">0</b> splats</span>
+    <span class="chip" id="hTool"><svg class="i sm"><use href="#i-orbit"/></svg><span>視点操作：ドラッグ回転 / 右ドラッグ移動 / ホイール拡大</span></span>
+  </div>
+  <div class="hud tr">
+    <button class="vbtn" data-view="all"><svg class="i sm"><use href="#i-home"/></svg>全体</button>
+    <button class="vbtn" data-view="emb"><svg class="i sm"><use href="#i-volume"/></svg>盛土</button>
+    <button class="vbtn" data-view="cut"><svg class="i sm"><use href="#i-mountain"/></svg>切土</button>
+    <button class="vbtn" data-view="exc"><svg class="i sm"><use href="#i-exc"/></svg>重機</button>
+    <button class="vbtn" data-view="rev"><svg class="i sm"><use href="#i-wall"/></svg>護岸</button>
+  </div>
+  <div class="hud bl"><canvas id="minimap" width="200" height="140"></canvas></div>
+  <div class="hud br">
+    <button class="vbtn" id="polyDone" style="border-color:var(--gr);color:#bfffd6"><svg class="i sm"><use href="#i-check"/></svg>範囲を確定</button>
+  </div>
+  <div class="hud" style="top:54px;right:10px"><div class="legend" id="legend"><div style="display:flex;align-items:center;gap:6px"><svg class="i sm"><use href="#i-heat"/></svg>出来形 偏差（現況－設計）</div><div class="bar"></div><div class="lab"><span>-0.40m</span><span>±0</span><span>+0.40m</span></div><div class="lab" style="margin-top:4px;color:var(--tx3)"><span>規格値（サンプル）±0.20m</span></div></div></div>
+  <div id="section"><div class="sh"><svg class="i sm"><use href="#i-section"/></svg><span id="secTitle">横断面</span><button id="secClose"><svg class="i sm"><use href="#i-x"/></svg></button></div><canvas id="secCv" width="1060" height="300"></canvas></div>
+</section>
+
+<!-- ============ AGENT ============ -->
+<aside class="agent">
+  <div class="ag-top">
+    <div class="ag-title"><svg class="i"><use href="#i-spark"/></svg>空間AIエージェント<span class="st" id="agState"><i></i>待機中</span></div>
+    <div class="seg" id="modelSeg">
+      <button data-m="claude" class="on"><svg class="i sm"><use href="#i-mA"/></svg>Claude</button>
+      <button data-m="openai"><svg class="i sm"><use href="#i-mB"/></svg>OpenAI</button>
+      <button data-m="coop"><svg class="i sm"><use href="#i-link"/></svg>協調</button>
+    </div>
+    <div class="mdl" id="mdlInfo"></div>
+    <div class="loopbox">
+      <svg id="loop" viewBox="0 0 132 132">
+        <circle cx="66" cy="66" r="46" fill="none" stroke="rgba(120,160,255,.18)" stroke-width="2" stroke-dasharray="3 5"/>
+        <g class="comet"><circle cx="66" cy="20" r="4" fill="#ffb547" style="filter:drop-shadow(0 0 6px #ffb547)"/><circle cx="56" cy="21.5" r="2.6" fill="#ffb547" opacity=".5"/><circle cx="48" cy="24.5" r="1.8" fill="#ffb547" opacity=".25"/></g>
+        <g class="node" data-ph="perceive" style="--c:#38e1ff"><circle cx="66" cy="20" r="17"/><use href="#i-eye" x="57" y="9" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.8"/><text x="66" y="33">知覚</text></g>
+        <g class="node" data-ph="reason" style="--c:#8b7bff"><circle cx="112" cy="66" r="17"/><use href="#i-brain" x="103" y="55" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.8"/><text x="112" y="79">推論</text></g>
+        <g class="node" data-ph="act" style="--c:#ffb547"><circle cx="66" cy="112" r="17"/><use href="#i-hand" x="57" y="101" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.8"/><text x="66" y="125">操作</text></g>
+        <g class="node" data-ph="verify" style="--c:#3ee07f"><circle cx="20" cy="66" r="17"/><use href="#i-shield" x="11" y="55" width="18" height="18" stroke="currentColor" fill="none" stroke-width="1.8"/><text x="20" y="79">検証</text></g>
+        <text x="66" y="63" text-anchor="middle" fill="#e6ecff" font-size="17" font-weight="700" font-family="monospace" id="loopN">0</text>
+        <text x="66" y="77" text-anchor="middle" fill="#6c7ba4" font-size="8.5">STEPS</text>
+      </svg>
+      <div class="metrics">
+        <div class="met"><small><svg class="i sm"><use href="#i-hand"/></svg>UI操作</small><b id="mAct">0</b></div>
+        <div class="met"><small><svg class="i sm"><use href="#i-api"/></svg>ツール呼出</small><b id="mTool">0</b></div>
+        <div class="met"><small><svg class="i sm"><use href="#i-token"/></svg>推定トークン</small><b id="mTok">0</b></div>
+        <div class="met"><small><svg class="i sm"><use href="#i-clock"/></svg>経過</small><b id="mTime">0.0s</b></div>
+      </div>
+    </div>
+    <div class="ctrl">
+      <button class="cbtn" id="cPause" title="一時停止/再開 (Space)" disabled><svg class="i sm"><use href="#i-pause"/></svg></button>
+      <button class="cbtn" id="cStop" title="停止" disabled><svg class="i sm"><use href="#i-stop"/></svg></button>
+      <div class="spd" id="spd"><button data-s="1" class="on">1x</button><button data-s="2">2x</button><button data-s="4">4x</button></div>
+      <div class="hitl"><svg class="i sm"><use href="#i-shield"/></svg>提出前に人間承認<span class="sw2 on" id="hitlSw"></span></div>
+    </div>
+  </div>
+  <div class="tasks" id="tasks">
+    <button class="task" data-sc="asbuilt" style="--c:#38e1ff"><svg class="i sm go"><use href="#i-play"/></svg><div class="ti"><svg class="i"><use href="#i-heat"/></svg></div><b>盛土 出来形管理</b><small>設計面との差分ヒートマップ・断面・合否判定</small></button>
+    <button class="task" data-sc="earthwork" style="--c:#ffb547"><svg class="i sm go"><use href="#i-play"/></svg><div class="ti"><svg class="i"><use href="#i-volume"/></svg></div><b>土量計算・運搬計画</b><small>切土範囲を囲って体積算出、盛土不足と照合</small></button>
+    <button class="task" data-sc="safety" style="--c:#ff5d6c"><svg class="i sm go"><use href="#i-play"/></svg><div class="ti"><svg class="i"><use href="#i-hazard"/></svg></div><b>重機 安全離隔チェック</b><small>旋回範囲の危険域設定と作業員の侵入監視</small></button>
+    <button class="task" data-sc="inspect" style="--c:#8b7bff"><svg class="i sm go"><use href="#i-play"/></svg><div class="ti"><svg class="i"><use href="#i-crack"/></svg></div><b>護岸 変状点検</b><small>ひび割れ検出・延長計測・判定区分の付与</small></button>
+  </div>
+  <div class="ask">
+    <textarea id="askTx" placeholder="例：盛土の出来形をチェックして報告書にまとめて／重機の周りは安全？"></textarea>
+    <button id="askBtn" title="指示を送信"><svg class="i"><use href="#i-send"/></svg></button>
+  </div>
+  <div class="tabs" id="tabs">
+    <button data-p="think" class="on"><svg class="i sm"><use href="#i-chat"/></svg>思考</button>
+    <button data-p="tool"><svg class="i sm"><use href="#i-api"/></svg>ツール<span class="n" id="nTool">0</span></button>
+    <button data-p="space"><svg class="i sm"><use href="#i-cube"/></svg>空間理解<span class="n" id="nObj">0</span></button>
+    <button data-p="audit"><svg class="i sm"><use href="#i-shield"/></svg>監査<span class="n" id="nAud">0</span></button>
+  </div>
+  <div class="pane on" id="p-think"></div>
+  <div class="pane" id="p-tool"></div>
+  <div class="pane" id="p-space"><div class="empty">「知覚」フェーズで、AIがスクリーンショットと3DGSシーングラフから現場の物体・位置関係を認識すると、ここに表示されます。</div></div>
+  <div class="pane" id="p-audit">
+    <div class="guard">
+      <div class="y"><svg class="i sm"><use href="#i-checkc"/></svg>閲覧・計測・注記</div>
+      <div class="y"><svg class="i sm"><use href="#i-checkc"/></svg>視点操作・撮影</div>
+      <div class="q"><svg class="i sm"><use href="#i-shield"/></svg>確定・提出＝要承認</div>
+      <div class="n"><svg class="i sm"><use href="#i-lock"/></svg>外部送信（不可）</div>
+      <div class="n"><svg class="i sm"><use href="#i-lock"/></svg>設計データ改変（不可）</div>
+      <div class="y"><svg class="i sm"><use href="#i-mask"/></svg>人物は匿名IDのみ</div>
+    </div>
+    <div class="pane-tools"><button class="mini" id="audExport"><svg class="i sm"><use href="#i-download"/></svg>監査ログJSON</button></div>
+    <div id="audList"></div>
+  </div>
+</aside>
+
+<!-- ============ FOOTER ============ -->
+<footer>
+  <div class="tl" id="timeline"><span class="ph"><svg class="i sm"><use href="#i-info"/></svg>エージェントの実行ステップがここにタイムライン表示されます。</span></div>
+  <div class="con" id="con"><b>●</b><span id="conTx">起動中…</span></div>
+</footer>
+</div>
+
+<!-- agent cursor -->
+<div id="acur" style="--cc:#f0956a"><svg class="ptr" viewBox="0 0 24 24" style="color:var(--cc)"><use href="#i-ptr"/></svg><span class="nm" id="acurNm">Claude</span><span class="act" id="acurAct">left_click</span></div>
+<div id="toasts"></div>
+
+<!-- approval modal -->
+<div class="modal" id="mApprove"><div class="mbox" style="width:min(560px,92vw)">
+  <div class="mh"><svg class="i"><use href="#i-shield"/></svg>Human-in-the-Loop 承認リクエスト</div>
+  <div class="mb">
+    <div class="apv"><div class="shield"><svg class="i xl"><use href="#i-shield"/></svg></div>
+      <div><h3 id="apTitle">-</h3><p id="apDesc">-</p><div style="margin-top:8px"><span class="risk"><svg class="i sm"><use href="#i-alert"/></svg><span id="apRisk">影響度：中</span></span></div></div></div>
+    <dl class="kv" id="apKv"></dl>
+    <img class="apimg" id="apImg" alt="">
+  </div>
+  <div class="mf"><span style="margin-right:auto;font-size:11px;color:var(--tx3);align-self:center">承認者：現場代理人（デモ）</span><button class="btn dan" id="apNo"><svg class="i sm"><use href="#i-x"/></svg>却下</button><button class="btn pri" id="apYes"><svg class="i sm"><use href="#i-check"/></svg>承認して実行</button></div>
+</div></div>
+
+<!-- report modal -->
+<div class="modal" id="mReport"><div class="mbox" style="width:min(820px,94vw)">
+  <div class="mh"><svg class="i"><use href="#i-report"/></svg>AI作成 業務レポート（ドラフト）<button class="x" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="mb" id="repBody"></div>
+  <div class="mf"><button class="btn" id="repJson"><svg class="i sm"><use href="#i-download"/></svg>JSON</button><button class="btn pri" id="repHtml"><svg class="i sm"><use href="#i-download"/></svg>HTMLで保存</button></div>
+</div></div>
+
+<!-- api modal -->
+<div class="modal" id="mApi"><div class="mbox" style="width:min(860px,94vw)">
+  <div class="mh"><svg class="i"><use href="#i-api"/></svg>API連携イメージ（このサンプルは通信しません）<button class="x" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="mb">
+    <div class="codetabs" id="codeTabs"><button data-c="claude" class="on">Anthropic Messages API</button><button data-c="openai">OpenAI Responses API</button><button data-c="loop">エージェントループ</button></div>
+    <pre class="code" id="codeBox"></pre>
+    <div class="note"><b>注意：</b>本ファイルは完全オフラインのモックです。API呼び出し・キー入力・外部送信は一切行いません。ツール型名やバージョン識別子（computer use の type 名、ベータヘッダ等）は更新されるため、本番実装時は各社の最新ドキュメントで確認してください。本番ではAPIキーをブラウザに置かず、社内プロキシ（認証・ログ・DLP）経由で呼び出す構成を推奨します。</div>
+  </div>
+</div></div>
+
+<!-- architecture modal -->
+<div class="modal" id="mArch"><div class="mbox" style="width:min(900px,95vw)">
+  <div class="mh"><svg class="i"><use href="#i-flow"/></svg>システム構成 ─ 「見て・考えて・操作して・確かめる」<button class="x" data-close><svg class="i"><use href="#i-x"/></svg></button></div>
+  <div class="mb">
+    <svg class="arch" viewBox="0 0 860 330" id="archSvg"></svg>
+    <div class="blist">
+      <div><svg class="i sm"><use href="#i-splat"/></svg><span><b>3DGS（3D Gaussian Splatting）</b>：ドローン・地上撮影から現場を数百万のガウス粒子で再構成。本サンプルは手続き生成の約1.3万粒子。</span></div>
+      <div><svg class="i sm"><use href="#i-gpu"/></svg><span><b>WebGPU</b>：インスタンス描画＋WGSLシェーダでガウス合成。非対応環境はCanvas2Dに自動フォールバック。</span></div>
+      <div><svg class="i sm"><use href="#i-eye"/></svg><span><b>空間理解</b>：スクリーンショット（画素）＋シーングラフ（物体・BBox・距離）の二系統をLLMに渡し、見た目と座標の両方で判断。</span></div>
+      <div><svg class="i sm"><use href="#i-hand"/></svg><span><b>自律UI操作</b>：computer use（クリック・ドラッグ・スクロール）と業務関数（体積計算等）を併用。UIを人と共有するので操作が可視化される。</span></div>
+      <div><svg class="i sm"><use href="#i-shield"/></svg><span><b>ガバナンス</b>：操作ホワイトリスト、確定・提出は人間承認、全操作をハッシュ連鎖の監査ログに記録。</span></div>
+      <div><svg class="i sm"><use href="#i-mask"/></svg><span><b>人権・プライバシー配慮</b>：作業員は画素段階で匿名化し、AIには匿名IDと位置だけを渡す（個人の監視・評価に使わない設計）。</span></div>
+    </div>
+  </div>
+</div></div>
+<script>
+(()=>{
+'use strict';
+/* =========================================================
+   0. Utilities
+   ========================================================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,t)=>a+(b-a)*t;
+const ease=t=>t<.5?4*t*t*t:1-Math.pow(-2*t+2,3)/2;
+function rng(seed){return()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+const R=rng(20261118), rr=(a,b)=>a+(b-a)*R();
+const icon=(id,cls='i sm')=>`<svg class="${cls}"><use href="#i-${id}"/></svg>`;
+const fmt=(v,d=2)=>Number(v).toLocaleString('ja-JP',{minimumFractionDigits:d,maximumFractionDigits:d});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const rid=()=>Math.random().toString(36).slice(2,10)+Math.random().toString(36).slice(2,6);
+const nowStr=()=>new Date().toLocaleTimeString('ja-JP',{hour12:false});
+const dist3=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y,a.z-b.z);
+const SVGNS='http://www.w3.org/2000/svg';
+
+/* =========================================================
+   1. Site terrain model (analytic, used for splats + measurements)
+   ========================================================= */
+const T={
+  base:(x,z)=>0.12*Math.sin(x*0.13)*Math.cos(z*0.17)+0.08*Math.sin(x*0.31+z*0.23),
+  hill:(x,z)=>6.2*Math.exp(-((x+32)**2+(z-6)**2)/60),
+  embShape(x,z){const dx=Math.max(0,-8-x,x-4),dz=Math.max(0,Math.abs(z)-8);return Math.max(0,4-Math.max(dx,dz)/1.5)},
+  dev(x,z){return 0.10*Math.sin(x*0.45)*Math.cos(z*0.38)+0.06*Math.sin(z*0.9+1.3)-0.52*Math.exp(-((x+3)**2+(z-4)**2)/12)+0.34*Math.exp(-((x-2)**2+(z+5)**2)/6)},
+  embCur(x,z){const s=T.embShape(x,z);if(s<=0)return 0;const k=Math.min(1,s/0.6);return Math.max(0,s+T.dev(x,z)*k)},
+  design(x,z){return T.base(x,z)+T.embShape(x,z)},
+  H(x,z){
+    if(x>17.8&&x<=21.2)return -(x-18)*0.85;
+    if(x>21.2&&x<34)return -2.8;
+    if(x>=34&&x<37)return -2.8+(x-34)/3*2.8+T.base(x,z)*(x-34)/3;
+    return T.base(x,z)+T.hill(x,z)+T.embCur(x,z);
+  }
+};
+const EXC={x:-19,z:7}; EXC.y=T.H(EXC.x,EXC.z);
+const TRUCK_PATH={cx:-16,cz:-20,a:15,b:5};
+
+/* =========================================================
+   2. 3D Gaussian Splat scene generation
+   ========================================================= */
+const G={GROUND:0,EMB:1,HILL:2,REV:3,WATER:4,EXC_B:5,EXC_U:6,TRUCK:7,W1:8,W2:9,W3:10,TREE:11,OFFICE:12,DESIGN:13,CRACK:14};
+const NG=15;
+const LAYER_OF=['terrain','embankment','terrain','revetment','river','machine','machine','machine','worker','worker','worker','vegetation','terrain','design','revetment'];
+const B={pos:[],col:[],size:[],alpha:[],grp:[],aux:[]};
+const GR={};
+function add(x,y,z,r,g,b,s,a,gp,aux=0){B.pos.push(x,y,z);B.col.push(clamp(r,0,1),clamp(g,0,1),clamp(b,0,1));B.size.push(s);B.alpha.push(a);B.grp.push(gp);B.aux.push(aux)}
+const beginG=g=>{GR[g]={s:B.size.length}}, endG=g=>{GR[g].e=B.size.length};
+function box(cx,cy,cz,sx,sy,sz,step,col,size,gp,jit=0.05,faceCol){
+  const hx=sx/2,hy=sy/2,hz=sz/2;
+  const face=(nx,ny,nz)=>{
+    const ax=nx?['y','z']:ny?['x','z']:['x','y'];
+    const ext={x:hx,y:hy,z:hz};
+    for(let u=-ext[ax[0]];u<=ext[ax[0]]+1e-6;u+=step)for(let v=-ext[ax[1]];v<=ext[ax[1]]+1e-6;v+=step){
+      const p={x:nx*hx,y:ny*hy,z:nz*hz};p[ax[0]]=u+rr(-jit,jit);p[ax[1]]=v+rr(-jit,jit);
+      const c=(faceCol&&faceCol(nx,ny,nz,p))||col;const n=rr(-.03,.03);
+      add(cx+p.x,cy+p.y,cz+p.z,c[0]+n,c[1]+n,c[2]+n,size,1,gp);
+    }
+  };
+  face(1,0,0);face(-1,0,0);face(0,1,0);face(0,-1,0);face(0,0,1);face(0,0,-1);
+}
+function tube(pts,rad,step,col,size,gp){
+  for(let k=0;k<pts.length-1;k++){const a=pts[k],b=pts[k+1];const L=Math.hypot(b[0]-a[0],b[1]-a[1],b[2]-a[2]);
+    for(let s=0;s<=L;s+=step){const t=s/L;const x=lerp(a[0],b[0],t),y=lerp(a[1],b[1],t),z=lerp(a[2],b[2],t);
+      for(let q=0;q<5;q++){const an=q/5*Math.PI*2;const n=rr(-.03,.03);add(x,y+Math.cos(an)*rad,z+Math.sin(an)*rad,col[0]+n,col[1]+n,col[2]+n,size,1,gp)}}}
+}
+const CRACKS=[];
+const LD=(()=>{const l=Math.hypot(-0.5,0.8,0.35);return[-0.5/l,0.8/l,0.35/l]})();
+function lit(x,z){const e=0.35;const hx=(T.H(x+e,z)-T.H(x-e,z))/(2*e),hz=(T.H(x,z+e)-T.H(x,z-e))/(2*e);const l=Math.hypot(hx,1,hz);const d=(-hx*LD[0]+LD[1]-hz*LD[2])/l;return 0.55+0.55*Math.max(0,d)}
+function buildScene(){
+  // ---- ground / hill (static, world coords)
+  for(let x=-46;x<=46;x+=1.12)for(let z=-33;z<=33;z+=1.12){
+    const px=x+rr(-.35,.35),pz=z+rr(-.35,.35);
+    if(px>17.8&&px<34)continue;
+    if(T.embShape(px,pz)>0.02)continue;
+    const y=T.H(px,pz),hh=T.hill(px,pz),n=rr(-.05,.05);
+    const site=px>-42&&px<17.8&&pz>-28&&pz<28;
+    const e=Math.hypot((px-TRUCK_PATH.cx)/TRUCK_PATH.a,(pz-TRUCK_PATH.cz)/TRUCK_PATH.b);
+    let c,g=G.GROUND;
+    if(px>=34||!site){c=[.27+n,.47+n*1.5,.22+n]}
+    else if(hh>0.35){g=G.HILL;const gr=hh>4.6&&R()<.55;c=gr?[.33+n,.46+n,.22]:[.47+n+hh*.01,.35+n,.24+n]}
+    else if(Math.abs(e-1)<0.13){c=[.55+n,.53+n,.5+n]}
+    else{c=[.58+n,.46+n,.32+n]}
+    const L=lit(px,pz);add(px,y,pz,c[0]*L,c[1]*L,c[2]*L,1.22,0.96,g);
+  }
+  // ---- embankment (denser for heatmap)
+  for(let x=-15;x<=11;x+=0.7)for(let z=-15;z<=15;z+=0.7){
+    const px=x+rr(-.2,.2),pz=z+rr(-.2,.2);const s=T.embShape(px,pz);if(s<=0.02)continue;
+    const cur=T.embCur(px,pz),y=T.base(px,pz)+cur,d=cur-s,n=rr(-.035,.035);
+    const band=(Math.floor(cur/0.5)%2)?0.045:0, stripe=(s>3.95&&Math.floor(px*1.3)%2)?-0.035:0;
+    const L=lit(px,pz);add(px,y,pz,(.74+n+band+stripe)*L,(.6+n+band+stripe)*L,(.42+n+band*.6)*L,0.9,0.97,G.EMB,d);
+  }
+  // ---- revetment (block-type)
+  beginG(G.REV);
+  for(let x=17.8;x<=21.2;x+=0.37)for(let z=-33;z<=33;z+=0.37){
+    const px=x+rr(-.06,.06),pz=z+rr(-.06,.06),y=-(px-18)*0.85,n=rr(-.04,.04);
+    const joint=((pz+33)%2.0<0.24)||((px-17.8)%1.13<0.14);const c=joint?.47:.67;
+    add(px,y,pz,c+n,c+n,c-.02+n,0.5,1,G.REV);
+  }
+  for(let z=-33;z<=33;z+=0.36)add(17.55,0.2,z+rr(-.04,.04),.82,.82,.8,0.3,1,G.REV);
+  endG(G.REV);
+  // ---- cracks
+  beginG(G.CRACK);
+  const cdef=[
+    {id:'C-1',pl:[[18.35,-6.0],[18.9,-5.5],[19.3,-5.7],[19.9,-5.0],[20.5,-4.6]]},
+    {id:'C-2',pl:[[18.4,3.9],[18.9,4.2],[19.4,4.0],[19.8,4.4]]},
+    {id:'C-3',pl:[[18.7,12.8],[19.0,13.2],[19.3,13.3]]}];
+  for(const c of cdef){
+    const s=B.size.length;const pts=c.pl.map(([x,z])=>({x:x-0.03,y:-(x-18)*0.85+0.07,z}));
+    let L=0;for(let k=0;k<pts.length-1;k++){const a=pts[k],b=pts[k+1];const l=dist3(a,b);L+=l;
+      for(let u=0;u<=l;u+=0.05){const t=u/l;add(lerp(a.x,b.x,t)+rr(-.012,.012),lerp(a.y,b.y,t)+rr(-.012,.012),lerp(a.z,b.z,t)+rr(-.02,.02),.1,.09,.08,0.085,1,G.CRACK)}}
+    CRACKS.push({id:c.id,pts,len:L,s,e:B.size.length});
+  }
+  endG(G.CRACK);
+  // ---- water (dynamic: waves)
+  beginG(G.WATER);
+  for(let x=21.3;x<=34.2;x+=1.15)for(let z=-34;z<=34;z+=1.15){const n=rr(-.04,.04);add(x+rr(-.3,.3),-1.95,z+rr(-.3,.3),.15+n,.37+n,.62+n,0.95,0.84,G.WATER,rr(0,6.28))}
+  endG(G.WATER);
+  // ---- excavator (local coords; swing center at origin)
+  const Y=[.96,.73,.12],DG=[.17,.17,.19];
+  beginG(G.EXC_B);
+  box(0,0.45,1.15,4.4,0.9,0.8,0.3,DG,0.24,G.EXC_B);box(0,0.45,-1.15,4.4,0.9,0.8,0.3,DG,0.24,G.EXC_B);
+  box(0,1.0,0,1.4,0.3,1.4,0.3,[.3,.3,.32],0.22,G.EXC_B);
+  endG(G.EXC_B);
+  beginG(G.EXC_U);
+  box(-0.2,1.6,0,3.0,1.1,2.5,0.28,Y,0.22,G.EXC_U);
+  box(-1.85,1.65,0,0.7,1.1,2.4,0.28,[.82,.6,.1],0.22,G.EXC_U);
+  box(0.75,2.65,0.75,1.1,1.2,1.0,0.22,Y,0.2,G.EXC_U,0.04,(nx,ny,nz,p)=>(nx===1&&p.y>-0.1)||(nz===1&&p.y>0)?[.16,.26,.38]:null);
+  tube([[1.0,2.1,-0.35],[4.0,4.7,-0.35],[6.3,1.5,-0.35]],0.2,0.17,Y,0.2,G.EXC_U);
+  box(6.4,0.9,-0.35,0.9,0.8,1.0,0.2,[.25,.25,.27],0.2,G.EXC_U);
+  endG(G.EXC_U);
+  // ---- dump truck (local; heading +x)
+  beginG(G.TRUCK);
+  box(0,0.75,0,5.4,0.35,2.0,0.3,[.2,.2,.22],0.22,G.TRUCK);
+  box(2.1,1.7,0,1.3,1.5,2.0,0.25,[.88,.9,.93],0.21,G.TRUCK,0.04,(nx,ny,nz,p)=>nx===1&&p.y>0?[.15,.25,.38]:null);
+  box(-0.85,1.55,0,3.5,1.1,2.1,0.28,[.9,.45,.15],0.22,G.TRUCK);
+  for(let k=0;k<70;k++){const u=rr(-1.6,1.6),v=rr(-.9,.9);add(-0.85+u,2.15+0.35*(1-Math.abs(u)/1.7)*(1-Math.abs(v)),v,.5,.38,.25,0.26,1,G.TRUCK)}
+  for(const wx of [1.9,-0.4,-1.9])for(const wz of [-1.0,1.0])box(wx,0.45,wz,0.8,0.8,0.35,0.22,[.08,.08,.09],0.2,G.TRUCK);
+  endG(G.TRUCK);
+  // ---- workers (local)
+  for(const g of [G.W1,G.W2,G.W3]){
+    beginG(g);
+    for(const lz of [-0.13,0.13])for(let y=0.05;y<=0.86;y+=0.13)add(0,y,lz,.16,.2,.38,0.13,1,g);
+    for(let y=0.92;y<=1.46;y+=0.11)for(let q=0;q<7;q++){const a=q/7*Math.PI*2;const st=Math.abs(y-1.2)<0.06;add(Math.cos(a)*0.2,y,Math.sin(a)*0.22,st?.95:1,st?.95:.55,st?.6:.1,0.12,1,g)}
+    for(let q=0;q<6;q++)add(rr(-.08,.08),1.6+rr(-.05,.05),rr(-.08,.08),.82,.66,.52,0.11,1,g);
+    for(let q=0;q<9;q++){const a=q/9*Math.PI*2;add(Math.cos(a)*0.13,1.76,Math.sin(a)*0.13,.97,.97,.97,0.12,1,g)}
+    endG(g);
+  }
+  // ---- trees
+  beginG(G.TREE);
+  const trees=[[-44,-28],[-44,-14],[-44,0],[-44,15],[-43,28],[-30,31],[-14,31],[2,31],[12,30],[-30,-31],[-14,-31],[2,-31],[13,-30],[40,-24],[41,-8],[40,9],[42,24]];
+  for(const [tx,tz] of trees){const ty=T.H(tx,tz);const h=rr(.85,1.25);
+    for(let y=0;y<1.6*h;y+=0.25)add(tx,ty+y,tz,.35,.24,.15,0.2,1,G.TREE);
+    for(let k=0;k<55;k++){const a=rr(0,6.28),r=Math.sqrt(R())*1.6*h,yy=rr(-1.2,1.4)*h;const n=rr(-.06,.06);add(tx+Math.cos(a)*r*(1-Math.abs(yy)/2.4),ty+2.9*h+yy,tz+Math.sin(a)*r*(1-Math.abs(yy)/2.4),.2+n,.45+n*1.4,.18+n,0.48,0.95,G.TREE)}}
+  endG(G.TREE);
+  // ---- site office
+  const oy=T.H(-34,-21);
+  box(-34,oy+1.35,-21,6,2.6,2.6,0.38,[.9,.92,.95],0.3,G.OFFICE,0.04,(nx,ny,nz,p)=>ny===1?[.35,.4,.5]:(nz===1&&Math.abs(p.y)<0.6&&Math.abs((p.x%1.5))<0.5)?[.25,.45,.7]:null);
+  // ---- design surface (3D design data)
+  beginG(G.DESIGN);
+  for(let x=-14;x<=10;x+=0.9)for(let z=-14;z<=14;z+=0.9){const s=T.embShape(x,z);if(s<=0.02)continue;add(x,T.design(x,z)+0.06,z,.25,.9,1,0.2,0.75,G.DESIGN)}
+  endG(G.DESIGN);
+}
+buildScene();
+const N=B.size.length;
+const P0=new Float32Array(B.pos),W=new Float32Array(B.pos),C0=new Float32Array(B.col);
+const SZ=new Float32Array(B.size),AL=new Float32Array(B.alpha),GP=new Uint8Array(B.grp),AUX=new Float32Array(B.aux);
+
+/* =========================================================
+   3. Dynamics (excavator swing, truck haul, workers, water)
+   ========================================================= */
+const sim={excPaused:false,swing:0.2,t:0};
+const rotY=(lx,lz,a)=>[lx*Math.cos(a)+lz*Math.sin(a),-lx*Math.sin(a)+lz*Math.cos(a)];
+function workerPos(k,t){
+  if(k===0){const x=-2+5*Math.sin(t*0.12),z=1+3*Math.sin(t*0.07);return{x,z}}
+  if(k===1){const d=8.6+3.6*Math.cos(t*0.45);return{x:EXC.x+0.8*d,z:EXC.z-0.6*d}}
+  return{x:15.4,z:-10+6*Math.sin(t*0.1)};
+}
+function truckPos(t){const th=t*0.22;return{x:TRUCK_PATH.cx+TRUCK_PATH.a*Math.cos(th),z:TRUCK_PATH.cz+TRUCK_PATH.b*Math.sin(th),dx:-TRUCK_PATH.a*Math.sin(th),dz:TRUCK_PATH.b*Math.cos(th)}}
+function placeGroup(g,ox,oy,oz,ang){const r=GR[g];const c=Math.cos(ang),s=Math.sin(ang);
+  for(let i=r.s;i<r.e;i++){const lx=P0[i*3],ly=P0[i*3+1],lz=P0[i*3+2];W[i*3]=ox+lx*c+lz*s;W[i*3+1]=oy+ly;W[i*3+2]=oz-lx*s+lz*c}}
+function bucketWorld(){const[x,z]=rotY(6.4,-0.35,sim.swing);return{x:EXC.x+x,y:EXC.y+0.9,z:EXC.z+z}}
+const workerState=[{},{},{}];
+function updateDynamic(t,dt){
+  sim.t=t;
+  const r=GR[G.WATER];for(let i=r.s;i<r.e;i++)W[i*3+1]=-1.95+0.07*Math.sin(t*1.6+P0[i*3]*0.7+P0[i*3+2]*0.45+AUX[i]*.3);
+  if(!sim.excPaused)sim.swing=0.95*Math.sin(t*0.55)+0.15;
+  placeGroup(G.EXC_B,EXC.x,EXC.y,EXC.z,0.15);
+  placeGroup(G.EXC_U,EXC.x,EXC.y,EXC.z,sim.swing);
+  const tp=truckPos(t);placeGroup(G.TRUCK,tp.x,T.H(tp.x,tp.z),tp.z,Math.atan2(-tp.dz,tp.dx));
+  [G.W1,G.W2,G.W3].forEach((g,k)=>{const p=workerPos(k,t),q=workerPos(k,t+0.08);const ang=Math.atan2(-(q.z-p.z),q.x-p.x);const y=T.H(p.x,p.z);placeGroup(g,p.x,y,p.z,ang);workerState[k]={x:p.x,y,z:p.z}});
+}
+
+/* =========================================================
+   4. Camera & math (column-major, WebGPU 0..1 depth)
+   ========================================================= */
+const cam={yaw:0.75,pitch:0.62,dist:88,tx:-6,ty:0,tz:2,fov:50*Math.PI/180};
+const VIEWS={
+  all:{yaw:0.75,pitch:0.62,dist:88,tx:-6,ty:0,tz:2},
+  emb:{yaw:0.42,pitch:0.62,dist:40,tx:-2,ty:2,tz:0},
+  cut:{yaw:1.05,pitch:0.62,dist:42,tx:-27,ty:2,tz:3},
+  exc:{yaw:0.85,pitch:0.8,dist:44,tx:-16,ty:1,tz:4},
+  rev:{yaw:1.4,pitch:0.62,dist:24,tx:19.6,ty:-1.3,tz:4}
+};
+let M=new Float32Array(16),focal=800,Wc=800,Hc=600,eye={x:0,y:0,z:0};
+function computeVP(){
+  const cp=Math.cos(cam.pitch);eye={x:cam.tx+cam.dist*cp*Math.sin(cam.yaw),y:cam.ty+cam.dist*Math.sin(cam.pitch),z:cam.tz+cam.dist*cp*Math.cos(cam.yaw)};
+  let zx=eye.x-cam.tx,zy=eye.y-cam.ty,zz=eye.z-cam.tz;let l=Math.hypot(zx,zy,zz);zx/=l;zy/=l;zz/=l;
+  let xx=zz,xy=0,xz=-zx;l=Math.hypot(xx,xz)||1;xx/=l;xz/=l;
+  const yx=zy*xz-zz*xy,yy=zz*xx-zx*xz,yz=zx*xy-zy*xx;
+  const V=[xx,yx,zx,0, xy,yy,zy,0, xz,yz,zz,0, -(xx*eye.x+xy*eye.y+xz*eye.z),-(yx*eye.x+yy*eye.y+yz*eye.z),-(zx*eye.x+zy*eye.y+zz*eye.z),1];
+  const f=1/Math.tan(cam.fov/2),asp=Wc/Hc,near=0.5,far=600,nf=1/(near-far);
+  const P=[f/asp,0,0,0, 0,f,0,0, 0,0,far*nf,-1, 0,0,far*near*nf,0];
+  for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=P[k*4+r]*V[c*4+k];M[c*4+r]=s}
+  focal=(Hc/2)*f;
+}
+function proj(p){const x=p.x,y=p.y,z=p.z;const w=M[3]*x+M[7]*y+M[11]*z+M[15];if(w<0.5)return null;
+  const cx=M[0]*x+M[4]*y+M[8]*z+M[12],cy=M[1]*x+M[5]*y+M[9]*z+M[13];return{x:(cx/w*0.5+0.5)*Wc,y:(1-(cy/w*0.5+0.5))*Hc,w}}
+let tween=null,lastFly=Promise.resolve();
+function flyTo(v,dur=1300){lastFly=new Promise(res=>{const from={...cam};let dy=v.yaw-from.yaw;dy=((dy+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
+  if(tween&&tween.res)tween.res();tween={from,to:{...from,...v,yaw:from.yaw+dy},p:0,dur,res}});return lastFly}
+
+/* =========================================================
+   5. Shading state & projection
+   ========================================================= */
+const ST={heatmap:false,privacy:true,crackHi:false,hi:new Map(),scan:null,layer:{terrain:1,embankment:1,revetment:1,river:1,machine:1,worker:1,vegetation:1,design:0,ai:1}};
+const grpVis=new Uint8Array(NG);
+function refreshVis(){for(let g=0;g<NG;g++)grpVis[g]=ST.layer[LAYER_OF[g]]?1:0}
+refreshVis();
+const SX=new Float32Array(N),SY=new Float32Array(N),SW=new Float32Array(N),VF=new Uint32Array(N);
+let frameNo=1,sorted=[];
+const grect=[];for(let g=0;g<NG;g++)grect.push({x0:0,y0:0,x1:0,y1:0,n:0});
+function projectAll(){
+  computeVP();frameNo++;
+  for(const r of grect){r.x0=1e9;r.y0=1e9;r.x1=-1e9;r.y1=-1e9;r.n=0}
+  const m0=M[0],m1=M[1],m3=M[3],m4=M[4],m5=M[5],m7=M[7],m8=M[8],m9=M[9],m11=M[11],m12=M[12],m13=M[13],m15=M[15];
+  const vis=[];const hw=Wc*0.5,hh=Hc*0.5;
+  for(let i=0;i<N;i++){
+    const g=GP[i];if(!grpVis[g])continue;
+    const x=W[i*3],y=W[i*3+1],z=W[i*3+2];const w=m3*x+m7*y+m11*z+m15;if(w<0.6)continue;
+    const sx=((m0*x+m4*y+m8*z+m12)/w+1)*hw,sy=(1-(m1*x+m5*y+m9*z+m13)/w)*hh;
+    const r=SZ[i]*focal/w+4;if(sx<-r||sx>Wc+r||sy<-r||sy>Hc+r)continue;
+    SX[i]=sx;SY[i]=sy;SW[i]=w;VF[i]=frameNo;vis.push(i);
+    const gr=grect[g];if(sx<gr.x0)gr.x0=sx;if(sx>gr.x1)gr.x1=sx;if(sy<gr.y0)gr.y0=sy;if(sy>gr.y1)gr.y1=sy;gr.n++;
+  }
+  vis.sort((a,b)=>SW[b]-SW[a]);sorted=vis;
+}
+const FOG=[.08,.14,.3];
+const HEAT=[[-1,[.16,.39,1]],[-.5,[.19,.75,1]],[0,[.24,.88,.5]],[.5,[1,.83,.35]],[1,[1,.25,.25]]];
+function heat(d){const t=clamp(d/0.4,-1,1);for(let k=0;k<HEAT.length-1;k++){const[a,ca]=HEAT[k],[b,cb]=HEAT[k+1];if(t<=b){const u=(t-a)/(b-a);return[lerp(ca[0],cb[0],u),lerp(ca[1],cb[1],u),lerp(ca[2],cb[2],u)]}}return HEAT[4][1]}
+let cr=0,cg=0,cb=0,ca=1,cs=1;
+function shade(i,t){
+  let r=C0[i*3],g=C0[i*3+1],b=C0[i*3+2],a=AL[i],s=SZ[i];const gp=GP[i];
+  if(gp===G.WATER){const w=0.5+0.5*Math.sin(t*2.2+AUX[i]+W[i*3]*0.5+W[i*3+2]*0.2);r+=w*.07;g+=w*.13;b+=w*.16}
+  else if(gp===G.EMB&&ST.heatmap){const h=heat(AUX[i]);r=h[0];g=h[1];b=h[2]}
+  else if(gp>=G.W1&&gp<=G.W3&&ST.privacy){r=.62;g=.52;b=.9;s*=2.3;a=.5}
+  else if(gp===G.CRACK&&ST.crackHi){const p=.5+.5*Math.sin(t*5);r=1;g=.2+.2*p;b=.3;s*=2.6}
+  else if(gp===G.DESIGN){const p=.5+.5*Math.sin(t*2+W[i*3]*0.3);a=.45+.35*p}
+  if(gp<=G.REV)s*=1.15;
+  const hc=ST.hi.get(gp);if(hc){const p=.35+.25*Math.sin(t*6);r=lerp(r,hc[0],p);g=lerp(g,hc[1],p);b=lerp(b,hc[2],p)}
+  if(ST.scan){const v=ST.scan.axis==='z'?W[i*3+2]:W[i*3];const d=(v-ST.scan.pos)/1.4;const k=Math.exp(-d*d);if(k>0.01){r=lerp(r,.35,k*.85);g=lerp(g,1,k*.85);b=lerp(b,1,k*.85)}}
+  const f=clamp((SW[i]-75)/170,0,.55);cr=lerp(r,FOG[0],f);cg=lerp(g,FOG[1],f);cb=lerp(b,FOG[2],f);ca=a;cs=s;
+}
+
+/* =========================================================
+   6. Renderers: Canvas2D (sprite) + WebGPU (WGSL instanced gaussians)
+   ========================================================= */
+const sprites=new Map();
+function sprite(r,g,b){
+  const ri=(r*31+.5)|0,gi=(g*31+.5)|0,bi=(b*31+.5)|0,key=(ri<<10)|(gi<<5)|bi;let s=sprites.get(key);if(s)return s;
+  s=document.createElement('canvas');s.width=s.height=32;const x=s.getContext('2d');const R8=ri*255/31|0,G8=gi*255/31|0,B8=bi*255/31|0;
+  const gr=x.createRadialGradient(16,16,0,16,16,16);
+  [[0,1],[.25,.78],[.5,.37],[.75,.11],[1,0]].forEach(([o,a])=>gr.addColorStop(o,`rgba(${R8},${G8},${B8},${a})`));
+  x.fillStyle=gr;x.fillRect(0,0,32,32);sprites.set(key,s);return s;
+}
+function draw2D(ctx,t,w,h,noClear){
+  if(!noClear)ctx.clearRect(0,0,w,h);let lastA=-1;
+  for(let k=0;k<sorted.length;k++){const i=sorted[k];shade(i,t);const rad=Math.min(cs*focal/SW[i],90);if(rad<0.35)continue;
+    if(ca!==lastA){ctx.globalAlpha=ca;lastA=ca}ctx.drawImage(sprite(cr,cg,cb),SX[i]-rad,SY[i]-rad,rad*2,rad*2)}
+  ctx.globalAlpha=1;
+}
+const GPU={ok:false,device:null,ctx:null,pipe:null,ubuf:null,ibuf:null,vbuf:null,bind:null,data:null,info:''};
+const WGSL=`
+struct U{vp:mat4x4<f32>,p:vec4<f32>};
+@group(0) @binding(0) var<uniform> u:U;
+struct VO{@builtin(position) pos:vec4<f32>,@location(0) uv:vec2<f32>,@location(1) col:vec4<f32>};
+@vertex fn vs(@location(0) corner:vec2<f32>,@location(1) ps:vec4<f32>,@location(2) col:vec4<f32>)->VO{
+  var o:VO; let c=u.vp*vec4<f32>(ps.xyz,1.0);
+  let rpx=min(ps.w*u.p.z/max(c.w,0.01),90.0);
+  let off=corner*rpx*2.0/u.p.xy*c.w;
+  o.pos=vec4<f32>(c.xy+off,c.z,c.w); o.uv=corner; o.col=col; return o;
+}
+@fragment fn fs(i:VO)->@location(0) vec4<f32>{
+  let d=dot(i.uv,i.uv); if(d>1.0){discard;}
+  let a=exp(-4.0*d)*i.col.a; return vec4<f32>(i.col.rgb*a,a);
+}`;
+async function initGPU(canvas){
+  if(!('gpu' in navigator))return 'navigator.gpu なし';
+  const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)return 'アダプタ取得不可';
+  const device=await adapter.requestDevice();
+  const ctx=canvas.getContext('webgpu');if(!ctx)return 'webgpuコンテキスト不可';
+  const format=navigator.gpu.getPreferredCanvasFormat();ctx.configure({device,format,alphaMode:'premultiplied'});
+  device.pushErrorScope('validation');
+  const mod=device.createShaderModule({code:WGSL});
+  const pipe=device.createRenderPipeline({layout:'auto',
+    vertex:{module:mod,entryPoint:'vs',buffers:[
+      {arrayStride:8,stepMode:'vertex',attributes:[{shaderLocation:0,offset:0,format:'float32x2'}]},
+      {arrayStride:32,stepMode:'instance',attributes:[{shaderLocation:1,offset:0,format:'float32x4'},{shaderLocation:2,offset:16,format:'float32x4'}]}]},
+    fragment:{module:mod,entryPoint:'fs',targets:[{format,blend:{color:{srcFactor:'one',dstFactor:'one-minus-src-alpha',operation:'add'},alpha:{srcFactor:'one',dstFactor:'one-minus-src-alpha',operation:'add'}}}]},
+    primitive:{topology:'triangle-list'}});
+  const vbuf=device.createBuffer({size:48,usage:GPUBufferUsage.VERTEX|GPUBufferUsage.COPY_DST});
+  device.queue.writeBuffer(vbuf,0,new Float32Array([-1,-1,1,-1,1,1,-1,-1,1,1,-1,1]));
+  const ibuf=device.createBuffer({size:N*32,usage:GPUBufferUsage.VERTEX|GPUBufferUsage.COPY_DST});
+  const ubuf=device.createBuffer({size:80,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
+  const bind=device.createBindGroup({layout:pipe.getBindGroupLayout(0),entries:[{binding:0,resource:{buffer:ubuf}}]});
+  const err=await device.popErrorScope();if(err)return 'パイプライン検証エラー: '+err.message;
+  device.addEventListener('uncapturederror',e=>{console.warn('WebGPU error',e.error);fallback2D('WebGPU実行時エラー → Canvas2Dへ切替')});
+  device.lost.then(i=>{console.warn('WebGPU device lost',i.reason,i.message);if(GPU.ok)fallback2D('WebGPUデバイス喪失 → Canvas2Dへ切替')});
+  const ai=adapter.info||{};
+  Object.assign(GPU,{ok:true,adapter,device,ctx,pipe,ubuf,ibuf,vbuf,bind,data:new Float32Array(N*8),info:[ai.vendor,ai.architecture].filter(Boolean).join(' / ')||'adapter'});
+  return null;
+}
+function drawGPU(t){
+  const d=GPU.data;let n=0;
+  for(let k=0;k<sorted.length;k++){const i=sorted[k];shade(i,t);const o=n*8;d[o]=W[i*3];d[o+1]=W[i*3+1];d[o+2]=W[i*3+2];d[o+3]=cs;d[o+4]=cr;d[o+5]=cg;d[o+6]=cb;d[o+7]=ca;n++}
+  const dev=GPU.device;const u=new Float32Array(20);u.set(M,0);u[16]=Wc;u[17]=Hc;u[18]=focal;u[19]=t;
+  dev.queue.writeBuffer(GPU.ubuf,0,u);if(n)dev.queue.writeBuffer(GPU.ibuf,0,d,0,n*8);
+  const enc=dev.createCommandEncoder();
+  const pass=enc.beginRenderPass({colorAttachments:[{view:GPU.ctx.getCurrentTexture().createView(),clearValue:{r:0,g:0,b:0,a:0},loadOp:'clear',storeOp:'store'}]});
+  pass.setPipeline(GPU.pipe);pass.setBindGroup(0,GPU.bind);pass.setVertexBuffer(0,GPU.vbuf);pass.setVertexBuffer(1,GPU.ibuf);if(n)pass.draw(6,n);pass.end();
+  dev.queue.submit([enc.finish()]);
+}
+let renderer='canvas2d';
+const cvGpu=$('#cvGpu'),cv2d=$('#cv2d'),ctx2d=cv2d.getContext('2d');
+function setRenderer(m){
+  renderer=(m==='webgpu'&&GPU.ok)?'webgpu':'canvas2d';
+  cvGpu.style.display=renderer==='webgpu'?'block':'none';cv2d.style.display=renderer==='canvas2d'?'block':'none';
+  const label=renderer==='webgpu'?'WebGPU（WGSL・インスタンス描画）':'Canvas2D（フォールバック）';
+  $('#hRend').textContent=label;$('#bdgGpu span').textContent='Renderer: '+(renderer==='webgpu'?'WebGPU':'Canvas2D');
+  $('#bdgGpu').classList.toggle('warn',renderer!=='webgpu');
+}
+function fallback2D(msg){GPU.ok=false;setRenderer('canvas2d');window.SAS&&SAS.toast(msg,'alert','#ffb547')}
+
+window.__SAS_CORE={FOG,$,$$,clamp,lerp,ease,icon,fmt,esc,rid,nowStr,dist3,SVGNS,T,EXC,G,NG,LAYER_OF,GR,CRACKS,N,P0,W,C0,SZ,AL,GP,AUX,sim,workerState,bucketWorld,truckPos,cam,VIEWS,proj,flyTo,getLastFly:()=>lastFly,ST,refreshVis,SX,SY,SW,VF,grect,getFrame:()=>frameNo,getSorted:()=>sorted,projectAll,draw2D,shade,initGPU,drawGPU,GPU,setRenderer,getRenderer:()=>renderer,cvGpu,cv2d,ctx2d,
+  getView:()=>({Wc,Hc,focal,eye}),setSize:(w,h)=>{Wc=w;Hc=h},updateDynamic,tweenStep:(dtms,mul)=>{if(!tween)return;tween.p+=dtms*mul/tween.dur;const e=ease(Math.min(1,tween.p));for(const k of ['yaw','pitch','dist','tx','ty','tz'])cam[k]=lerp(tween.from[k],tween.to[k],e);if(tween.p>=1){const r=tween.res;tween=null;r&&r()}},heat};
+})();
+
+(()=>{
+'use strict';
+const C=window.__SAS_CORE;
+const {$,$$,clamp,lerp,ease,icon,fmt,esc,rid,nowStr,dist3,SVGNS,T,EXC,G,GR,CRACKS,N,W,GP,AUX,sim,workerState,cam,VIEWS,proj,flyTo,ST,SX,SY,SW,VF,grect}=C;
+const vp=$('#vp'),ov=$('#ov'),tagsEl=$('#tags');
+let dpr=1,Wc=800,Hc=600;
+const st=document.createElement('style');
+st.textContent='.ovl{stroke-linecap:round;stroke-linejoin:round}.ovl.dash{stroke-dasharray:8 6;animation:dash 1s linear infinite}';
+document.head.appendChild(st);
+
+/* ---------------- sizing ---------------- */
+function resize(){const r=vp.getBoundingClientRect();dpr=Math.min(window.devicePixelRatio||1,1.5);Wc=Math.max(200,r.width|0);Hc=Math.max(200,r.height|0);C.setSize(Wc,Hc);
+  for(const cv of [C.cv2d,C.cvGpu]){cv.width=Math.round(Wc*dpr);cv.height=Math.round(Hc*dpr)}ov.setAttribute('viewBox',`0 0 ${Wc} ${Hc}`)}
+new ResizeObserver(resize).observe(vp);resize();
+
+/* ---------------- toast / console ---------------- */
+function toast(msg,ic='info',color='#38e1ff',ms=3800){const t=document.createElement('div');t.className='toast';t.style.setProperty('--c',color);t.innerHTML=icon(ic)+`<span>${msg}</span>`;$('#toasts').appendChild(t);setTimeout(()=>{t.classList.add('out');setTimeout(()=>t.remove(),400)},ms)}
+function con(msg){$('#conTx').textContent=`[${nowStr()}] ${msg}`}
+window.SAS={toast};
+
+/* =========================================================
+   Overlays (SVG lines/polys/rings/bboxes + HTML tags/pins)
+   ========================================================= */
+const OVL=[];let ovSeq=0;
+const val=v=>typeof v==='function'?v():v;
+function svgEl(tag,attrs){const e=document.createElementNS(SVGNS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);ov.appendChild(e);return e}
+function addOv(o){
+  o.id=++ovSeq;o.kind=o.kind||'meas';o.els=[];const col=o.color||'#38e1ff';
+  switch(o.type){
+    case 'line':o.els.push(svgEl('line',{stroke:col,'stroke-width':2.4,class:'ovl dash'}));o.dots=[svgEl('circle',{r:4.5,fill:col,stroke:'#fff','stroke-width':1.2}),svgEl('circle',{r:4.5,fill:col,stroke:'#fff','stroke-width':1.2})];break;
+    case 'poly':o.els.push(svgEl(o.open?'polyline':'polygon',{stroke:col,'stroke-width':2.2,fill:o.open?'none':col,'fill-opacity':.16,class:'ovl dash'}));break;
+    case 'ring':o.els.push(svgEl('path',{stroke:col,'stroke-width':2.6,fill:col,'fill-opacity':.13,class:'ovl dash'}));o.els.push(svgEl('path',{stroke:col,'stroke-width':1.6,fill:'none',class:'ovl'}));break;
+    case 'bbox':o.els.push(svgEl('rect',{stroke:col,'stroke-width':1,fill:col,'fill-opacity':.05,'stroke-opacity':.4,'stroke-dasharray':'3 4'}));o.els.push(svgEl('path',{stroke:col,'stroke-width':2.4,fill:'none',class:'ovl'}));break;
+    case 'link':o.els.push(svgEl('line',{stroke:col,'stroke-width':1.8,class:'ovl dash'}));break;
+    case 'dot':o.els.push(svgEl('circle',{r:5.5,fill:col,stroke:'#fff','stroke-width':1.5}));break;
+  }
+  if(o.type==='pin'){const d=document.createElement('div');d.className='pin';d.style.color=col;d.innerHTML=`<div class="pm" style="background:${col}">${icon(o.icon||'pin')}</div><div class="pl">${o.label}</div>`;tagsEl.appendChild(d);o.tag=d}
+  else if(o.label!==undefined){const d=document.createElement('div');d.className='tag';d.style.color=col;d.innerHTML=o.label;tagsEl.appendChild(d);o.tag=d}
+  o.born=performance.now();OVL.push(o);return o;
+}
+function removeOv(o){if(!o)return;o.els.forEach(e=>e.remove());o.dots&&o.dots.forEach(e=>e.remove());o.tag&&o.tag.remove();const k=OVL.indexOf(o);if(k>=0)OVL.splice(k,1)}
+function clearOv(kind){[...OVL].filter(o=>!kind||o.kind===kind).forEach(removeOv)}
+function rectOf(o){
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9,n=0;const fr=C.getFrame();
+  if(o.range){for(let i=o.range[0];i<o.range[1];i++)if(VF[i]===fr){const x=SX[i],y=SY[i];if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;n++}}
+  else for(const g of o.groups){const r=grect[g];if(!r.n)continue;n+=r.n;x0=Math.min(x0,r.x0);y0=Math.min(y0,r.y0);x1=Math.max(x1,r.x1);y1=Math.max(y1,r.y1)}
+  if(n<2)return null;const pad=o.pad||6;return{x0:x0-pad,y0:y0-pad,x1:x1+pad,y1:y1+pad};
+}
+function updateOverlays(t){
+  for(const o of OVL){
+    const hidden=(o.kind==='det'&&!ST.layer.ai);let ok=!hidden,anchor=null;
+    if(ok)switch(o.type){
+      case 'line':case 'link':{const a=proj(val(o.a)),b=proj(val(o.b));if(!a||!b){ok=false;break}const e=o.els[0];e.setAttribute('x1',a.x);e.setAttribute('y1',a.y);e.setAttribute('x2',b.x);e.setAttribute('y2',b.y);
+        if(o.dots){o.dots[0].setAttribute('cx',a.x);o.dots[0].setAttribute('cy',a.y);o.dots[1].setAttribute('cx',b.x);o.dots[1].setAttribute('cy',b.y)}
+        if(o.colorFn){const c=o.colorFn();e.setAttribute('stroke',c);o.tag&&(o.tag.style.color=c)}
+        anchor={x:(a.x+b.x)/2,y:(a.y+b.y)/2-8};break}
+      case 'poly':{const ps=o.pts.map(proj);if(ps.some(p=>!p)){ok=false;break}o.els[0].setAttribute('points',ps.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' '));
+        anchor={x:ps.reduce((s,p)=>s+p.x,0)/ps.length,y:Math.min(...ps.map(p=>p.y))-6};break}
+      case 'ring':{const c=val(o.center);const mk=(R)=>{let d='';for(let k=0;k<=64;k++){const a=k/64*Math.PI*2;const p=proj({x:c.x+R*Math.cos(a),y:c.y+0.25,z:c.z+R*Math.sin(a)});if(!p)return null;d+=(k?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)}return d+'Z'};
+        const d1=mk(o.radius);if(!d1){ok=false;break}o.els[0].setAttribute('d',d1);const ph=(t*0.7)%1;const d2=mk(o.radius*(1+ph*0.35));if(d2){o.els[1].setAttribute('d',d2);o.els[1].setAttribute('opacity',(1-ph)*0.8)}
+        const col=o.colorFn?o.colorFn():null;if(col){o.els.forEach(e=>{e.setAttribute('stroke',col);e.setAttribute('fill',e===o.els[0]?col:'none')});o.tag&&(o.tag.style.color=col)}
+        const top=proj({x:c.x,y:c.y+0.25,z:c.z-o.radius});anchor=top?{x:top.x,y:top.y-6}:null;break}
+      case 'bbox':{const r=rectOf(o);if(!r){ok=false;break}const L=Math.min(16,(r.x1-r.x0)/3,(r.y1-r.y0)/3);
+        o.els[0].setAttribute('x',r.x0);o.els[0].setAttribute('y',r.y0);o.els[0].setAttribute('width',r.x1-r.x0);o.els[0].setAttribute('height',r.y1-r.y0);
+        o.els[1].setAttribute('d',`M${r.x0} ${r.y0+L}V${r.y0}H${r.x0+L}M${r.x1-L} ${r.y0}H${r.x1}V${r.y0+L}M${r.x1} ${r.y1-L}V${r.y1}H${r.x1-L}M${r.x0+L} ${r.y1}H${r.x0}V${r.y1-L}`);
+        anchor={x:(r.x0+r.x1)/2,y:r.y0-4};break}
+      case 'pin':case 'dot':{const a=proj(val(o.p));if(!a){ok=false;break}if(o.type==='dot'){o.els[0].setAttribute('cx',a.x);o.els[0].setAttribute('cy',a.y)}anchor=a;break}
+    }
+    o.els.forEach(e=>e.style.display=ok?'':'none');o.dots&&o.dots.forEach(e=>e.style.display=ok?'':'none');
+    if(o.tag){o.tag.style.display=ok&&anchor?'':'none';if(ok&&anchor){o.tag.style.left=anchor.x+'px';o.tag.style.top=anchor.y+'px';if(o.labelFn){const h=o.labelFn();if(h!==o._lh){o.tag.innerHTML=h;o._lh=h}}}}
+  }
+}
+
+/* =========================================================
+   Measurement / analysis functions (computed from the model)
+   ========================================================= */
+function pointInPoly(x,z,ps){let c=false;for(let i=0,j=ps.length-1;i<ps.length;j=i++){const a=ps[i],b=ps[j];if((a.z>z)!==(b.z>z)&&x<(b.x-a.x)*(z-a.z)/(b.z-a.z)+a.x)c=!c}return c}
+function polyArea(ps){let s=0;for(let i=0,j=ps.length-1;i<ps.length;j=i++)s+=(ps[j].x+ps[i].x)*(ps[j].z-ps[i].z);return Math.abs(s)/2}
+function volumeCalc(ps,ref=0,step=0.5){let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9;ps.forEach(p=>{x0=Math.min(x0,p.x);x1=Math.max(x1,p.x);z0=Math.min(z0,p.z);z1=Math.max(z1,p.z)});
+  let cut=0,fill=0,cells=0;const a=step*step;for(let x=x0+step/2;x<x1;x+=step)for(let z=z0+step/2;z<z1;z+=step){if(!pointInPoly(x,z,ps))continue;cells++;const h=T.H(x,z)-ref;if(h>0)cut+=h*a;else fill+=-h*a}
+  return{cut,fill,area:polyArea(ps),cells};}
+function embBalance(){let under=0,over=0,design=0,current=0;const a=0.25;for(let x=-14+0.25;x<10;x+=0.5)for(let z=-14+0.25;z<14;z+=0.5){const s=T.embShape(x,z);if(s<=0)continue;const c=T.embCur(x,z);design+=s*a;current+=c*a;if(c<s)under+=(s-c)*a;else over+=(c-s)*a}return{design,current,under,over}}
+function devStats(tol=0.2){let n=0,s=0,ss=0,mn=1e9,mx=-1e9,imn=-1,imx=-1,pass=0,under=0,overc=0;
+  for(let i=0;i<N;i++){if(GP[i]!==G.EMB)continue;const d=AUX[i];n++;s+=d;ss+=d*d;if(d<mn){mn=d;imn=i}if(d>mx){mx=d;imx=i}if(Math.abs(d)<=tol)pass++;else if(d<0)under++;else overc++}
+  const mean=s/n,std=Math.sqrt(Math.max(0,ss/n-mean*mean));const P=i=>({x:W[i*3],y:W[i*3+1]+0.05,z:W[i*3+2]});
+  return{n,mean,std,min:mn,max:mx,pass_rate:pass/n*100,out_under:under,out_over:overc,worstP:P(imn),maxP:P(imx)};}
+function aabb(groups){const gs=new Set(groups);let x0=1e9,y0=1e9,z0=1e9,x1=-1e9,y1=-1e9,z1=-1e9,n=0;
+  for(let i=0;i<N;i++){if(!gs.has(GP[i]))continue;n++;const x=W[i*3],y=W[i*3+1],z=W[i*3+2];if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;if(z<z0)z0=z;if(z>z1)z1=z}
+  return{n,c:{x:(x0+x1)/2,y:(y0+y1)/2,z:(z0+z1)/2},d:{x:x1-x0,y:y1-y0,z:z1-z0},min:{x:x0,y:y0,z:z0},max:{x:x1,y:y1,z:z1}};}
+function pick(sx,sy){const so=C.getSorted();let best=-1,bw=1e9;for(let k=0;k<so.length;k++){const i=so[k];if(GP[i]===G.DESIGN)continue;const dx=SX[i]-sx,dy=SY[i]-sy;if(dx*dx+dy*dy<144&&SW[i]<bw){bw=SW[i];best=i}}
+  return best<0?null:{x:W[best*3],y:W[best*3+1],z:W[best*3+2],g:GP[best]};}
+
+/* =========================================================
+   Tools
+   ========================================================= */
+const TOOL={cur:'select',pts:[],temp:[],n:{dist:0,area:0,vol:0,note:0,haz:0},last:null};
+const HINT={select:['orbit','視点操作：ドラッグ回転 / 右ドラッグ移動 / ホイール拡大'],distance:['ruler','距離：2点をクリック'],area:['area','面積：頂点をクリック →「範囲を確定」'],volume:['volume','土量：範囲の頂点をクリック →「範囲を確定」（基準高 ±0.00m）'],section:['section','断面：盛土上の位置をクリック（X方向の横断）'],annotate:['pin','注記：ピンを置く位置をクリック'],hazard:['hazard','危険域：重機付近をクリック（旋回半径を設定）']};
+function clearTemp(){TOOL.temp.forEach(removeOv);TOOL.temp=[]}
+function setTool(t){
+  if(t==='capture'){capture();return}
+  TOOL.cur=t;TOOL.pts=[];clearTemp();
+  $$('#tools .tool[data-tool]').forEach(b=>b.classList.toggle('on',b.dataset.tool===t));
+  const h=HINT[t];$('#hTool').innerHTML=icon(h[0])+`<span>${h[1]}</span>`;$('#polyDone').classList.remove('show');
+  vp.style.cursor=t==='select'?'grab':'crosshair';
+}
+$$('#tools .tool[data-tool]').forEach(b=>b.addEventListener('click',()=>{const t=b.dataset.tool;setTool(TOOL.cur===t&&t!=='select'?'select':t)}));
+$('[data-toggle=heatmap]').addEventListener('click',e=>{ST.heatmap=!ST.heatmap;e.currentTarget.classList.toggle('on',ST.heatmap);$('#legend').classList.toggle('show',ST.heatmap);con(ST.heatmap?'出来形ヒートマップ ON':'出来形ヒートマップ OFF')});
+function addResult(ic,title,value,color='#38e1ff'){const box=$('#results');const em=box.querySelector('.empty');em&&em.remove();const d=document.createElement('div');d.className='res';d.innerHTML=`<div class="rh" style="color:${color}">${icon(ic)}<span style="color:var(--tx)">${title}</span></div><div class="rv" style="color:${color}">${value}</div>`;box.prepend(d);while(box.children.length>9)box.lastChild.remove()}
+function toolAt(p,o={}){
+  switch(TOOL.cur){
+    case 'distance':{TOOL.pts.push(p);if(TOOL.pts.length===1){TOOL.temp.push(addOv({type:'dot',p,color:o.color||'#38e1ff',kind:'temp'}));return}
+      const[a,b]=TOOL.pts;clearTemp();TOOL.pts=[];const d=dist3(a,b),dh=Math.hypot(a.x-b.x,a.z-b.z),dv=b.y-a.y;const n=++TOOL.n.dist;const name=o.label||`距離 D-${n}`;
+      addOv({type:'line',a,b,color:o.color||'#38e1ff',kind:o.kind||'meas',label:`${icon('ruler')}<span>${name}　${fmt(d)} m</span><em>水平 ${fmt(dh)} / 高低 ${fmt(dv)}</em>`});
+      addResult('ruler',name,`${fmt(d)} m（水平 ${fmt(dh)} m）`,o.color||'#38e1ff');TOOL.last={d,dh,dv,a,b};con(`${name}: ${fmt(d)} m`);return TOOL.last}
+    case 'area':case 'volume':{TOOL.pts.push(p);clearTemp();const col=TOOL.cur==='area'?'#3ee07f':'#ffb547';
+      TOOL.temp.push(addOv({type:'poly',pts:[...TOOL.pts],color:col,kind:'temp',open:TOOL.pts.length<3}));TOOL.pts.forEach(q=>TOOL.temp.push(addOv({type:'dot',p:q,color:col,kind:'temp'})));
+      $('#polyDone').classList.toggle('show',TOOL.pts.length>=3);return}
+    case 'section':return openSection(p);
+    case 'annotate':{const n=++TOOL.n.note;const lab=o.label||`注記 #${n}`;addOv({type:'pin',p,color:o.color||'#ffb547',icon:o.icon||'pin',label:lab,kind:'pin'});addResult('pin',`注記 #${n}`,lab,o.color||'#ffb547');con('注記を追加: '+lab);return}
+    case 'hazard':{let c=p;if(Math.hypot(p.x-EXC.x,p.z-EXC.z)<6)c={x:EXC.x,y:EXC.y,z:EXC.z};const R=o.radius||7.5;const n=++TOOL.n.haz;
+      const ring=addOv({type:'ring',center:c,radius:R,color:'#ff5d6c',kind:'hazard',colorFn:o.colorFn,label:`${icon('hazard')}<span>危険エリア HZ-0${n}</span><em>R=${fmt(R,1)}m</em>`});
+      addResult('hazard',`危険エリア HZ-0${n}`,`半径 ${fmt(R,1)} m`,'#ff5d6c');TOOL.lastHazard=ring;con(`危険エリア HZ-0${n} を設定`);return ring}
+  }
+}
+function finishPoly(){
+  if(TOOL.pts.length<3)return null;const ps=[...TOOL.pts];const kind=TOOL.cur;clearTemp();TOOL.pts=[];$('#polyDone').classList.remove('show');
+  if(kind==='area'){const a=polyArea(ps);const n=++TOOL.n.area;addOv({type:'poly',pts:ps,color:'#3ee07f',label:`${icon('area')}<span>面積 A-${n}　${fmt(a,1)} m²</span>`});addResult('area',`面積 A-${n}`,`${fmt(a,1)} m²`,'#3ee07f');TOOL.last={area:a,ps};con(`面積 A-${n}: ${fmt(a,1)} m²`);return TOOL.last}
+  const v=volumeCalc(ps,0,0.5);const n=++TOOL.n.vol;addOv({type:'poly',pts:ps,color:'#ffb547',label:`${icon('volume')}<span>土量 V-${n}　切土 ${fmt(v.cut,0)} m³</span><em>面積 ${fmt(v.area,0)}m² ／ 基準高±0</em>`});
+  addResult('volume',`土量 V-${n}`,`切土 ${fmt(v.cut,0)} m³／盛土 ${fmt(v.fill,0)} m³`,'#ffb547');TOOL.last={...v,ps};con(`土量 V-${n}: 切土 ${fmt(v.cut,0)} m³`);return TOOL.last;
+}
+$('#polyDone').addEventListener('click',finishPoly);
+
+/* ---------- section ---------- */
+let secLine=null;
+function openSection(p){
+  const z0=p.z;const xs=[];for(let x=-17;x<=13.001;x+=0.25)xs.push(x);
+  const cur=xs.map(x=>T.base(x,z0)+T.embCur(x,z0)),des=xs.map(x=>T.embShape(x,z0)>0?T.design(x,z0):null);
+  let worst=0,wx=0;xs.forEach((x,k)=>{if(des[k]!==null){const d=cur[k]-des[k];if(Math.abs(d)>Math.abs(worst)){worst=d;wx=x}}});
+  $('#secTitle').textContent=`横断面 Z=${fmt(z0,1)}m（X方向）─ 現況 vs 設計　最大偏差 ${worst>=0?'+':''}${fmt(worst)} m @X=${fmt(wx,1)}`;
+  $('#section').classList.add('show');
+  removeOv(secLine);const pl=[];for(let x=-17;x<=13;x+=1)pl.push({x,y:T.H(x,z0)+0.2,z:z0});secLine=addOv({type:'poly',open:true,pts:pl,color:'#ff7ad9',kind:'sec',label:`${icon('section')}<span>断面 Z=${fmt(z0,1)}</span>`});
+  const t0=performance.now();const anim=()=>{const pr=Math.min(1,(performance.now()-t0)/900);drawSection(xs,cur,des,pr,worst,wx);if(pr<1)requestAnimationFrame(anim)};anim();
+  addResult('section',`断面 Z=${fmt(z0,1)}m`,`最大偏差 ${worst>=0?'+':''}${fmt(worst)} m`,'#ff7ad9');con(`横断面 Z=${fmt(z0,1)} を表示`);
+  return{z:z0,worst,wx};
+}
+$('#secClose').addEventListener('click',()=>{$('#section').classList.remove('show');removeOv(secLine);secLine=null});
+function drawSection(xs,cur,des,pr,worst,wx){
+  const cv=$('#secCv'),x=cv.getContext('2d'),w=cv.width,h=cv.height,L=70,Rm=24,Tm=26,Bm=44;x.clearRect(0,0,w,h);
+  const X=v=>L+(v+17)/30*(w-L-Rm),Y=v=>Tm+(1-(v+0.6)/5.4)*(h-Tm-Bm);
+  x.strokeStyle='rgba(140,170,255,.13)';x.lineWidth=1;x.fillStyle='#8a9ac4';x.font='18px sans-serif';
+  for(let v=0;v<=4;v+=1){x.beginPath();x.moveTo(L,Y(v));x.lineTo(w-Rm,Y(v));x.stroke();x.fillText(v.toFixed(1),L-44,Y(v)+6)}
+  for(let v=-15;v<=13;v+=5){x.beginPath();x.moveTo(X(v),Tm);x.lineTo(X(v),h-Bm);x.stroke();x.fillText(v+'m',X(v)-14,h-14)}
+  const lim=-17+30*pr;x.save();x.beginPath();x.rect(0,0,X(lim),h);x.clip();
+  for(let k=0;k<xs.length-1;k++){if(des[k]===null||des[k+1]===null)continue;const d=cur[k]-des[k];x.fillStyle=Math.abs(d)>0.2?(d<0?'rgba(255,93,108,.55)':'rgba(255,181,71,.5)'):'rgba(62,224,127,.25)';
+    x.beginPath();x.moveTo(X(xs[k]),Y(cur[k]));x.lineTo(X(xs[k+1]),Y(cur[k+1]));x.lineTo(X(xs[k+1]),Y(des[k+1]));x.lineTo(X(xs[k]),Y(des[k]));x.fill()}
+  x.lineWidth=3;x.strokeStyle='#f0a85a';x.beginPath();xs.forEach((v,k)=>k?x.lineTo(X(v),Y(cur[k])):x.moveTo(X(v),Y(cur[k])));x.stroke();
+  x.setLineDash([10,7]);x.strokeStyle='#38e1ff';x.beginPath();let st=false;xs.forEach((v,k)=>{if(des[k]===null){st=false;return}st?x.lineTo(X(v),Y(des[k])):x.moveTo(X(v),Y(des[k]));st=true});x.stroke();x.setLineDash([]);x.restore();
+  if(pr>=1){x.fillStyle='#ff5d6c';x.beginPath();x.arc(X(wx),Y(T.base(wx,0)+0),0,0,0);x.fill();x.strokeStyle='#ff7ad9';x.lineWidth=2;x.beginPath();x.moveTo(X(wx),Tm);x.lineTo(X(wx),h-Bm);x.stroke();x.fillStyle='#ff9be3';x.fillText(`最大偏差 ${worst>=0?'+':''}${worst.toFixed(2)}m`,X(wx)+8,Tm+18)}
+  x.font='17px sans-serif';x.fillStyle='#f0a85a';x.fillRect(w-330,8,22,4);x.fillText('現況（3DGS）',w-300,16);x.fillStyle='#38e1ff';x.fillRect(w-170,8,22,4);x.fillText('設計面',w-140,16);x.fillStyle='#8a9ac4';x.fillText('標高(m)',6,20);
+}
+
+/* ---------- capture ---------- */
+function snapshot(){
+  const cv=document.createElement('canvas');cv.width=Wc;cv.height=Hc;const x=cv.getContext('2d');
+  const g=x.createRadialGradient(Wc/2,-Hc*.1,10,Wc/2,-Hc*.1,Hc*1.3);const lt=document.documentElement.dataset.theme==='light';(lt?[[0,'#ffffff'],[.4,'#dbe9ff'],[.75,'#c3d8f5'],[1,'#b4cbee']]:[[0,'#2b4a8e'],[.38,'#142453'],[.7,'#0a1230'],[1,'#070b18']]).forEach(([o,c])=>g.addColorStop(o,c));x.fillStyle=g;x.fillRect(0,0,Wc,Hc);
+  C.draw2D(x,performance.now()/1000,Wc,Hc,true);
+  x.lineWidth=2;x.font='12px sans-serif';
+  for(const o of OVL){if(o.kind==='det'&&!ST.layer.ai)continue;if(o.kind==='temp')continue;const col=o.colorFn?o.colorFn():(o.color||'#38e1ff');x.strokeStyle=col;x.fillStyle=col;let an=null;
+    if(o.type==='line'||o.type==='link'){const a=proj(val(o.a)),b=proj(val(o.b));if(!a||!b)continue;x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b.x,b.y);x.stroke();an={x:(a.x+b.x)/2,y:(a.y+b.y)/2-8}}
+    else if(o.type==='poly'){const ps=o.pts.map(proj);if(ps.some(p=>!p))continue;x.beginPath();ps.forEach((p,k)=>k?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y));if(!o.open)x.closePath();x.stroke();an={x:ps[0].x,y:ps[0].y-8}}
+    else if(o.type==='ring'){const c=val(o.center);x.beginPath();let okr=true;for(let k=0;k<=48;k++){const a=k/48*Math.PI*2;const p=proj({x:c.x+o.radius*Math.cos(a),y:c.y+.25,z:c.z+o.radius*Math.sin(a)});if(!p){okr=false;break}k?x.lineTo(p.x,p.y):x.moveTo(p.x,p.y)}if(!okr)continue;x.stroke();const p=proj({x:c.x,y:c.y,z:c.z-o.radius});an=p}
+    else if(o.type==='bbox'){const r=rectOf(o);if(!r)continue;x.strokeRect(r.x0,r.y0,r.x1-r.x0,r.y1-r.y0);an={x:r.x0+40,y:r.y0-4}}
+    else if(o.type==='pin'){const a=proj(o.p);if(!a)continue;x.beginPath();x.arc(a.x,a.y-10,7,0,7);x.fill();an={x:a.x+40,y:a.y-14}}
+    if(an&&o.tag){const tx=o.tag.textContent.trim();const tw=x.measureText(tx).width+12;x.fillStyle='rgba(8,14,34,.88)';x.fillRect(an.x-tw/2,an.y-15,tw,18);x.strokeStyle=col;x.lineWidth=1;x.strokeRect(an.x-tw/2,an.y-15,tw,18);x.lineWidth=2;x.fillStyle='#e6ecff';x.fillText(tx,an.x-tw/2+6,an.y-2)}}
+  x.fillStyle='rgba(8,14,34,.7)';x.fillRect(0,Hc-24,Wc,24);x.fillStyle='#9fb0d8';x.font='12px monospace';x.fillText(`Spatial Agent Studio | ${new Date().toLocaleString('ja-JP')} | ${C.getRenderer()} | splats ${N}`,10,Hc-8);
+  return cv.toDataURL('image/jpeg',0.84);
+}
+function capture(silent){
+  const f=$('#flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go');
+  const url=snapshot();
+  if(!silent){const gal=$('#gallery');const em=gal.querySelector('.empty');em&&em.remove();const im=new Image();im.src=url;im.title=nowStr();gal.prepend(im);while(gal.children.length>8)gal.lastChild.remove();toast('ビューポートをキャプチャしました','camera','#38e1ff',2200);con('キャプチャ保存')}
+  return url;
+}
+
+/* ---------- layers & UI wiring ---------- */
+const LAYERS=[['terrain','地形・仮設','#8d7a52'],['embankment','盛土','#d6b07a'],['revetment','護岸','#a8acb4'],['river','河川','#3a7fd0'],['machine','重機・車両','#f2b72a'],['worker','作業員','#ff8c2a'],['vegetation','植生','#4f9a4a'],['design','設計面（3D設計データ）','#38e1ff'],['ai','AIオーバーレイ','#ffb547']];
+$('#layers').innerHTML=LAYERS.map(([k,n,c])=>`<button class="layer ${ST.layer[k]?'on':''}" data-layer="${k}"><i class="sw" style="background:${c};box-shadow:0 0 6px ${c}"></i>${n}<span class="tg"></span></button>`).join('');
+$$('#layers .layer').forEach(b=>b.addEventListener('click',()=>{const k=b.dataset.layer;ST.layer[k]=ST.layer[k]?0:1;b.classList.toggle('on',!!ST.layer[k]);C.refreshVis();con(`レイヤ「${b.textContent.trim()}」 ${ST.layer[k]?'表示':'非表示'}`)}));
+$('#privToggle').addEventListener('click',e=>{ST.privacy=!ST.privacy;e.currentTarget.classList.toggle('on',ST.privacy);con('人物の自動匿名化 '+(ST.privacy?'ON':'OFF'));if(!ST.privacy)toast('匿名化OFF：本番運用では原則ONを推奨（個人の特定・監視につながる情報をAIへ渡さない）','mask','#ffb547',5200)});
+$$('.vbtn[data-view]').forEach(b=>b.addEventListener('click',()=>{flyTo(VIEWS[b.dataset.view]);con(`視点「${b.textContent.trim()}」へ移動`)}));
+$('#hRend').parentElement.style.cursor='pointer';
+$('#hRend').parentElement.addEventListener('click',()=>{if(!C.GPU.ok){toast('この環境ではWebGPUが利用できないため Canvas2D で描画しています','gpu','#ffb547');return}C.setRenderer(C.getRenderer()==='webgpu'?'canvas2d':'webgpu');toast('レンダラ切替: '+C.getRenderer(),'gpu','#8b7bff',2000)});
+
+/* ---------- pointer controls ---------- */
+let drag=null;
+vp.addEventListener('contextmenu',e=>e.preventDefault());
+vp.addEventListener('pointerdown',e=>{if(e.target.closest('.hud,#section,#banner'))return;drag={x:e.clientX,y:e.clientY,b:e.button,shift:e.shiftKey,moved:0};vp.setPointerCapture(e.pointerId);if(TOOL.cur==='select')vp.style.cursor='grabbing'});
+vp.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);drag.x=e.clientX;drag.y=e.clientY;
+  if(drag.b===2||drag.shift){const k=cam.dist*0.0016;const rx=Math.cos(cam.yaw),rz=-Math.sin(cam.yaw),fx=-Math.sin(cam.yaw),fz=-Math.cos(cam.yaw);cam.tx-=rx*dx*k-fx*dy*k;cam.tz-=rz*dx*k-fz*dy*k}
+  else{cam.yaw-=dx*0.006;cam.pitch=clamp(cam.pitch+dy*0.005,0.08,1.45)}});
+vp.addEventListener('pointerup',e=>{if(!drag)return;const d=drag;drag=null;if(TOOL.cur==='select')vp.style.cursor='grab';
+  if(d.moved<5&&d.b===0&&TOOL.cur!=='select'){const r=vp.getBoundingClientRect();const p=pick(e.clientX-r.left,e.clientY-r.top);if(p)toolAt(p);else toast('点群上をクリックしてください','info','#9fb0d8',1500)}});
+vp.addEventListener('wheel',e=>{if(e.target.closest('#section'))return;e.preventDefault();cam.dist=clamp(cam.dist*Math.exp(e.deltaY*0.001),6,220)},{passive:false});
+
+/* =========================================================
+   Minimap
+   ========================================================= */
+const mm=$('#minimap'),mx=mm.getContext('2d'),MMW=mm.width,MMH=mm.height;
+const mmX=x=>(x+46)/92*MMW,mmY=z=>(z+33)/66*MMH;
+const mmBase=document.createElement('canvas');mmBase.width=MMW;mmBase.height=MMH;
+function renderMMBase(){const x=mmBase.getContext('2d');const lt=document.documentElement.dataset.theme==='light';x.clearRect(0,0,MMW,MMH);x.fillStyle=lt?'#e8eef9':'#0b132e';x.fillRect(0,0,MMW,MMH);const idx=[];for(let i=0;i<N;i++){const g=GP[i];if(g<=G.WATER||g===G.TREE||g===G.OFFICE)idx.push(i)}idx.sort((a,b)=>W[a*3+1]-W[b*3+1]);
+  for(const i of idx){const c=C.C0;x.fillStyle=`rgb(${c[i*3]*255|0},${c[i*3+1]*255|0},${c[i*3+2]*255|0})`;x.fillRect(mmX(W[i*3])-1,mmY(W[i*3+2])-1,2.4,2.4)}
+  x.fillStyle=lt?'rgba(255,255,255,.12)':'rgba(7,11,24,.25)';x.fillRect(0,0,MMW,MMH)}renderMMBase();
+function drawMinimap(t){
+  mx.clearRect(0,0,MMW,MMH);mx.drawImage(mmBase,0,0);
+  for(const o of OVL){if(o.type==='ring'){const c=val(o.center);mx.strokeStyle=o.colorFn?o.colorFn():o.color;mx.lineWidth=1.5;mx.beginPath();mx.ellipse(mmX(c.x),mmY(c.z),o.radius/92*MMW,o.radius/66*MMH,0,0,7);mx.stroke()}
+    else if(o.type==='poly'&&!o.open){mx.strokeStyle=o.color;mx.lineWidth=1.2;mx.beginPath();o.pts.forEach((p,k)=>k?mx.lineTo(mmX(p.x),mmY(p.z)):mx.moveTo(mmX(p.x),mmY(p.z)));mx.closePath();mx.stroke()}}
+  const b=C.bucketWorld();mx.strokeStyle='#f2b72a';mx.lineWidth=2;mx.beginPath();mx.moveTo(mmX(EXC.x),mmY(EXC.z));mx.lineTo(mmX(b.x),mmY(b.z));mx.stroke();mx.fillStyle='#f2b72a';mx.beginPath();mx.arc(mmX(EXC.x),mmY(EXC.z),3.5,0,7);mx.fill();
+  const tp=C.truckPos(t);mx.fillStyle='#ff8a3a';mx.fillRect(mmX(tp.x)-3,mmY(tp.z)-3,6,6);
+  workerState.forEach(w=>{mx.fillStyle=ST.privacy?'#b39bff':'#ff8c2a';mx.beginPath();mx.arc(mmX(w.x),mmY(w.z),2.6,0,7);mx.fill()});
+  const e=C.getView().eye;const ex=mmX(e.x),ey=mmY(e.z),tx=mmX(cam.tx),ty=mmY(cam.tz);const a=Math.atan2(ty-ey,tx-ex);
+  mx.fillStyle='rgba(56,225,255,.18)';mx.strokeStyle='#38e1ff';mx.lineWidth=1;mx.beginPath();mx.moveTo(clamp(ex,0,MMW),clamp(ey,0,MMH));mx.lineTo(tx+Math.cos(a+1.35)*18,ty+Math.sin(a+1.35)*18);mx.lineTo(tx+Math.cos(a-1.35)*18,ty+Math.sin(a-1.35)*18);mx.closePath();mx.fill();mx.stroke();
+  mx.fillStyle='#9fb0d8';mx.font='9px sans-serif';mx.fillText('MAP  N↑',6,12);
+}
+
+/* =========================================================
+   Agent engine
+   ========================================================= */
+class Abort extends Error{}
+const AG={running:false,paused:false,abort:false,speed:1,model:'claude',hitl:true,steps:0,acts:0,tools:0,tok:0,t0:0,ph:null,approveRes:null,detected:null,task:null};
+const MODEL_INFO={claude:'claude-opus-5-5 ・ Messages API ・ computer use ＋ 業務ツール（tool use）',openai:'OpenAI 最新モデル ・ Responses API ・ computer use ＋ function calling',coop:'計画・空間推論・検証＝Claude ／ UI操作実行＝OpenAI（役割分担）'};
+const PH={perceive:['知覚','eye','#38e1ff'],reason:['推論','brain','#8b7bff'],act:['操作','hand','#ffb547'],verify:['検証','shield','#3ee07f']};
+const uiModel=()=>AG.model==='coop'?'openai':AG.model;
+const fnModel=()=>AG.model==='coop'?'claude':AG.model;
+const whoFor=ph=>AG.model==='coop'?(ph==='act'?'openai':'claude'):AG.model;
+const MNAME={claude:'Claude',openai:'OpenAI'},MCOL={claude:'#f0956a',openai:'#36d6ad'},MICON={claude:'mA',openai:'mB'};
+function updModel(){$('#mdlInfo').textContent=MODEL_INFO[AG.model];$$('#modelSeg button').forEach(b=>b.classList.toggle('on',b.dataset.m===AG.model))}
+$$('#modelSeg button').forEach(b=>b.addEventListener('click',()=>{if(AG.running){toast('実行中はモデルを切り替えできません','lock','#ffb547');return}AG.model=b.dataset.m;updModel();con('エージェントモデル: '+b.textContent.trim());audit('HUMAN','CONFIG','モデル切替 → '+AG.model)}));
+function wait(ms){return new Promise((res,rej)=>{let left=ms,last=performance.now();const tick=()=>{if(AG.abort)return rej(new Abort());const n=performance.now();if(!AG.paused)left-=(n-last)*AG.speed;last=n;if(left<=0)return res();setTimeout(tick,16)};setTimeout(tick,16)})}
+function animate(ms,fn){return new Promise((res,rej)=>{let p=0,last=performance.now();const step=n=>{if(AG.abort)return rej(new Abort());if(!AG.paused)p=Math.min(1,p+(n-last)*AG.speed/ms);last=n;fn(p);if(p>=1)return res();requestAnimationFrame(step)};requestAnimationFrame(step)})}
+function metrics(){$('#mAct').textContent=AG.acts;$('#mTool').textContent=AG.tools;$('#mTok').textContent=Math.round(AG.tok).toLocaleString();$('#loopN').textContent=AG.steps;$('#nTool').textContent=$('#p-tool').children.length}
+setInterval(()=>{if(AG.running&&!AG.paused)$('#mTime').textContent=((performance.now()-AG.t0)/1000).toFixed(1)+'s'},100);
+
+/* ---------- audit (hash chain) ---------- */
+const AUD=[];let prevHash='GENESIS';
+function fnv(s){let h1=0x811c9dc5,h2=0x9747b28c;for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1^=c;h1=Math.imul(h1,0x01000193)>>>0;h2^=c;h2=Math.imul(h2,0x5bd1e995)>>>0;h2^=h2>>>13}return(h1>>>0).toString(16).padStart(8,'0')+(h2>>>0).toString(16).padStart(8,'0')}
+function audit(actor,type,detail){const e={seq:AUD.length+1,ts:new Date().toISOString(),actor,type,detail,prev:prevHash};e.hash=fnv(JSON.stringify(e));prevHash=e.hash;AUD.push(e);
+  const col=actor.startsWith('AI:Claude')?'#f0956a':actor.startsWith('AI:OpenAI')?'#36d6ad':actor==='HUMAN'?'#3ee07f':'#9fb0d8';const short=actor==='HUMAN'?'人':actor==='SYSTEM'?'SYS':actor.replace('AI:','');
+  const d=document.createElement('div');d.className='au';d.style.setProperty('--c',col);d.innerHTML=`<span class="t">${nowStr()}</span><span class="a" style="color:${col}">${short}</span><span>${esc(type)}：${esc(detail)}</span><span class="h">#${e.seq} ${e.hash}</span>`;
+  const l=$('#audList');l.prepend(d);while(l.children.length>150)l.lastChild.remove();$('#nAud').textContent=AUD.length}
+const aiActor=ph=>'AI:'+MNAME[whoFor(ph)];
+
+/* ---------- timeline / phase / messages ---------- */
+function tlAdd(ph,text,ic){const tl=$('#timeline');const ph0=tl.querySelector('.ph');ph0&&ph0.remove();tl.querySelectorAll('.st.cur').forEach(e=>e.classList.remove('cur'));
+  if(tl.children.length){const a=document.createElement('span');a.className='arrow';a.innerHTML=icon('chev');tl.appendChild(a)}
+  const c=PH[ph]?PH[ph][2]:'#9fb0d8';const s=document.createElement('span');s.className='st cur';s.style.setProperty('--c',c);s.innerHTML=icon(ic||(PH[ph]&&PH[ph][1])||'info')+esc(text);tl.appendChild(s);tl.scrollLeft=tl.scrollWidth}
+function setPhase(ph){AG.ph=ph;AG.steps++;$$('#loop .node').forEach(n=>n.classList.toggle('on',n.dataset.ph===ph));tlAdd(ph,PH[ph][0],PH[ph][1]);metrics();
+  const who=whoFor(ph);$('#bannerTx').textContent=`${MNAME[who]} が「${PH[ph][0]}」フェーズを実行中`}
+async function phase(ph){setPhase(ph);await wait(250)}
+function bubble(kind,who,ph,html){const p=$('#p-think');const d=document.createElement('div');
+  if(kind==='user'){d.className='msg user';d.style.setProperty('--c','#38e1ff');d.innerHTML=`<div class="av">${icon('worker')}</div><div class="bd"><div class="who"><b>あなた</b>${nowStr()}</div><div class="tx">${html}</div></div>`}
+  else{const c=MCOL[who];d.className='msg';d.style.setProperty('--c',c);d.innerHTML=`<div class="av">${icon(MICON[who])}</div><div class="bd"><div class="who"><b>${MNAME[who]}</b>${ph?`<span style="color:${PH[ph][2]}">${icon(PH[ph][1])} ${PH[ph][0]}</span>`:''}<span>${nowStr()}</span></div><div class="tx">${html||''}</div></div>`}
+  p.appendChild(d);p.scrollTop=p.scrollHeight;return d.querySelector('.tx')}
+async function say(ph,text){const who=whoFor(ph);const tx=bubble('ai',who,ph,'');const p=$('#p-think');
+  for(let i=0;i<=text.length;i+=2){tx.innerHTML=esc(text.slice(0,i))+'<span class="caret"></span>';if(i%12===0)p.scrollTop=p.scrollHeight;await wait(14)}
+  tx.textContent=text;p.scrollTop=p.scrollHeight;AG.tok+=text.length*1.3+60;metrics();audit(aiActor(ph),'THOUGHT',text.slice(0,60)+(text.length>60?'…':''));await wait(200)}
+
+/* ---------- tool-call log (model-specific formats) ---------- */
+function hj(o){let s=JSON.stringify(o,null,2);if(s.length>1800)s=s.slice(0,1800)+'\n…(省略)';s=s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+  return s.replace(/("(?:[^"\\]|\\.)*")(\s*:)?|(-?\b\d+(?:\.\d+)?(?:e[+-]?\d+)?\b)|\b(true|false|null)\b/g,(m,str,col,num,kw)=>str?(col?`<span class="k">${str}</span>${col}`:`<span class="s">${str}</span>`):`<span class="n">${num||kw}</span>`)}
+function logBlock(who,title,obj,isRes){const p=$('#p-tool');const d=document.createElement('div');d.className='tc'+(isRes?' res':'');d.style.setProperty('--c',MCOL[who]);
+  d.innerHTML=`<div class="tch">${icon(isRes?'checkc':MICON[who])}<b>${MNAME[who]}</b>${esc(title)}<em>${nowStr()}</em></div><pre>${hj(obj)}</pre>`;p.appendChild(d);p.scrollTop=p.scrollHeight;while(p.children.length>120)p.firstChild.remove();metrics()}
+const r2=o=>JSON.parse(JSON.stringify(o,(k,v)=>typeof v==='number'?Math.round(v*100)/100:v));
+function logComputer(a,label){
+  const m=uiModel();AG.acts++;let req,res;
+  if(m==='claude'){const id='toolu_'+rid();let input;
+    if(a.type==='click')input={action:'left_click',coordinate:[a.x,a.y]};else if(a.type==='screenshot')input={action:'screenshot'};
+    else if(a.type==='drag')input={action:'left_click_drag',start_coordinate:a.from,coordinate:a.to};else input={action:'scroll',coordinate:[a.x,a.y],scroll_direction:a.dy>0?'down':'up',scroll_amount:Math.abs(a.dy)};
+    req={type:'tool_use',id,name:'computer',input};res={type:'tool_result',tool_use_id:id,content:a.type==='screenshot'?[{type:'image',source:{type:'base64',media_type:'image/png',data:'iVBORw0KGgoAAAANSUhEUg…（ビューポート画像・省略）'}}]:[{type:'text',text:'ok'}]}}
+  else{const id='call_'+rid();let action;
+    if(a.type==='click')action={type:'click',button:'left',x:a.x,y:a.y};else if(a.type==='screenshot')action={type:'screenshot'};
+    else if(a.type==='drag')action={type:'drag',path:[{x:a.from[0],y:a.from[1]},{x:a.to[0],y:a.to[1]}]};else action={type:'scroll',x:a.x,y:a.y,scroll_x:0,scroll_y:a.dy*100};
+    req={type:'computer_call',call_id:id,action,pending_safety_checks:[],status:'completed'};res={type:'computer_call_output',call_id:id,output:{type:'computer_screenshot',image_url:'data:image/png;base64,iVBORw0KGgo…（省略）'}}}
+  logBlock(m,' ・ '+(label||a.type),req,false);if(a.type==='screenshot')logBlock(m,' ・ 結果',res,true);
+  audit('AI:'+MNAME[m],'UI_ACTION',`${a.type}${a.x!==undefined?` (${a.x},${a.y})`:''} ${label||''}`);AG.tok+=a.type==='screenshot'?1600:90;metrics();
+}
+async function fnTool(name,input,fn){
+  const m=fnModel();AG.tools++;const id=(m==='claude'?'toolu_':'call_')+rid();
+  logBlock(m,' ・ '+name,m==='claude'?{type:'tool_use',id,name,input:r2(input)}:{type:'function_call',call_id:id,name,arguments:JSON.stringify(r2(input))},false);
+  tlAdd(AG.ph||'act',name,'api');audit('AI:'+MNAME[m],'TOOL_CALL',name);await wait(450);
+  const out=await fn();const o2=r2(out||{});
+  logBlock(m,' ・ '+name+' 結果',m==='claude'?{type:'tool_result',tool_use_id:id,content:JSON.stringify(o2)}:{type:'function_call_output',call_id:id,output:JSON.stringify(o2)},true);
+  AG.tok+=JSON.stringify(o2).length*0.5+120;metrics();await wait(250);return out;
+}
+
+/* ---------- virtual cursor ---------- */
+const curEl=$('#acur');const cur={x:0,y:0};
+function setCur(x,y){cur.x=x;cur.y=y;curEl.style.transform=`translate(${x-4}px,${y-3}px)`}
+function cursorStyle(){const m=uiModel();curEl.style.setProperty('--cc',MCOL[m]);$('#acurNm').textContent=MNAME[m]+' ・ computer use'}
+function ripple(x,y){const r=document.createElement('div');r.className='ripple';r.style.left=x+'px';r.style.top=y+'px';r.style.setProperty('--cc',MCOL[uiModel()]);document.body.appendChild(r);setTimeout(()=>r.remove(),750)}
+function trail(x,y){const r=document.createElement('div');r.className='trail';r.style.left=x+'px';r.style.top=y+'px';r.style.setProperty('--cc',MCOL[uiModel()]);document.body.appendChild(r);setTimeout(()=>r.remove(),620)}
+async function moveCursor(x,y,act){$('#acurAct').textContent=act||'mouse_move';const sx=cur.x,sy=cur.y;const d=Math.hypot(x-sx,y-sy);const cx=(sx+x)/2+(y-sy)*0.2,cy=(sy+y)/2-(x-sx)*0.2;let k=0;
+  await animate(380+d*0.55,p=>{const e=ease(p),u=1-e;const px=u*u*sx+2*u*e*cx+e*e*x,py=u*u*sy+2*u*e*cy+e*e*y;setCur(px,py);if(++k%3===0&&p<1)trail(px,py)})}
+async function clickEl(sel,label){
+  const el=typeof sel==='string'?$(sel):sel;if(!el)throw new Error('UI要素が見つかりません: '+sel);
+  el.scrollIntoView({block:'nearest',inline:'nearest'});await wait(60);const r=el.getBoundingClientRect();const x=Math.round(r.left+r.width/2),y=Math.round(r.top+r.height/2);
+  await moveCursor(x,y,'left_click');logComputer({type:'click',x,y},label);ripple(x,y);el.classList.remove('agent-hit');void el.offsetWidth;el.classList.add('agent-hit');setTimeout(()=>el.classList.remove('agent-hit'),800);
+  el.click();tlAdd('act',label,'hand');await wait(330);
+}
+async function click3D(p,opts={},label){
+  const s=proj(p);const r=vp.getBoundingClientRect();if(!s)throw new Error('対象が画面外です');const x=Math.round(r.left+s.x),y=Math.round(r.top+s.y);
+  await moveCursor(x,y,'left_click');const s2=proj(p);const x2=Math.round(r.left+s2.x),y2=Math.round(r.top+s2.y);setCur(x2,y2);
+  logComputer({type:'click',x:x2,y:y2},label||'3D点をクリック');ripple(x2,y2);const out=toolAt(p,opts);tlAdd('act',label||'3Dクリック','target');await wait(320);return out;
+}
+async function dragView(dx){const r=vp.getBoundingClientRect();const sx=Math.round(r.left+r.width*0.5-dx/2),sy=Math.round(r.top+r.height*0.58);await moveCursor(sx,sy,'left_click_drag');
+  const yaw0=cam.yaw;ripple(sx,sy);let k=0;await animate(1100,p=>{const e=ease(p);setCur(sx+dx*e,sy-Math.sin(e*Math.PI)*16);cam.yaw=yaw0-dx*0.006*e;if(++k%3===0)trail(cur.x,cur.y)});
+  logComputer({type:'drag',from:[sx,sy],to:[Math.round(sx+dx),sy]},'視点を回転（死角確認）');tlAdd('act','ドラッグ回転','drag');await wait(200)}
+async function scrollView(steps,label){const r=vp.getBoundingClientRect();const x=Math.round(r.left+r.width*0.55),y=Math.round(r.top+r.height*0.5);await moveCursor(x,y,'scroll');const d0=cam.dist;
+  await animate(900,p=>{cam.dist=d0*Math.pow(0.88,steps*ease(p))});logComputer({type:'scroll',x,y,dy:-steps},label||'ズーム');tlAdd('act',label||'ズーム','zoom');await wait(200)}
+async function screenshot(label){const sf=$('#scanframe');sf.classList.add('on');$('#acurAct').textContent='screenshot';const f=$('#flash');f.classList.remove('go');void f.offsetWidth;f.classList.add('go');
+  logComputer({type:'screenshot'},label||'スクリーンショット取得');tlAdd(AG.ph||'perceive','スクリーンショット','camera');await wait(750);sf.classList.remove('on')}
+async function ensureTool(t,label){if(C&&TOOL.cur!==t)await clickEl(`#tools [data-tool="${t}"]`,label||`ツール選択：${t}`)}
+async function ensureToggle(on,label){if(ST.heatmap!==on)await clickEl('[data-toggle=heatmap]',label||'ヒートマップ切替')}
+async function ensureLayer(k,on,label){if(!!ST.layer[k]!==on)await clickEl(`#layers [data-layer="${k}"]`,label||`レイヤ切替：${k}`)}
+async function clickView(k,label){await clickEl(`.vbtn[data-view="${k}"]`,label||`視点：${k}`);await C.getLastFly()}
+
+/* ---------- approval (Human-in-the-Loop) ---------- */
+async function approve(spec){
+  tlAdd('verify','人間承認待ち','shield');audit(aiActor('verify'),'APPROVAL_REQUEST',spec.title);
+  if(!AG.hitl){await wait(400);audit('SYSTEM','AUTO_APPROVED',spec.title+'（デモ設定：人間承認OFF）');toast('人間承認がOFFのため自動承認しました（デモ設定）','shield','#ffb547');return{ok:true,auto:true,by:'自動（デモ設定）',at:new Date().toISOString()}}
+  $('#apTitle').textContent=spec.title;$('#apDesc').textContent=spec.desc;$('#apRisk').textContent='影響度：'+(spec.risk||'中');
+  $('#apKv').innerHTML=(spec.kv||[]).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join('');const im=$('#apImg');if(spec.img){im.src=spec.img;im.style.display=''}else im.style.display='none';
+  $('#mApprove').classList.add('show');$('#bannerTx').textContent='人間の承認を待っています';con('承認待ち: '+spec.title);
+  const ok=await new Promise(res=>{AG.approveRes=res});AG.approveRes=null;$('#mApprove').classList.remove('show');
+  audit('HUMAN',ok?'APPROVED':'REJECTED',spec.title);toast(ok?'承認されました：'+spec.title:'却下されました：'+spec.title,ok?'checkc':'x',ok?'#3ee07f':'#ff5d6c');
+  if(AG.abort)throw new Abort();return{ok,by:'現場代理人（デモ）',at:new Date().toISOString()};
+}
+$('#apYes').addEventListener('click',()=>AG.approveRes&&AG.approveRes(true));
+$('#apNo').addEventListener('click',()=>AG.approveRes&&AG.approveRes(false));
+
+/* ---------- report store ---------- */
+const REP=[];
+function addReport(r){r.id='R-'+String(REP.length+1).padStart(3,'0');r.at=new Date().toISOString();r.model=AG.model;REP.push(r);audit('SYSTEM','REPORT_ADD',r.id+' '+r.title);return r}
+
+/* =========================================================
+   Spatial understanding: scene graph from 3DGS
+   ========================================================= */
+const OBJDEF=[
+  {k:'emb',n:'盛土（施工中）',ic:'volume',c:'#38e1ff',g:[G.EMB],cf:.97},
+  {k:'hill',n:'切土対象（地山）',ic:'mountain',c:'#c79a62',g:[G.HILL],cf:.94},
+  {k:'rev',n:'護岸（ブロック張）',ic:'wall',c:'#a8b4c8',g:[G.REV],cf:.96,nobox:true},
+  {k:'river',n:'河川（水面）',ic:'river',c:'#3a9bff',g:[G.WATER],cf:.99,nobox:true},
+  {k:'exc',n:'バックホウ',ic:'exc',c:'#f2b72a',g:[G.EXC_B,G.EXC_U],cf:.98},
+  {k:'truck',n:'ダンプトラック',ic:'truck',c:'#ff8a3a',g:[G.TRUCK],cf:.95},
+  {k:'w1',n:'作業員 W-01（匿名）',ic:'worker',c:'#b39bff',g:[G.W1],cf:.91},
+  {k:'w2',n:'作業員 W-02（匿名）',ic:'worker',c:'#b39bff',g:[G.W2],cf:.89},
+  {k:'w3',n:'作業員 W-03（匿名）',ic:'worker',c:'#b39bff',g:[G.W3],cf:.9},
+  {k:'office',n:'仮設事務所',ic:'office',c:'#9fb0d8',g:[G.OFFICE],cf:.9}];
+async function detectScene(){
+  clearOv('det');const pane=$('#p-space');pane.innerHTML=`<div class="sec-h">${icon('cube')}シーングラフ（3DGS → 物体・3D BBox）</div>`;const out={};
+  for(const d of OBJDEF){
+    const bb=aabb(d.g);out[d.k]={...d,bb};
+    if(!d.nobox)addOv({type:'bbox',groups:d.g,color:d.c,kind:'det',label:`${icon(d.ic)}<span>${d.n}</span><em>${Math.round(d.cf*100)}%</em>`});
+    const el=document.createElement('div');el.className='sg-item';el.style.setProperty('--c',d.c);
+    el.innerHTML=`<div class="ic">${icon(d.ic,'i')}</div><div><b>${d.n}</b><small>中心(${fmt(bb.c.x,1)}, ${fmt(bb.c.y,1)}, ${fmt(bb.c.z,1)}) ／ ${fmt(bb.d.x,1)}×${fmt(bb.d.z,1)}×${fmt(bb.d.y,1)}m ／ ${bb.n} splats</small></div><div class="cf">${Math.round(d.cf*100)}%<i style="width:${d.cf*100}%"></i></div>`;
+    pane.appendChild(el);$('#nObj').textContent=Object.keys(out).length;await wait(170);
+  }
+  const wmin=Math.min(...workerState.map(w=>Math.hypot(w.x-EXC.x,w.z-EXC.z)));const tp=C.truckPos(sim.t);
+  const toe=Math.hypot(Math.max(-14-EXC.x,0,EXC.x-10),Math.max(0,Math.abs(EXC.z)-14));
+  const rel=[`バックホウ ─ 盛土法尻：${fmt(toe,1)} m`,`バックホウ ─ 最寄り作業員：${fmt(wmin,1)} m`,`ダンプ ─ バックホウ：${fmt(Math.hypot(tp.x-EXC.x,tp.z-EXC.z),1)} m`,`盛土 天端（現況最高）：EL ${fmt(out.emb.bb.max.y,2)} m`,`護岸 延長：${fmt(out.rev.bb.d.z,1)} m（法勾配 約1:1.18）`];
+  pane.insertAdjacentHTML('beforeend',`<div class="sec-h" style="margin-top:10px">${icon('link')}空間関係（AIが推論に使用）</div>`+rel.map(r=>`<div class="rel">${r}</div>`).join(''));
+  AG.detected=out;return out;
+}
+
+/* =========================================================
+   Scenarios
+   ========================================================= */
+const SC={};
+SC.asbuilt=async()=>{
+  await phase('perceive');
+  await say('perceive','まず現在のビューポートを撮影し、3DGSシーングラフ（物体ラベル・3D BBox・座標）を取得して現場を把握します。');
+  await clickView('all','視点：全体');await screenshot();
+  const sg=await fnTool('get_scene_graph',{source:'3dgs_viewport',include:['semantic_label','bbox_3d','relations'],anonymize_persons:true},async()=>{const o=await detectScene();return{objects:Object.keys(o).length,splats:N,coordinate_system:'現場座標(m), Y=標高',persons:'匿名ID W-01〜W-03（外見情報なし）'}});
+  await dragView(150);
+  const e=AG.detected.emb.bb;
+  await say('perceive',`盛土（約${fmt(e.d.x,0)}m×${fmt(e.d.z,0)}m、天端EL約${fmt(e.max.y,1)}m）、切土対象の地山、護岸、河川、バックホウ、ダンプ、作業員3名を認識しました。作業員は匿名IDと位置のみで扱います。`);
+  await phase('reason');
+  await say('reason','出来形の判定には設計面との比較が必要です。①設計面レイヤを表示 → ②出来形ヒートマップで面的に偏差を把握 → ③最大不足箇所の横断を確認 → ④規格値で統計判定 → ⑤所見を注記して帳票化、の順に進めます。');
+  await phase('act');
+  await clickView('emb','視点：盛土');
+  await ensureLayer('design',true,'レイヤ：設計面 ON');await wait(500);
+  await ensureToggle(true,'出来形ヒートマップ ON');await wait(300);
+  await screenshot('ヒートマップを視覚確認');
+  const s=await fnTool('compute_deviation',{target:'embankment',reference:'design_surface',tolerance_m:0.2,method:'splat_vs_design_TIN'},async()=>devStats(0.2));
+  await say('reason',`偏差：平均 ${s.mean>=0?'+':''}${fmt(s.mean,3)} m、標準偏差 ${fmt(s.std,3)} m、最大不足 ${fmt(s.min)} m、最大過剰 +${fmt(s.max)} m。規格外は ${s.out_under+s.out_over} 点です。最大不足箇所の横断を確認します。`);
+  await ensureTool('section','ツール：断面');await click3D(s.worstP,{},'最大不足箇所で横断表示');await wait(1300);
+  await ensureTool('annotate','ツール：注記');
+  await click3D(s.worstP,{label:`最大不足 ${fmt(s.min)}m（追加盛土・再転圧）`,color:'#ff5d6c',icon:'alert'},'注記：最大不足');
+  await click3D(s.maxP,{label:`最大過剰 +${fmt(s.max)}m（敷均し調整）`,color:'#ffb547',icon:'alert'},'注記：最大過剰');
+  await ensureTool('select','ツール：視点');
+  await phase('verify');await screenshot('結果を視覚検証');
+  const pass=s.pass_rate>=95;const verdict=pass?'合格':'是正要（不足部の手直し後に再計測）';
+  await say('verify',`判定：規格値±0.20m（サンプル設定）に対する合格率は ${fmt(s.pass_rate,1)}%（${s.n}点中 ${s.n-s.out_under-s.out_over}点）。不足側 ${s.out_under}点・過剰側 ${s.out_over}点。サンプル基準（95%以上）により「${verdict}」と判断します。帳票ドラフトを作成し、確定前に承認を依頼します。`);
+  const img=capture(true);
+  const ap=await approve({title:'出来形管理帳票（ドラフト）を確定し、レポートに登録',desc:'AIが3DGS点群と設計面の差分から作成した出来形判定です。確定すると業務レポートに登録されます（外部送信は行いません）。',risk:'中（発注者提出書類の基礎資料）',
+    kv:[['対象','盛土（施工中）'],['評価点数',s.n+' 点'],['合格率',fmt(s.pass_rate,1)+' %'],['最大不足／過剰',`${fmt(s.min)} m ／ +${fmt(s.max)} m`],['AI判定',verdict]],img});
+  if(!ap.ok){await say('verify','承認されなかったため、帳票は確定せずドラフトのまま保持します。指摘があれば指示してください。');return}
+  addReport({type:'asbuilt',title:'盛土 出来形管理（面管理）',icon:'heat',color:'#38e1ff',verdict:pass?['ok','合格']:['ng','是正要'],
+    kv:[['評価方式','3DGS点群 × 設計面 差分（面管理）'],['評価点数',s.n+' 点'],['平均偏差',fmt(s.mean,3)+' m'],['標準偏差',fmt(s.std,3)+' m'],['最大不足',fmt(s.min)+' m'],['最大過剰','+'+fmt(s.max)+' m'],['規格値（サンプル）','±0.20 m'],['合格率',fmt(s.pass_rate,1)+' %'],['規格外（不足／過剰）',`${s.out_under} ／ ${s.out_over} 点`]],
+    findings:`盛土天端の一部（北側中央付近）に最大 ${fmt(s.min)}m の不足が面的に分布。追加盛土・再転圧後に再計測を推奨。南側に +${fmt(s.max)}m の過剰があり敷均しで調整可能。`,snapshot:img,approval:ap});
+  await clickEl('#btnReport','レポートを開く');
+};
+SC.earthwork=async()=>{
+  await phase('perceive');
+  await say('perceive','土量計算の対象を確認します。スクリーンショットとシーングラフから、切土対象の地山と盛土の位置・規模を把握します。');
+  await clickView('all','視点：全体');await screenshot();
+  if(!AG.detected)await fnTool('get_scene_graph',{source:'3dgs_viewport',include:['semantic_label','bbox_3d']},async()=>{const o=await detectScene();return{objects:Object.keys(o).length}});
+  const h=AG.detected.hill.bb;
+  await say('perceive',`切土対象の地山は中心(${fmt(h.c.x,1)}, ${fmt(h.c.z,1)})付近、最高EL約${fmt(h.max.y,1)}m。盛土は設計に対して不足部が残っています。`);
+  await phase('reason');
+  await say('reason','①切土範囲を多角形で囲み、基準高±0mより上の体積をグリッド積分 → ②盛土の設計面と現況の差から必要盛土量を算出 → ③土量変化率を考慮して運搬台数を試算、の順で土量バランスを確認します。');
+  await phase('act');
+  await clickView('cut','視点：切土');await ensureTool('volume','ツール：土量');
+  const poly=[];for(let k=0;k<6;k++){const a=k/6*Math.PI*2+0.3;const x=-32+Math.cos(a)*10.5,z=6+Math.sin(a)*10.5;poly.push({x,y:T.H(x,z)+0.1,z})}
+  for(let k=0;k<poly.length;k++)await click3D(poly[k],{},`範囲頂点 P${k+1}`);
+  await clickEl('#polyDone','範囲を確定');
+  const v=await fnTool('read_measurement',{panel:'results',item:'latest_volume'},async()=>({cut_m3:TOOL.last.cut,fill_m3:TOOL.last.fill,area_m2:TOOL.last.area,base_level_m:0,grid_m:0.5}));
+  await ensureTool('select','ツール：視点');await clickView('emb','視点：盛土');
+  const b=await fnTool('compute_fill_requirement',{target:'embankment',reference:'design_surface',grid_m:0.5},async()=>{const e=embBalance();return{design_volume_m3:e.design,current_volume_m3:e.current,shortage_m3:e.under,surplus_m3:e.over,net_required_m3:e.under-e.over}});
+  const need=Math.max(0,b.under!==undefined?b.under-b.over:b.shortage_m3-b.surplus_m3);
+  const Cf=0.9,Lf=1.25,cap=6.0;
+  const hp=await fnTool('plan_haulage',{cut_bank_m3:v.cut_m3,fill_required_m3:need,compaction_C:Cf,loosening_L:Lf,truck_capacity_m3:cap},async()=>{const bank=need/Cf,loose=bank*Lf;const sur=v.cut_m3-bank;return{bank_needed_m3:bank,loose_haul_m3:loose,truck_trips:Math.ceil(loose/cap),surplus_bank_m3:sur,haul_out_loose_m3:sur*Lf,haul_out_trips:Math.ceil(sur*Lf/cap)}});
+  addOv({type:'line',a:{x:-30,y:T.H(-30,4)+2,z:4},b:{x:-6,y:5.5,z:0},color:'#ff8a3a',kind:'meas',label:`${icon('truck')}<span>運搬計画 ${hp.truck_trips}台（ほぐし ${fmt(hp.loose_haul_m3,0)}m³）</span>`});
+  await phase('verify');await clickView('all','視点：全体');await screenshot('結果を視覚検証');
+  await say('verify',`切土量 ${fmt(v.cut_m3,0)} m³（地山）に対し、盛土の必要量は ${fmt(need,1)} m³（締固め後）。C=${Cf}・L=${Lf}（サンプル値）で地山換算 ${fmt(hp.bank_needed_m3,1)} m³、運搬土量 ${fmt(hp.loose_haul_m3,1)} m³、${cap}m³積みで ${hp.truck_trips} 台。残る地山 ${fmt(hp.surplus_bank_m3,0)} m³ は余剰で、場外搬出する場合はほぐし ${fmt(hp.haul_out_loose_m3,0)} m³・延べ ${hp.haul_out_trips} 台が必要です。流用先を含む土量配分計画を推奨します。`);
+  const img=capture(true);
+  const ap=await approve({title:'土量計算・運搬計画を確定し、レポートに登録',desc:'3DGS地形モデルからAIが算出した土量と運搬台数の試算です。土量変化率・積載量はサンプル値です。',risk:'中（工程・原価計画に影響）',
+    kv:[['切土量（地山）',fmt(v.cut_m3,0)+' m³'],['盛土必要量',fmt(need,1)+' m³'],['運搬土量（ほぐし）',fmt(hp.loose_haul_m3,1)+' m³'],['ダンプ台数（盛土へ）',hp.truck_trips+' 台'],['余剰地山の場外搬出',hp.haul_out_trips+' 台（延べ）']],img});
+  if(!ap.ok){await say('verify','承認されなかったため、計算結果はドラフトのまま保持します。');return}
+  addReport({type:'earthwork',title:'土量計算・運搬計画',icon:'volume',color:'#ffb547',verdict:['wa','要配分計画'],
+    kv:[['切土範囲面積',fmt(v.area_m2,0)+' m²'],['切土量（地山）',fmt(v.cut_m3,0)+' m³'],['盛土 設計体積',fmt(b.design_volume_m3,0)+' m³'],['盛土 現況体積',fmt(b.current_volume_m3,0)+' m³'],['不足／過剰',`${fmt(b.shortage_m3,1)} ／ ${fmt(b.surplus_m3,1)} m³`],['盛土必要量（締固め後）',fmt(need,1)+' m³'],['変化率 C／L（サンプル）',`${Cf} ／ ${Lf}`],['運搬土量（ほぐし）',fmt(hp.loose_haul_m3,1)+' m³'],['ダンプ台数（'+cap+'m³積）',hp.truck_trips+' 台'],['残地山（余剰）',fmt(hp.surplus_bank_m3,0)+' m³'],['場外搬出（仮定）',`ほぐし ${fmt(hp.haul_out_loose_m3,0)} m³ ／ 延べ ${hp.haul_out_trips} 台`]],
+    findings:`盛土の不足分は切土で十分賄える。切土の大部分は余剰となるため、場外搬出または他工区への流用を含む土量配分計画を作成すること。`,snapshot:img,approval:ap});
+  await clickEl('#btnReport','レポートを開く');
+};
+SC.safety=async()=>{
+  await phase('perceive');
+  await say('perceive','重機と作業員の位置関係を確認します。人物は匿名化した状態でのみ追跡します。');
+  if(!ST.privacy){await say('reason','ポリシー上、人物の匿名化が必要です。匿名化を有効化してから進めます。');await clickEl('#privToggle','人物の自動匿名化 ON')}
+  await clickView('exc','視点：重機');await screenshot();
+  const tr=await fnTool('track_objects',{classes:['excavator','worker'],anonymize_persons:true,retain_appearance:false},async()=>{
+    ST.hi.set(G.EXC_U,[1,.9,.3]);ST.hi.set(G.EXC_B,[1,.9,.3]);
+    const ws=workerState.map((w,k)=>({id:'W-0'+(k+1),x:w.x,z:w.z,dist_to_excavator_m:Math.hypot(w.x-EXC.x,w.z-EXC.z)}));
+    clearOv('det');addOv({type:'bbox',groups:[G.EXC_B,G.EXC_U],color:'#f2b72a',kind:'det',label:`${icon('exc')}<span>バックホウ（旋回中）</span><em>98%</em>`});
+    [G.W1,G.W2,G.W3].forEach((g,k)=>addOv({type:'bbox',groups:[g],color:'#b39bff',kind:'det',pad:4,label:`${icon('worker')}<span>W-0${k+1}</span><em>匿名</em>`}));
+    return{excavator:{x:EXC.x,z:EXC.z,state:'swinging'},workers:ws}});
+  await phase('reason');
+  await say('reason','危険エリアの半径は「旋回中心〜バケット先端の水平距離＋余裕1.0m」とします。まず距離ツールで作業半径を実測します。');
+  await phase('act');
+  await ensureTool('distance','ツール：距離');
+  await click3D({x:EXC.x,y:EXC.y+1.0,z:EXC.z},{color:'#f2b72a'},'旋回中心をクリック');
+  const bw=C.bucketWorld();const reach=await click3D(bw,{color:'#f2b72a',label:'作業半径'},'バケット先端をクリック');
+  const R=Math.ceil(((reach?reach.dh:6.4)+1.0)*10)/10;
+  await say('reason',`作業半径（水平）は ${fmt(reach?reach.dh:6.4)} m。余裕1.0mを加え、危険エリア半径を ${fmt(R,1)} m に設定します。`);
+  await ensureTool('hazard','ツール：危険域');
+  let intr=false;const ring=await click3D({x:EXC.x,y:EXC.y,z:EXC.z},{radius:R,colorFn:()=>intr?'#ff3d52':(sim.excPaused?'#ffb547':'#ff5d6c')},'旋回中心に危険エリア設定');
+  await ensureTool('select','ツール：視点');
+  const links=[];
+  const res=await fnTool('monitor_clearance',{zone_id:'HZ-01',radius_m:R,targets:['W-01','W-02','W-03'],interval_ms:500,stop_on:'intrusion'},async()=>{
+    [0,1,2].forEach(k=>{const dd=()=>Math.hypot(workerState[k].x-EXC.x,workerState[k].z-EXC.z);
+      links.push(addOv({type:'link',a:()=>({x:EXC.x,y:EXC.y+1.2,z:EXC.z}),b:()=>({x:workerState[k].x,y:workerState[k].y+1.0,z:workerState[k].z}),color:'#3ee07f',kind:'link',colorFn:()=>dd()<R?'#ff3d52':dd()<R+3?'#ffb547':'#3ee07f',label:'',labelFn:()=>`${icon('worker')}<span>W-0${k+1}　${fmt(dd(),1)} m</span>`}))});
+    const t0=performance.now();let minD=1e9,minW='',events=[];let realT=0;
+    while(true){await wait(250);realT+=250;const ds=workerState.map(w=>Math.hypot(w.x-EXC.x,w.z-EXC.z));ds.forEach((d,k)=>{if(d<minD){minD=d;minW='W-0'+(k+1)}});
+      const k=ds.findIndex(d=>d<R);if(k>=0&&!intr){intr=true;events.push({t:nowStr(),worker:'W-0'+(k+1),distance_m:ds[k]});toast(`侵入検知：W-0${k+1} が危険エリア内（${fmt(ds[k],1)} m）`,'hazard','#ff3d52',5000);audit('SYSTEM','ALERT',`HZ-01 侵入 W-0${k+1} ${fmt(ds[k],1)}m`);}
+      if(intr&&realT>1500)break;if((performance.now()-t0)>40000)break}
+    return{monitored_s:(performance.now()-t0)/1000,intrusion:intr,events,min_distance_m:minD,min_worker:minW}});
+  await phase('verify');await screenshot('状況を視覚検証');
+  await say('verify',res.intrusion?`危険エリア（R=${fmt(R,1)}m）への侵入を検知しました（${res.events[0].worker}、${fmt(res.events[0].distance_m,1)} m）。最小離隔は ${fmt(res.min_distance_m,1)} m。旋回の一時停止を推奨します。重機の停止指示は人の判断が必要なため承認を依頼します。`:`監視時間内に侵入はありませんでした。最小離隔 ${fmt(res.min_distance_m,1)} m。`);
+  const img=capture(true);
+  const ap=await approve({title:'重機オペレーターへ「旋回一時停止」アラートを送信',desc:'デモでは画面内の重機アニメーション停止と通知のみを行います。実運用では現場の無線・警報装置連携を想定し、最終判断は必ず人が行います。',risk:'高（作業停止を伴う）',
+    kv:[['危険エリア','HZ-01 半径 '+fmt(R,1)+' m'],['侵入','あり：'+(res.events[0]?res.events[0].worker:'-')],['最小離隔',fmt(res.min_distance_m,1)+' m'],['人物情報','匿名ID・位置のみ（外見情報なし）']],img});
+  if(ap.ok){sim.excPaused=true;intr=false;toast('バックホウ：旋回一時停止（デモ）','exc','#ffb547',4500);await say('verify','アラートを送信し、旋回を一時停止しました。作業員の退避確認後、オペレーターの判断で再開してください。')}
+  else await say('verify','承認されなかったため、アラートは送信しません。監視は継続可能です。');
+  addReport({type:'safety',title:'重機 安全離隔チェック',icon:'hazard',color:'#ff5d6c',verdict:res.intrusion?['ng','侵入あり']:['ok','侵入なし'],
+    kv:[['危険エリア','HZ-01（旋回中心）'],['作業半径（実測）',fmt(reach?reach.dh:6.4)+' m'],['設定半径',fmt(R,1)+' m'],['監視時間',fmt(res.monitored_s,1)+' s'],['侵入イベント',res.events.map(e=>`${e.worker} ${fmt(e.distance_m,1)}m`).join(', ')||'なし'],['最小離隔',`${fmt(res.min_distance_m,1)} m（${res.min_worker}）`],['アラート送信',ap.ok?'送信（旋回一時停止）':'未送信']],
+    findings:'旋回範囲内への立入りが発生。立入禁止柵・誘導員の配置、合図者との連携手順の再周知を推奨。人物は匿名化して扱い、個人の評価・監視には使用しない。',snapshot:img,approval:ap});
+};
+SC.inspect=async()=>{
+  await phase('perceive');
+  await say('perceive','護岸の変状点検を行います。護岸正面へ視点を移動し、近接して点群をスキャンします。');
+  await clickView('rev','視点：護岸');await scrollView(1,'近接ズーム');await screenshot();
+  ST.scan={axis:'z',pos:-14};const sf=$('#scanframe');sf.classList.add('on');await animate(2400,p=>{ST.scan.pos=-14+p*34});ST.scan=null;sf.classList.remove('on');
+  const df=await fnTool('detect_defects',{target:'revetment',classes:['crack','spalling','joint_gap'],min_length_m:0.3},async()=>{
+    ST.crackHi=true;clearOv('det');
+    for(const c of CRACKS){addOv({type:'bbox',range:[c.s,c.e],color:'#ff5d6c',kind:'det',pad:10,label:`${icon('crack')}<span>${c.id} ひび割れ</span><em>${(0.86+c.len*0.03).toFixed(2)}</em>`});await wait(250)}
+    return{detections:CRACKS.map(c=>({id:c.id,class:'crack',start:c.pts[0],end:c.pts[c.pts.length-1],polyline_length_m:c.len}))}});
+  await phase('reason');
+  await say('reason',`ひび割れを ${CRACKS.length} 件検出しました。各ひび割れの端点間を距離ツールで実測し、折れ線延長と合わせて判定区分（サンプル基準：1.5m未満Ⅰ／2.5m未満Ⅱ／以上Ⅲ）を付与します。`);
+  await phase('act');await ensureTool('distance','ツール：距離');
+  const rows=[];
+  for(const c of CRACKS){const a=c.pts[0],b=c.pts[c.pts.length-1];await click3D(a,{color:'#ff7ad9'},`${c.id} 始点`);const m=await click3D(b,{color:'#ff7ad9',label:c.id+' 端点間'},`${c.id} 終点`);rows.push({c,m})}
+  await ensureTool('annotate','ツール：注記');
+  for(const {c} of rows){const cls=c.len<1.5?'Ⅰ 経過観察':c.len<2.5?'Ⅱ 予防保全':'Ⅲ 早期措置';c.cls=cls;const mid=c.pts[Math.floor(c.pts.length/2)];
+    await click3D({x:mid.x+0.05,y:mid.y+0.15,z:mid.z},{label:`${c.id} 延長${fmt(c.len)}m 判定${cls}`,color:cls.startsWith('Ⅲ')?'#ff5d6c':cls.startsWith('Ⅱ')?'#ffb547':'#3ee07f',icon:'crack'},`${c.id} 判定を注記`)}
+  await ensureTool('select','ツール：視点');
+  await phase('verify');await screenshot('結果を視覚検証');
+  await say('verify',`判定：${rows.map(r=>`${r.c.id}＝${r.c.cls}（延長${fmt(r.c.len)}m）`).join('、')}。なお、ひび割れ幅は3DGSの解像度では確定できないため、Ⅲ判定箇所はクラックスケールによる近接目視での確認を推奨します。`);
+  const img=capture(true);
+  const ap=await approve({title:'護岸 点検調書（ドラフト）をレポートに登録',desc:'3DGS点群からAIが検出・計測した変状一覧です。幅の計測は近接目視で補完が必要です。',risk:'中（維持管理計画の基礎資料）',
+    kv:rows.map(r=>[r.c.id,`延長 ${fmt(r.c.len)}m ／ 端点間 ${fmt(r.m?r.m.d:0)}m ／ ${r.c.cls}`]),img});
+  if(!ap.ok){await say('verify','承認されなかったため、点検調書はドラフトのまま保持します。');return}
+  addReport({type:'inspect',title:'護岸 変状点検（ひび割れ）',icon:'crack',color:'#8b7bff',verdict:rows.some(r=>r.c.cls.startsWith('Ⅲ'))?['ng','早期措置あり']:['ok','経過観察'],
+    kv:rows.flatMap(r=>[[`${r.c.id} 延長（折れ線）`,fmt(r.c.len)+' m'],[`${r.c.id} 端点間距離`,fmt(r.m?r.m.d:0)+' m'],[`${r.c.id} 判定区分`,r.c.cls]]),
+    findings:'Ⅲ判定箇所は早期に近接目視・幅計測を実施し、補修工法（注入・充填等）を検討すること。判定区分は本サンプルの仮基準であり、実業務では各管理者の点検要領に従う。',snapshot:img,approval:ap});
+  await clickEl('#btnReport','レポートを開く');
+};
+
+/* ---------- runner ---------- */
+const SC_NAME={asbuilt:'盛土 出来形管理',earthwork:'土量計算・運搬計画',safety:'重機 安全離隔チェック',inspect:'護岸 変状点検'};
+async function runScenario(key,userText){
+  if(AG.running){toast('エージェントは実行中です','info','#ffb547');return}
+  Object.assign(AG,{running:true,paused:false,abort:false,steps:0,acts:0,tools:0,tok:0,t0:performance.now(),task:key});
+  $('#timeline').innerHTML='';$('#p-tool').innerHTML='';metrics();
+  $$('.task').forEach(t=>t.classList.toggle('running',t.dataset.sc===key));
+  $('#agState').className='st run';$('#agState').innerHTML='<i></i>実行中：'+SC_NAME[key];$('#loop').classList.add('run');
+  vp.classList.add('autopilot');$('#banner').classList.add('show');cursorStyle();const r=vp.getBoundingClientRect();setCur(r.left+r.width/2,r.top+r.height/2);curEl.classList.add('show');
+  $('#cPause').disabled=false;$('#cStop').disabled=false;$$('#tabs button')[0].click();
+  bubble('user',null,null,esc(userText||SC_NAME[key]+'をお願いします'));audit('HUMAN','TASK',userText||SC_NAME[key]);con(`タスク開始：${SC_NAME[key]}（${MNAME[whoFor('reason')]}）`);
+  let ok=false;
+  try{await SC[key]();ok=true;$(`.task[data-sc="${key}"]`).classList.add('done');tlAdd('verify','完了','checkc');toast(`タスク完了：${SC_NAME[key]}`,'checkc','#3ee07f')}
+  catch(e){if(e instanceof Abort){bubble('ai',whoFor('verify'),null,'ユーザー操作により停止しました。途中までの計測結果は保持しています。');tlAdd('verify','停止','stop');audit('HUMAN','STOP',SC_NAME[key])}
+    else{console.error(e);bubble('ai',whoFor('verify'),null,'エラーが発生したため中断しました：'+esc(e.message));toast('エラー：'+e.message,'alert','#ff5d6c')}}
+  finally{AG.running=false;AG.paused=false;AG.abort=false;$$('.task').forEach(t=>t.classList.remove('running'));$('#agState').className='st';$('#agState').innerHTML='<i></i>待機中';$('#loop').classList.remove('run');$$('#loop .node').forEach(n=>n.classList.remove('on'));
+    vp.classList.remove('autopilot');$('#banner').classList.remove('show');curEl.classList.remove('show');$('#cPause').disabled=true;$('#cStop').disabled=true;$('#cPause').innerHTML=icon('pause');ST.hi.clear();if(TOOL.cur!=='select')setTool('select');
+    audit('SYSTEM','TASK_END',`${SC_NAME[key]} ${ok?'完了':'中断'} steps=${AG.steps} actions=${AG.acts} tools=${AG.tools}`);con(`タスク${ok?'完了':'終了'}：${SC_NAME[key]}`)}
+}
+$$('.task').forEach(t=>t.addEventListener('click',()=>runScenario(t.dataset.sc)));
+function route(s){if(/出来形|ヒート|設計面|偏差|仕上/.test(s))return'asbuilt';if(/土量|体積|切土|運搬|残土|土工/.test(s))return'earthwork';if(/安全|離隔|危険|重機|旋回|作業員|ヒヤリ|バックホウ/.test(s))return'safety';if(/護岸|ひび|亀裂|点検|変状|クラック/.test(s))return'inspect';if(/盛土/.test(s))return'asbuilt';return null}
+function ask(){const tx=$('#askTx').value.trim();if(!tx)return;$('#askTx').value='';const k=route(tx);
+  if(!k){bubble('user',null,null,esc(tx));bubble('ai',whoFor('reason'),'reason','（オフライン版）この指示は対応業務に分類できませんでした。対応できるのは「出来形管理」「土量計算・運搬計画」「重機の安全離隔」「護岸の変状点検」です。例：「盛土の出来形をチェックして」');return}
+  runScenario(k,tx)}
+$('#askBtn').addEventListener('click',ask);$('#askTx').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();ask()}});
+$('#cPause').addEventListener('click',()=>{if(!AG.running)return;AG.paused=!AG.paused;$('#cPause').innerHTML=icon(AG.paused?'play':'pause');$('#agState').innerHTML='<i></i>'+(AG.paused?'一時停止中':'実行中：'+SC_NAME[AG.task]);$('#loop').classList.toggle('run',!AG.paused);if(AG.paused)$('#bannerTx').textContent='一時停止中（人が操作できます）';audit('HUMAN',AG.paused?'PAUSE':'RESUME',SC_NAME[AG.task])});
+$('#cStop').addEventListener('click',()=>{if(!AG.running)return;AG.abort=true;AG.paused=false;if(AG.approveRes)AG.approveRes(false)});
+$$('#spd button').forEach(b=>b.addEventListener('click',()=>{AG.speed=+b.dataset.s;$$('#spd button').forEach(x=>x.classList.toggle('on',x===b))}));
+$('#hitlSw').addEventListener('click',e=>{AG.hitl=!AG.hitl;e.currentTarget.classList.toggle('on',AG.hitl);audit('HUMAN','CONFIG','人間承認 '+(AG.hitl?'ON':'OFF（デモ）'));if(!AG.hitl)toast('人間承認をOFFにしました（デモ用）。本番では確定・提出・停止指示は必ず人が承認してください。','shield','#ffb547',5200)});
+$$('#tabs button').forEach(b=>b.addEventListener('click',()=>{$$('#tabs button').forEach(x=>x.classList.toggle('on',x===b));$$('.pane').forEach(p=>p.classList.toggle('on',p.id==='p-'+b.dataset.p))}));
+document.addEventListener('keydown',e=>{if(e.target.tagName==='TEXTAREA')return;if(e.code==='Space'&&AG.running){e.preventDefault();$('#cPause').click()}
+  if(e.key==='Escape'){if($('.modal.show:not(#mApprove)')){$$('.modal.show').forEach(m=>{if(m.id!=='mApprove')m.classList.remove('show')})}else if(TOOL.cur!=='select')setTool('select')}});
+
+/* =========================================================
+   Report / API / Architecture modals
+   ========================================================= */
+function reportHTML(forExport){
+  if(!REP.length)return`<div class="empty" style="text-align:center;padding:30px">${icon('report','i xl')}<br><br>まだ登録されたレポートはありません。<br>右パネルのタスクをAIエージェントに実行させ、承認すると登録されます。</div>`;
+  const head=`<div class="rcard" style="background:linear-gradient(160deg,rgba(56,225,255,.08),rgba(139,123,255,.06))"><h4>${icon('office')}○○川 築堤・護岸工事（サンプル現場）</h4><table><tr><td>作成</td><td>${new Date().toLocaleString('ja-JP')}</td></tr><tr><td>作成者</td><td>空間AIエージェント（${esc(MODEL_INFO[AG.model])}）</td></tr><tr><td>登録件数</td><td>${REP.length} 件</td></tr><tr><td>監査ログ</td><td>${AUD.length} 件 ／ 最終ハッシュ ${prevHash}</td></tr></table></div>`;
+  return head+REP.map(r=>`<div class="rcard"><h4 style="color:${r.color}">${icon(r.icon)}<span style="color:var(--tx)">${r.id}　${esc(r.title)}</span><span class="vd ${r.verdict[0]}">${esc(r.verdict[1])}</span></h4><table>${r.kv.map(([k,v])=>`<tr><td>${esc(k)}</td><td>${esc(v)}</td></tr>`).join('')}</table>
+    <div style="margin-top:8px;font-size:12px;line-height:1.7;color:var(--tx2)"><b style="color:var(--tx)">AI所見：</b>${esc(r.findings)}</div>${r.snapshot?`<img src="${r.snapshot}" alt="snapshot">`:''}
+    <div class="rmeta">承認：${esc(r.approval.by)} ／ ${new Date(r.approval.at).toLocaleString('ja-JP')} ／ モデル：${r.model}</div></div>`).join('')+
+    `<div class="note">本レポートはAIが作成したドラフトです。数値は3DGSモデル（サンプル）からの算出値であり、規格値・判定基準・土量変化率等はサンプル設定です。実業務では発注者基準・社内基準に従い、責任者が確認してください。</div>`;
+}
+function openReport(){$('#repBody').innerHTML=reportHTML();$('#mReport').classList.add('show')}
+$('#btnReport').addEventListener('click',openReport);
+function dl(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},500)}
+$('#repHtml').addEventListener('click',()=>{const css=[...document.querySelectorAll('style')].map(s=>s.textContent).join('\n');const sym=document.querySelector('svg defs').outerHTML;
+  const html=`<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><title>AI業務レポート ${new Date().toLocaleDateString('ja-JP')}</title><style>${css}html,body{overflow:auto;height:auto}body{padding:24px;max-width:900px;margin:0 auto}</style></head><body><svg width="0" height="0" style="position:absolute">${sym}</svg><h2 style="margin-bottom:14px">AI作成 業務レポート（ドラフト）</h2>${reportHTML(true)}<h3 style="margin:18px 0 8px">監査ログ</h3><pre class="code">${esc(JSON.stringify(AUD,null,1))}</pre></body></html>`;
+  dl(`AI業務レポート_${Date.now()}.html`,new Blob([html],{type:'text/html'}));audit('HUMAN','EXPORT','レポートHTML保存')});
+$('#repJson').addEventListener('click',()=>{dl(`AI業務レポート_${Date.now()}.json`,new Blob([JSON.stringify({site:'○○川 築堤・護岸工事（サンプル）',generated:new Date().toISOString(),reports:REP.map(r=>({...r,snapshot:r.snapshot?'(jpeg dataURL 省略)':null})),audit:AUD},null,2)],{type:'application/json'}));audit('HUMAN','EXPORT','レポートJSON保存')});
+$('#audExport').addEventListener('click',()=>dl(`監査ログ_${Date.now()}.json`,new Blob([JSON.stringify(AUD,null,2)],{type:'application/json'})));
+$$('.modal').forEach(m=>{m.addEventListener('click',e=>{if(e.target===m&&m.id!=='mApprove')m.classList.remove('show')});m.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>m.classList.remove('show')))});
+
+const CODE={
+claude:`// サーバ側（社内プロキシ）から呼び出す想定。APIキーはブラウザに置かない。
+POST https://api.anthropic.com/v1/messages
+x-api-key: $ANTHROPIC_API_KEY
+anthropic-version: 2023-06-01
+anthropic-beta: computer-use-<最新バージョン>      // ※最新ドキュメントで確認
+
+{
+  "model": "claude-opus-5-5",
+  "max_tokens": 4096,
+  "system": "あなたは土木施工管理の空間AIエージェント。画面と3Dシーングラフから現場を理解し、UIツールを操作して業務を完了する。確定・提出・作業停止は必ず人間承認を求める。人物は匿名IDと位置のみで扱う。",
+  "tools": [
+    { "type": "computer_<最新バージョン>", "name": "computer",
+      "display_width_px": 1440, "display_height_px": 900 },
+    { "name": "get_scene_graph",
+      "description": "3DGSビューポートの物体ラベル・3D BBox・空間関係を返す",
+      "input_schema": { "type": "object", "properties": {
+        "include": { "type": "array", "items": { "type": "string" } },
+        "anonymize_persons": { "type": "boolean" } } } },
+    { "name": "compute_deviation",
+      "description": "盛土点群と設計面の偏差統計（平均・最大・合格率）を返す",
+      "input_schema": { "type": "object", "properties": {
+        "target": { "type": "string" }, "tolerance_m": { "type": "number" } },
+        "required": ["target"] } }
+  ],
+  "messages": [{ "role": "user", "content": [
+    { "type": "text", "text": "盛土の出来形をチェックして報告書にまとめて" },
+    { "type": "image", "source": { "type": "base64", "media_type": "image/png", "data": "<viewport screenshot>" } }
+  ]}]
+}
+
+// 応答の tool_use（例）
+{ "type": "tool_use", "name": "computer", "input": { "action": "left_click", "coordinate": [118, 214] } }
+→ クライアントで実行し tool_result（スクリーンショット）を返す → 次のターンへ`,
+openai:`// サーバ側（社内プロキシ）から呼び出す想定。APIキーはブラウザに置かない。
+POST https://api.openai.com/v1/responses
+Authorization: Bearer $OPENAI_API_KEY
+
+{
+  "model": "<computer use 対応の最新モデル>",          // ※最新ドキュメントで確認
+  "tools": [
+    { "type": "computer_use_preview",                      // ※ツール型名は最新版を確認
+      "display_width": 1440, "display_height": 900, "environment": "browser" },
+    { "type": "function", "name": "compute_volume",
+      "description": "多角形範囲の切土・盛土体積をグリッド積分で返す",
+      "parameters": { "type": "object", "properties": {
+        "polygon": { "type": "array", "items": { "type": "object" } },
+        "base_level_m": { "type": "number" } }, "required": ["polygon"] } }
+  ],
+  "input": [{ "role": "user", "content": [
+    { "type": "input_text", "text": "切土の土量を計算して運搬台数を出して" },
+    { "type": "input_image", "image_url": "data:image/png;base64,<viewport screenshot>" }
+  ]}],
+  "truncation": "auto"
+}
+
+// 応答の computer_call（例）
+{ "type": "computer_call", "call_id": "call_…", "action": { "type": "click", "button": "left", "x": 640, "y": 410 } }
+→ 実行後 computer_call_output（スクリーンショット）を previous_response_id 付きで返す`,
+loop:`// エージェントループ（本サンプルの動作をコード化した擬似コード）
+async function agentLoop(task) {
+  let ctx = [userMessage(task), await screenshot(), await sceneGraph()];   // 知覚
+  for (let step = 0; step < MAX_STEPS; step++) {
+    const res = await llm.call({ tools: [computer, ...civilTools], input: ctx }); // 推論
+    for (const call of res.toolCalls) {
+      if (!policy.allows(call)) { audit("DENY", call); continue; }          // 操作ホワイトリスト
+      if (policy.needsHuman(call)) {                                        // 確定・提出・停止
+        const ok = await humanApproval(call, await screenshot());
+        audit(ok ? "APPROVED" : "REJECTED", call);
+        if (!ok) { ctx.push(rejected(call)); continue; }
+      }
+      const out = call.type === "computer" ? await ui.execute(call)         // 操作
+                                           : await civilTools[call.name](call.input);
+      audit("EXEC", call, hash(out));                                       // ハッシュ連鎖
+      ctx.push(result(call, out), await screenshot());                      // 検証→再知覚
+    }
+    if (res.done) return res.report;
+  }
+}
+// 人物は画素段階で匿名化 → LLMへは匿名ID・座標のみ。外部送信・設計データ改変はポリシーで禁止。`};
+function showCode(k){$('#codeBox').textContent=CODE[k];$$('#codeTabs button').forEach(b=>b.classList.toggle('on',b.dataset.c===k))}
+$$('#codeTabs button').forEach(b=>b.addEventListener('click',()=>showCode(b.dataset.c)));
+$('#btnApi').addEventListener('click',()=>{showCode('claude');$('#mApi').classList.add('show')});
+let archBuilt=false;
+function buildArch(){if(archBuilt)return;archBuilt=true;const s=$('#archSvg');
+  const nodes=[['n1',20,30,170,'3DGS 現場データ','撮影→ガウス粒子','#38e1ff','splat'],['n2',230,30,170,'WebGPU レンダラ','WGSL・インスタンス描画','#8b7bff','gpu'],['n3',440,30,180,'視覚入力','スクショ＋シーングラフ','#38e1ff','eye'],['n4',660,30,180,'LLM（Claude / OpenAI）','空間推論・計画','#f0956a','brain'],
+    ['n5',660,150,180,'ツール呼び出し','computer use / function','#ffb547','api'],['n6',440,150,180,'ブラウザUI 自律操作','計測・解析・注記','#ffb547','hand'],['n7',230,150,170,'検証','結果を再撮影して確認','#3ee07f','checkc'],['n8',20,150,170,'人間承認（HITL）','確定・提出・停止','#ff5d6c','shield']];
+  let h=`<defs><marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#6c7ba4"/></marker></defs>`;
+  const P={n1:[190,62],n2:[230,62]};const paths=[['p1','M190 62H230','#38e1ff'],['p2','M400 62H440','#8b7bff'],['p3','M620 62H660','#38e1ff'],['p4','M750 94V150','#f0956a'],['p5','M660 182H620','#ffb547'],['p6','M440 182H400','#ffb547'],['p7','M315 150V120Q315 108 330 108H510Q530 108 530 94','#3ee07f'],['p8','M230 182H190','#ff5d6c']];
+  h+=paths.map(([id,d,c])=>`<path id="${id}" d="${d}" stroke="${c}" stroke-width="2" fill="none" class="flowl" marker-end="url(#ah)"/>`).join('');
+  h+=`<rect x="230" y="262" width="610" height="46" rx="10" fill="#0f1838" stroke="#6c7ba4" stroke-dasharray="4 4"/><text x="250" y="290" fill="#9fb0d8" font-size="12">監査ログ（ハッシュ連鎖）─ 全ての知覚・推論・操作・承認を記録し、後から検証可能に</text>`;
+  h+=[['M105 214V285H230'],['M530 214V262'],['M750 214V262']].map(([d])=>`<path d="${d}" stroke="#6c7ba4" stroke-width="1.3" fill="none" stroke-dasharray="3 4"/>`).join('');
+  h+=nodes.map(([id,x,y,w,t1,t2,c,ic])=>`<g class="nd"><rect x="${x}" y="${y}" width="${w}" height="64" rx="12" stroke="${c}" style="filter:drop-shadow(0 0 6px ${c}55)"/><use href="#i-${ic}" x="${x+12}" y="${y+20}" width="24" height="24" stroke="${c}" fill="none" stroke-width="1.8"/><text x="${x+44}" y="${y+28}">${t1}</text><text class="s" x="${x+44}" y="${y+46}">${t2}</text></g>`).join('');
+  h+=paths.map(([id,,c],k)=>`<circle r="4.5" fill="${c}" class="pkt" style="color:${c}"><animateMotion dur="${1.6+k*0.15}s" repeatCount="indefinite"><mpath href="#${id}"/></animateMotion></circle>`).join('');
+  s.innerHTML=h;}
+$('#btnArch').addEventListener('click',()=>{buildArch();$('#mArch').classList.add('show')});
+
+/* =========================================================
+   Header sparks, clock, main loop, boot
+   ========================================================= */
+const sp=$('#sparks');for(let k=0;k<22;k++){const i=document.createElement('i');i.style.left=(Math.random()*100)+'%';i.style.top=(20+Math.random()*60)+'%';i.style.animationDelay=(Math.random()*5)+'s';i.style.background=['#38e1ff','#8b7bff','#ffb547'][k%3];sp.appendChild(i)}
+setInterval(()=>{$('#clock').textContent=nowStr()},500);
+let lastT=performance.now(),fpsT=0,fpsN=0,mmTick=0;
+function frame(now){
+  const dt=Math.min(100,now-lastT);lastT=now;const t=now/1000;
+  C.tweenStep(dt,AG.running?(AG.paused?0:AG.speed):1);
+  C.updateDynamic(t,dt);C.projectAll();
+  if(C.getRenderer()==='webgpu'&&C.GPU.ok){try{C.drawGPU(t)}catch(e){console.warn(e);C.GPU.ok=false;C.setRenderer('canvas2d')}}
+  else{const x=C.ctx2d;x.setTransform(dpr,0,0,dpr,0,0);C.draw2D(x,t,Wc,Hc)}
+  updateOverlays(t);if(++mmTick%4===0)drawMinimap(t);
+  fpsT+=dt;fpsN++;if(fpsT>500){$('#hFps').textContent=Math.round(fpsN*1000/fpsT);$('#hSpl').textContent=C.getSorted().length.toLocaleString();fpsT=0;fpsN=0}
+  requestAnimationFrame(frame);
+}
+async function boot(){
+  const steps=$$('#bootSteps div'),bar=$('#bootBar');const mark=(k,okk=true)=>{steps[k].classList.add('on');if(okk)steps[k].classList.add('ok');bar.style.width=((k+1)/steps.length*100)+'%'};
+  const sl=ms=>new Promise(r=>setTimeout(r,ms));
+  steps[0].classList.add('on');
+  let msg=null;try{msg=await Promise.race([C.initGPU(C.cvGpu),sl(3500).then(()=>'タイムアウト')])}catch(e){msg=String(e&&e.message||e)}
+  mark(0);steps[0].lastChild.textContent=C.GPU.ok?`WebGPU 利用可能（${C.GPU.info}）`:`WebGPU 不可 → Canvas2D（${msg}）`;await sl(250);
+  C.setRenderer(C.GPU.ok?'webgpu':'canvas2d');requestAnimationFrame(frame);
+  steps[1].lastChild.textContent=`3DGS 現場シーンを生成（${N.toLocaleString()} ガウシアン・スプラット）`;mark(1);await sl(380);
+  mark(2);await sl(320);updModel();mark(3);await sl(320);audit('SYSTEM','BOOT',`renderer=${C.getRenderer()} splats=${N}`);mark(4);await sl(450);
+  $('#boot').classList.add('hide');con(`準備完了 ─ ${C.getRenderer()==='webgpu'?'WebGPU':'Canvas2D'} / ${N.toLocaleString()} splats / オフラインモード`);
+  bubble('ai','claude',null,'こんにちは。現場の3DGSモデルを<b>見て</b>理解し、左のUIツールを<b>自分で操作して</b>土木業務を完結させるエージェントです。上の4つのタスクを選ぶか、指示を入力してください。<br><span style="color:var(--tx3);font-size:11px">※完全オフラインのモックです。AIの応答・API呼び出しは模擬で、外部通信は行いません。</span>');
+  flyTo(VIEWS.all,10);
+}
+boot();
+/* ---------- theme (light / dark) ---------- */
+function applyTheme(t,anim,save){const h=document.documentElement;if(anim){h.classList.add('theming');setTimeout(()=>h.classList.remove('theming'),650)}h.dataset.theme=t;
+  if(save){try{localStorage.setItem('sas-theme',t)}catch(e){}}const F=C.FOG;if(t==='light'){F[0]=.83;F[1]=.89;F[2]=.98}else{F[0]=.08;F[1]=.14;F[2]=.3}renderMMBase();if(window.SAS&&SAS.emit)SAS.emit('theme',t)}
+$('#themeBtn').addEventListener('click',()=>{const t=document.documentElement.dataset.theme==='light'?'dark':'light';applyTheme(t,true,true);con(t==='light'?'ライトモードに切り替えました':'ダークモードに切り替えました')});
+applyTheme(document.documentElement.dataset.theme||'dark');
+try{matchMedia('(prefers-color-scheme: light)').addEventListener('change',e=>{let s=null;try{s=localStorage.getItem('sas-theme')}catch(_){}if(!s)applyTheme(e.matches?'light':'dark',true)})}catch(e){}
+window.__SAS_DEBUG={AG,REP,AUD,runScenario,devStats,embBalance,TOOL,ST};
+})();
+</script>
+</body></html>

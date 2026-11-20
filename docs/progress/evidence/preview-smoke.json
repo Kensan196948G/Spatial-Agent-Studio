@@ -1,0 +1,54 @@
+{
+  "base": "https://spatial-agent-studio-preview.pages.dev",
+  "api": "https://sas-api.mirai-dx-platform.com",
+  "startedAt": "2026-11-20T02:04:53.409Z",
+  "health": {
+    "status": 200,
+    "body": {
+      "ok": true,
+      "db": "up",
+      "version": "0.1.0",
+      "time": "2026-11-20T02:04:53.713Z",
+      "aiMode": "demo-deterministic"
+    }
+  },
+  "cors": {
+    "status": 204,
+    "allowOrigin": "https://spatial-agent-studio-preview.pages.dev",
+    "allowHeaders": "content-type, authorization"
+  },
+  "checks": [
+    {
+      "name": "api health",
+      "ok": true,
+      "detail": "{\"ok\":true,\"db\":\"up\",\"version\":\"0.1.0\",\"time\":\"2026-11-20T02:04:53.713Z\",\"aiMode\":\"demo-deterministic\"}"
+    },
+    {
+      "name": "cors preflight",
+      "ok": true,
+      "detail": "{\"status\":204,\"allowOrigin\":\"https://spatial-agent-studio-preview.pages.dev\",\"allowHeaders\":\"content-type, authorization\"}"
+    },
+    {
+      "name": "login → dashboard",
+      "ok": true,
+      "detail": "https://spatial-agent-studio-preview.pages.dev/"
+    },
+    {
+      "name": "3D site workspace",
+      "ok": true,
+      "detail": "https://spatial-agent-studio-preview.pages.dev/sites/site-a"
+    },
+    {
+      "name": "audit hash chain",
+      "ok": true,
+      "detail": "rows=8"
+    }
+  ],
+  "screenshots": [
+    "preview-dashboard.png",
+    "preview-site.png",
+    "preview-audit.png"
+  ],
+  "finishedAt": "2026-11-20T02:04:59.948Z",
+  "ok": true
+}

@@ -1,0 +1,271 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { FastifyInstance } from 'fastify';
+import { Client } from 'pg';
+import { buildApp } from '../../src/api/app';
+import { loadConfig } from '../../src/api/config';
+
+const TEST_DB =
+  process.env.TEST_DATABASE_URL ??
+  'postgresql:///spatial_agent_studio_test?host=/var/run/postgresql';
+
+const config = loadConfig({
+  databaseUrl: TEST_DB,
+  nodeEnv: 'test',
+  appOrigin: 'http://127.0.0.1:7440',
+  cookieSecure: false,
+  sessionTtlHours: 8,
+  staticDir: '/nonexistent-for-api-tests',
+  corsOrigins: ['https://spatial-agent-studio-preview.pages.dev'],
+});
+
+let app: FastifyInstance;
+
+async function login(email: string, password: string): Promise<string> {
+  const res = await app.inject({
+    method: 'POST',
+    url: '/api/auth/login',
+    payload: { email, password },
+  });
+  expect(res.statusCode).toBe(200);
+  const raw = res.headers['set-cookie'];
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  expect(value).toBeTruthy();
+  return String(value).split(';')[0]!;
+}
+
+function auth(cookie: string): { cookie: string } {
+  return { cookie };
+}
+
+beforeAll(async () => {
+  app = await buildApp(config);
+  await app.ready();
+});
+
+afterAll(async () => {
+  await app.close();
+});
+
+describe('Spatial Agent Studio API', () => {
+  it('serves a health check with the database up', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/health' });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.ok).toBe(true);
+    expect(body.db).toBe('up');
+    expect(body.aiMode).toBe('demo-deterministic');
+  });
+
+  it('accepts bearer-token auth and CORS preflight for Cloudflare Pages', async () => {
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { email: 'manager@example.com', password: 'SasManager!2026' },
+      headers: { origin: 'https://spatial-agent-studio-preview.pages.dev' },
+    });
+    expect(login.statusCode).toBe(200);
+    const token = login.json().token as string;
+    expect(token).toBeTruthy();
+
+    const me = await app.inject({
+      method: 'GET',
+      url: '/api/auth/me',
+      headers: { authorization: `Bearer ${token}` },
+    });
+    expect(me.statusCode).toBe(200);
+    expect(me.json().user.email).toBe('manager@example.com');
+
+    const preflight = await app.inject({
+      method: 'OPTIONS',
+      url: '/api/bootstrap',
+      headers: {
+        origin: 'https://spatial-agent-studio-preview.pages.dev',
+        'access-control-request-method': 'GET',
+        'access-control-request-headers': 'authorization',
+      },
+    });
+    expect(preflight.statusCode).toBe(204);
+    expect(preflight.headers['access-control-allow-origin']).toBe(
+      'https://spatial-agent-studio-preview.pages.dev',
+    );
+    expect(String(preflight.headers['access-control-allow-headers'])).toContain('authorization');
+
+    const blocked = await app.inject({
+      method: 'OPTIONS',
+      url: '/api/bootstrap',
+      headers: {
+        origin: 'https://evil.example.com',
+        'access-control-request-method': 'GET',
+      },
+    });
+    expect(blocked.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  it('rejects unauthenticated access to protected resources', async () => {
+    const res = await app.inject({ method: 'GET', url: '/api/bootstrap' });
+    expect(res.statusCode).toBe(401);
+    expect(res.json().error.code).toBe('UNAUTHENTICATED');
+  });
+
+  it('rejects invalid login credentials without leaking which part failed', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/auth/login',
+      payload: { email: 'manager@example.com', password: 'wrong-password' },
+    });
+    expect(res.statusCode).toBe(401);
+    expect(res.json().error.code).toBe('INVALID_CREDENTIALS');
+    expect(res.json().error.message).not.toContain('存在');
+  });
+
+  it('logs in, runs an as-built draft, approves it, and persists the report + audit chain', async () => {
+    const cookie = await login('manager@example.com', 'SasManager!2026');
+
+    const boot = await app.inject({ method: 'GET', url: '/api/bootstrap', headers: auth(cookie) });
+    expect(boot.statusCode).toBe(200);
+    const bootstrap = boot.json();
+    expect(bootstrap.user.role).toBe('manager');
+    expect(bootstrap.dashboard.sites).toHaveLength(3);
+
+    const site = await app.inject({
+      method: 'GET',
+      url: '/api/sites/site-a',
+      headers: auth(cookie),
+    });
+    expect(site.statusCode).toBe(200);
+    expect(site.json().id).toBe('site-a');
+    expect(site.json().versions.length).toBe(3);
+
+    const runRes = await app.inject({
+      method: 'POST',
+      url: '/api/sites/site-a/runs',
+      headers: auth(cookie),
+      payload: { task: 'asbuilt' },
+    });
+    expect(runRes.statusCode).toBe(201);
+    const run = runRes.json().run;
+    expect(run.task).toBe('asbuilt');
+    expect(run.steps).toHaveLength(6);
+    expect(run.result.stats.n).toBe(2688);
+    expect(run.result.stats.passRate).toBeCloseTo(93.415, 3);
+    expect(run.approval.status).toBe('pending');
+    expect(run.approval.risk).toBe('medium');
+    expect(run.approval.title).toContain('出来形管理帳票');
+
+    const pending = await app.inject({
+      method: 'GET',
+      url: '/api/approvals?status=pending',
+      headers: auth(cookie),
+    });
+    expect(pending.statusCode).toBe(200);
+    const pendingIds = pending.json().approvals.map((a: { id: string }) => a.id);
+    expect(pendingIds).toContain(run.approval.id);
+
+    const decide = await app.inject({
+      method: 'POST',
+      url: `/api/approvals/${run.approval.id}/decision`,
+      headers: auth(cookie),
+      payload: { decision: 'approve', note: 'API integration test' },
+    });
+    expect(decide.statusCode).toBe(200);
+    const decision = decide.json();
+    expect(decision.approval.status).toBe('approved');
+    expect(decision.approval.decidedBy.name).toContain('現場代理人');
+    expect(decision.report).not.toBeNull();
+    expect(decision.report.title).toBe('出来形管理帳票');
+
+    const reports = await app.inject({
+      method: 'GET',
+      url: '/api/sites/site-a/reports',
+      headers: auth(cookie),
+    });
+    expect(reports.statusCode).toBe(200);
+    expect(reports.json().reports.length).toBe(1);
+
+    const audit = await app.inject({ method: 'GET', url: '/api/audit', headers: auth(cookie) });
+    expect(audit.statusCode).toBe(200);
+    expect(audit.json().verify.ok).toBe(true);
+    const types = audit.json().events.map((e: { type: string }) => e.type);
+    expect(types).toContain('RUN_REQUESTED');
+    expect(types).toContain('RUN_COMPLETED');
+    expect(types).toContain('APPROVAL_REQUESTED');
+    expect(types).toContain('APPROVED');
+    expect(types).toContain('REPORT_CREATED');
+
+    const again = await app.inject({
+      method: 'POST',
+      url: `/api/approvals/${run.approval.id}/decision`,
+      headers: auth(cookie),
+      payload: { decision: 'approve' },
+    });
+    expect(again.statusCode).toBe(409);
+  });
+
+  it('runs a safety check and blocks approval by a non-approver', async () => {
+    const manager = await login('manager@example.com', 'SasManager!2026');
+    const staff = await login('staff@example.com', 'SasStaff!2026');
+
+    const runRes = await app.inject({
+      method: 'POST',
+      url: '/api/sites/site-a/runs',
+      headers: auth(staff),
+      payload: { task: 'safety' },
+    });
+    expect(runRes.statusCode).toBe(201);
+    const run = runRes.json().run;
+    expect(run.result.scan.intruded).toBe(true);
+    expect(run.result.scan.radiusM).toBe(7.5);
+    expect(run.approval.risk).toBe('high');
+
+    const denied = await app.inject({
+      method: 'POST',
+      url: `/api/approvals/${run.approval.id}/decision`,
+      headers: auth(staff),
+      payload: { decision: 'approve' },
+    });
+    expect(denied.statusCode).toBe(403);
+    expect(denied.json().error.code).toBe('FORBIDDEN');
+
+    const ok = await app.inject({
+      method: 'POST',
+      url: `/api/approvals/${run.approval.id}/decision`,
+      headers: auth(manager),
+      payload: { decision: 'reject', note: '作業員退避を確認してから再開' },
+    });
+    expect(ok.statusCode).toBe(200);
+    expect(ok.json().approval.status).toBe('rejected');
+    expect(ok.json().report).toBeNull();
+
+    const audit = await app.inject({ method: 'GET', url: '/api/audit', headers: auth(manager) });
+    const types = audit.json().events.map((e: { type: string }) => e.type);
+    expect(types).toContain('DENY');
+    expect(types).toContain('REJECTED');
+  });
+
+  it('rejects invalid run payloads', async () => {
+    const cookie = await login('manager@example.com', 'SasManager!2026');
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/sites/site-a/runs',
+      headers: auth(cookie),
+      payload: { task: 'unknown' },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json().error.code).toBe('INVALID_BODY');
+  });
+
+  it('keeps the audit log append-only at the database level', async () => {
+    const client = new Client({ connectionString: TEST_DB });
+    await client.connect();
+    try {
+      await expect(
+        client.query("UPDATE audit_events SET detail = 'tampered' WHERE seq = 1"),
+      ).rejects.toThrow(/append-only/);
+      await expect(client.query('DELETE FROM audit_events WHERE seq = 1')).rejects.toThrow(
+        /append-only/,
+      );
+    } finally {
+      await client.end();
+    }
+  });
+});
