@@ -31,6 +31,43 @@
 
 ## 4. 閉鎖手順（Cloudflare公式 Known Issues 準拠）
 
+> **前提（先に実施）**：閉じると自動検証（`scripts/preview-smoke.mjs`）が Access でブロックされる。
+> 先に **Access サービストークン**を発行し、検証側にヘッダーを渡せる状態にしておくこと。
+
+### 4.0 サービストークンの発行（自動化を止めない）
+
+1. Zero Trust → **Access** → **Service Auth** → **Create Service Token**
+2. Name 例：`sas-preview-smoke`、Duration：必要最小限（例 1年）→ 発行
+3. **Client ID / Client Secret は一度しか表示されない**ので、その場で控える
+4. 対象の Access アプリ（`Spatial Agent Studio Preview` 等）のポリシーに
+   **Service Auth → 発行したトークンを include** で追加（`non_identity` ではなく service token 用の include）
+5. ホスト上に 0600 で保存（リポジトリへは置かない）
+
+```bash
+cat >> ~/.config/spatial-agent-studio/preview-api.env <<'EOF'
+# 自動検証用（Pages を Access で閉じた後も smoke を実行できるようにする）
+# CF_ACCESS_CLIENT_ID=...        # ← 実際の値はここに書かない（別ファイル推奨）
+# CF_ACCESS_CLIENT_SECRET=...
+EOF
+chmod 600 ~/.config/spatial-agent-studio/preview-api.env
+```
+
+実行例（トークンは環境変数で渡す。`-u` 等でシェル履歴に残さないよう注意）：
+
+```bash
+set -a; . ~/.config/spatial-agent-studio/access-smoke.env; set +a
+node scripts/preview-smoke.mjs            # pages.dev（Access保護後）
+# カスタムドメインで検証する場合
+PREVIEW_URL=https://spatial-agent-studio-preview.mirai-dx-platform.com node scripts/preview-smoke.mjs
+```
+
+`scripts/preview-smoke.mjs` は `CF_ACCESS_CLIENT_ID` / `CF_ACCESS_CLIENT_SECRET` が
+設定されていれば、API 呼び出しとブラウザの全リクエストへ
+`CF-Access-Client-Id` / `CF-Access-Client-Secret` を付与する。
+未設定で Access のログイン画面へリダイレクトされた場合は、明示的に FAIL する。
+
+### 4.1 `*.pages.dev` を閉じる
+
 1. ダッシュボード → **Workers & Pages** → `spatial-agent-studio-preview` を選択
 2. **Settings > General** → **Enable access policy**
    - これでプレビュー配信用の Access アプリが作成される（`*.pages.dev` 本体はまだ対象外）

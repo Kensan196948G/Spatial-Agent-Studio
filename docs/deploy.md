@@ -90,6 +90,12 @@ nohup /usr/local/bin/cloudflared --no-autoupdate \
 
 ## 4. 検証
 
+> **Access保護下での検証**：`scripts/preview-smoke.mjs` は `CF_ACCESS_CLIENT_ID` /
+> `CF_ACCESS_CLIENT_SECRET` を設定すると、API・ブラウザ双方にサービストークンのヘッダーを付与します。
+> `*.pages.dev` を Access で閉じた後もこの方法でスモークを継続できます（手順は
+> [docs/security/pages-dev-exposure.md](security/pages-dev-exposure.md) §4.0）。
+
+
 ### APIヘルス
 
 ```bash
