@@ -26,6 +26,8 @@
 | V2.1 Preview | **配備済み・V2.1 UIで実操作確認済み**（デプロイ `69ed0a62`） |
 | Previewカスタムドメイン | **ACTIVE**：`spatial-agent-studio-preview.mirai-dx-platform.com`（Pages検証・証明書ともにactive、CNAMEプロキシ済み） |
 | Cloudflare Access（Preview） | **適用済み**：同ドメインにメールOTP（許可メール2件・8時間セッション）。Edgeは302でチームドメインへ |
+| Access保護外（pages.dev） | **暫定受容**（2026-11-20 ユーザー判断 1,2）。APIでは閉鎖不可（Pages Accessはダッシュボード専用）。閉鎖手順・緩和策・確認コマンドを [docs/security/pages-dev-exposure.md](../security/pages-dev-exposure.md) に記録 |
+| QA引き継ぎ | 欠陥再実行・未実行17件・unknown 11件・レポートv3・releaseゲート申請の手順を [docs/qa/handoff-2026-11-20.md](../qa/handoff-2026-11-20.md) に作成（QAセッションへ貼り付け可） |
 | QA指摘の修正（2026-11-20） | **DEF-01**（不正ID→500＋DBエラー露出）を404へ、**DEF-02**（スモークの旧ログイン前提）を自動サインインへ、**DEF-03**（`AI: DEMO`欠落）をヘッダーに追加。配備物にビルドcommitを埋め込み（`<meta name="sas-commit">` / システム設定「配信ビルド」） |
 | アプリ認証UI | **ログイン画面なし**：Access通過後にデモセッションを自動確立。ヘッダーに認証状態バッジ（Access 認証済み／未経由） |
 | ログアウト | **実装済み**：アプリセッション失効 → Accessログアウト（チームドメイン）へ遷移。pages.dev等では再サインイン画面を表示 |
