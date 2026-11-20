@@ -124,6 +124,11 @@ test('V2.1 UI: システム設定画面（環境・権限・データ・監査�
 
   await page.locator('#stHealth').click();
   await expect(page.locator('.toast')).toContainText('ヘルスチェック');
+
+  // AI要約（実LLM/デモ）: 数値は計算エンジン、AIは文章化のみ
+  await page.locator('#stAiRun').click();
+  await expect(page.locator('#stAiOut')).toContainText(/合格|是正/, { timeout: 20_000 });
+  await expect(page.locator('#stAiOut')).not.toContainText('AI_ERROR');
 });
 
 test('V2.1 UI: AI出来形→人の承認→レポート→承認履歴→監査', async ({ page }) => {
