@@ -261,6 +261,44 @@ describe('Spatial Agent Studio API', () => {
     expect(types).toContain('REJECTED');
   });
 
+  it('rejects malformed ids with 4xx and never exposes database errors', async () => {
+    const cookie = await login('manager@example.com', 'SasManager!2026');
+    const decision = await app.inject({
+      method: 'POST',
+      url: '/api/approvals/AP-999999/decision',
+      headers: auth(cookie),
+      payload: { decision: 'approve' },
+    });
+    expect(decision.statusCode).toBe(404);
+    expect(decision.json().error.code).toBe('APPROVAL_NOT_FOUND');
+    expect(decision.body).not.toContain('22P02');
+    expect(decision.body).not.toContain('invalid input syntax');
+
+    const approval = await app.inject({
+      method: 'GET',
+      url: '/api/approvals/not-a-uuid',
+      headers: auth(cookie),
+    });
+    expect(approval.statusCode).toBe(404);
+    expect(approval.body).not.toContain('22P02');
+
+    const site = await app.inject({
+      method: 'GET',
+      url: '/api/sites/not-a-uuid',
+      headers: auth(cookie),
+    });
+    expect(site.statusCode).toBe(404);
+    expect(site.body).not.toContain('22P02');
+
+    const run = await app.inject({
+      method: 'GET',
+      url: '/api/runs/not-a-uuid',
+      headers: auth(cookie),
+    });
+    expect(run.statusCode).toBe(404);
+    expect(run.body).not.toContain('22P02');
+  });
+
   it('rejects invalid run payloads', async () => {
     const cookie = await login('manager@example.com', 'SasManager!2026');
     const res = await app.inject({

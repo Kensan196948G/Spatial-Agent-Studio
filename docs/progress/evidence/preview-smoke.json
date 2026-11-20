@@ -2,14 +2,14 @@
   "ui": "V2.1 static shell",
   "base": "https://spatial-agent-studio-preview.pages.dev",
   "api": "https://sas-api.mirai-dx-platform.com",
-  "startedAt": "2026-11-20T03:37:16.203Z",
+  "startedAt": "2026-11-20T05:59:20.397Z",
   "health": {
     "status": 200,
     "body": {
       "ok": true,
       "db": "up",
       "version": "0.1.0",
-      "time": "2026-11-20T03:37:16.465Z",
+      "time": "2026-11-20T05:59:20.564Z",
       "aiMode": "demo-deterministic"
     }
   },
@@ -22,7 +22,7 @@
     {
       "name": "api health",
       "ok": true,
-      "detail": "{\"ok\":true,\"db\":\"up\",\"version\":\"0.1.0\",\"time\":\"2026-11-20T03:37:16.465Z\",\"aiMode\":\"demo-deterministic\"}"
+      "detail": "{\"ok\":true,\"db\":\"up\",\"version\":\"0.1.0\",\"time\":\"2026-11-20T05:59:20.564Z\",\"aiMode\":\"demo-deterministic\"}"
     },
     {
       "name": "cors preflight",
@@ -30,9 +30,14 @@
       "detail": "{\"status\":204,\"allowOrigin\":\"https://spatial-agent-studio-preview.pages.dev\",\"allowHeaders\":\"content-type, authorization\"}"
     },
     {
-      "name": "login → V2.1 dashboard",
+      "name": "auto sign-in → V2.1 dashboard",
       "ok": true,
-      "detail": "sites=5 nav=9"
+      "detail": "sites=5 nav=11 loginForm=0"
+    },
+    {
+      "name": "AI: DEMO badge",
+      "ok": true,
+      "detail": "AI: DEMO"
     },
     {
       "name": "site selection → 3D viewer",
@@ -52,7 +57,7 @@
     {
       "name": "audit pane",
       "ok": true,
-      "detail": "rows=18"
+      "detail": "rows=66"
     }
   ],
   "screenshots": [
@@ -61,6 +66,6 @@
     "preview-v21-approvals.png",
     "preview-v21-audit.png"
   ],
-  "finishedAt": "2026-11-20T03:37:31.147Z",
+  "finishedAt": "2026-11-20T05:59:35.783Z",
   "ok": true
 }

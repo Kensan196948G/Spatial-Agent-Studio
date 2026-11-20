@@ -7,10 +7,10 @@
 | WebUI | Cloudflare Pages（静的SPA、Previewプロジェクト） | <https://spatial-agent-studio-preview.pages.dev> |
 | API | ローカルFastify（port 7450） + Cloudflare Tunnel | <https://sas-api.mirai-dx-platform.com> |
 | DB | ローカルPostgreSQL `spatial_agent_studio_preview` | localhost only |
-| 対象コミット | `930415d`（main、PR #6 merge） | — |
+| 対象コミット | ビルド時に埋め込む（Settings 画面の「配信ビルド」で確認） | — |
 
 - Pagesプロジェクト：`spatial-agent-studio-preview`（production branch: `preview`）
-- 直近のデプロイURL：<https://8b5bf4d3.spatial-agent-studio-preview.pages.dev>（対象コミット `930415d`）
+- 直近のデプロイURL：Settings 画面の「配信ビルド」と照合して特定する（`<meta name="sas-commit">` にビルド時のHEADを埋め込み）
 - 初回デプロイURL：<https://046f4340.spatial-agent-studio-preview.pages.dev>
 - Tunnel：`spatial-agent-studio` / `5290da16-d855-4b5b-9eac-0d2d566bfc39`
 - DNS：`sas-api.mirai-dx-platform.com` → `5290da16-....cfargotunnel.com`（proxied）

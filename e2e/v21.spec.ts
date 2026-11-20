@@ -17,6 +17,7 @@ test('V2.1 UI: ログイン→ホーム（実データ・5現場・9画面）', 
   await expect(page.locator('#nav .nb[data-pg="dash"]')).toHaveClass(/on/);
   await expect(page.locator('#themeBtn')).toBeVisible();
   await expect(page.locator('#roleName')).toContainText('現場代理人');
+  await expect(page.locator('#bdgAi')).toHaveText(/AI:\s*DEMO/);
 });
 
 test('V2.1 UI: ログイン画面なしで起動（Access認証前提）', async ({ page }) => {
