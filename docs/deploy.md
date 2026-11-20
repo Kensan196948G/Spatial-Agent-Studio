@@ -162,6 +162,29 @@ npx wrangler pages deploy dist/web --project-name spatial-agent-studio --branch 
 
 ---
 
+## 2.9 ロール割当（Accessのメール → アプリ内ロール）
+
+- 実体：`~/.config/spatial-agent-studio/access-roles.txt`（0600・git管理外）
+- 形式：`email,role1,role2,...`／`@domain,roles`（先頭が既定ロール）。`#` と空行は無視
+- 反映：**ファイル保存で即時**（mtimeキャッシュ）。envの `SAS_ACCESS_ROLES_FILE` を変えた場合のみ再起動
+- 優先順位：**ファイルのemail一致 → ファイルのドメイン一致 → envの `SAS_ACCESS_ROLES` / `SAS_ACCESS_ROLE_DOMAINS`**
+
+> **落とし穴（2026-11-20 に実際に発生）**：`SAS_ACCESS_ROLES_FILE` に
+> `+ path.join(process.env.HOME, ...) +` のような**式の文字列**が入っていたため、ファイルが読まれず
+> env側の古い定義にサイレントにフォールバックしていた（症状：想定外のロール／403）。
+> **必ず絶対パス**を書くこと。確認は `POST /api/auth/access`（未登録は403・`ACCESS_ROLE_UNMAPPED` が監査に残る）。
+
+本番の割当（2026-11-20 ユーザー指定）：
+
+| 区分 | ロール |
+| :-- | :-- |
+| EMAIL_2（管理者） | field, agent, hq, it（既定=agent） |
+| EMAIL_1（現場担当者） | field |
+| EMAIL_3（現場代理人・所長／本社／IT・DX） | agent, hq, it |
+| EMAIL_4（本社／IT・DX） | hq, it（アドレス判明後に追記） |
+
+---
+
 ## 3. APIの起動
 
 ### ローカル確認（開発）
