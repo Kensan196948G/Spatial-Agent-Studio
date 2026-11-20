@@ -38,7 +38,7 @@ active_entries: 4 grants: 9
 
 | # | 条件 | 主体 |
 | :-: | :-- | :-- |
-| 1 | pages.dev を **Access で閉じる**か**受容**（現在は302リダイレクト・UIは配信していない） | 人 |
+| 1 | ~~pages.dev の扱い~~ **受容を確定（2026-11-20・選択1）**。アプリ非配信・データ到達不可。詳細は [pages-dev-acceptance.md](../production/pages-dev-acceptance.md) | 人 |
 | 2 | **非機能目標の承認**（[nonfunctional-targets.md](nonfunctional-targets.md)） | 人 |
 | 3 | OTPログイン後の**画面・ロール別表示の証跡**（QAブラウザ不可のため人） | 人 |
 
