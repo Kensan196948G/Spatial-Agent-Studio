@@ -1,78 +1,93 @@
-# QA出力と実測の突合記録（2026-11-20 修正後）
+# QA出力と実測の突合記録（2026-11-20 修正後・最終）
 
 対象QAプロジェクト：`prj_mwoil3oo_09e1644b`（Spatial-Agent-Studio）
-対象リポジトリ：HEAD `e8f6cd7`（修正本体は `fc61e1a`）
-配備：<https://spatial-agent-studio-preview.pages.dev>（`<meta name="sas-commit">` = ビルド時HEAD）
+対象リポジトリ：HEAD `19a5f6a`／修正本体 `fc61e1a`
+配備：<https://spatial-agent-studio-preview.pages.dev>（`<meta name="sas-commit">` = **`19a5f6a`**・dirtyなし）
 
-## 0. 読み方（重要な前提）
+## 0. 読み方（2つの時点）
 
-QAセッションの出力には**2つの時点**が混在している。
-
-| 時点 | 内容 | 現在の扱い |
+| 時点 | 内容 | 扱い |
 | :-- | :-- | :-- |
-| A. 修正前 | 「変更0件・HEAD `0e4a8f7`・欠陥3件未修正・再現」の回帰記録（`doc_mwojvj6d_21205140`） | **履歴**。現状の判定には使わない |
-| B. 修正後 | 「配備commit `fc61e1a` を確認、DEF-01は404封筒で再現せず、smokeを実行」 | **現行**。本記録の対象 |
+| A. 修正前 | 「変更0件・HEAD `0e4a8f7`・欠陥3件未修正」の回帰記録（`doc_mwojvj6d_21205140`） | **履歴**。現判定には使わない |
+| B. 修正後 | 15:24〜15:30 の再検証（POST-FIX）＋レポート v3 | **現行** |
 
 ## 1. 突合表（主張 → 実測）
 
-| # | QA出力の主張 | 実測（2026-11-20 15:2x JST） | 判定 |
+| # | QA出力の主張 | 実測 | 判定 |
 | :-: | :-- | :-- | :-- |
-| 1 | アプリコード変更0件（HEAD `0e4a8f7`） | main は `e8f6cd7`。`fc61e1a` で DEF-01/02/03 を修正済み | **古い（時点A）** |
-| 2 | DEF-01: 500＋`22P02` 露出 | `POST /api/approvals/AP-999999/decision` → **404** `APPROVAL_NOT_FOUND`、本文に `22P02` を含まない（`tests/api/app.test.ts` でも回帰担保） | **修正済み** |
-| 3 | DEF-02: `preview-smoke` が `#sasLogin` でタイムアウト | `node scripts/preview-smoke.mjs` → **PASS 8/8**（自動サインイン・11画面・ログインフォーム0） | **修正済み** |
-| 4 | DEF-03: `AI: DEMO` 0件 | ヘッダーに `AI: DEMO` を常時表示（`#bdgAi`）。E2Eとスモークで検証 | **修正済み** |
-| 5 | unit 11/11 PASS | 変更なし（11/11） | 一致 |
-| 6 | 配備コミット不明 | `<meta name="sas-commit">`＋システム設定「配信ビルド」で特定可能 | **解消** |
-| 7 | Accessロール割当の実機動作が未確認 | 再起動後に実測：社用ドメイン→`field`／所有者→`agent,hq,it`／未登録→403 | **確認済み** |
-| 8 | `pkill` でAPIが約4分停止→復旧 | health 200・CORS 204・ロール割当も復旧済み | 解消（申し送り済み） |
-| 9 | 取込み実行 `status=unknown` | **13件**（前回11件から増加）。自動ゲートのブロック要因 | **未解決** |
-| 10 | レポート v2 が最終 | レポートは5件のまま（**v3未作成**） | **未対応** |
-| 11 | 最終releaseゲート申請（pending） | ゲート4件すべて pending（承認なし） | 妥当（承認は人） |
+| 1 | 変更0件・HEAD `0e4a8f7` | main は `19a5f6a`。`fc61e1a` で3件修正 | 古い（時点A） |
+| 2 | DEF-01: 500＋`22P02` | **404** `APPROVAL_NOT_FOUND`・22P02なし（APIテストで担保） | 修正済み・closed |
+| 3 | DEF-02: smokeタイムアウト | **PASS 8/8**（nav=11・loginForm=0） | 修正済み・closed |
+| 4 | DEF-03: `AI: DEMO` 0件 | ヘッダーに常時表示（smoke/E2Eで検証） | 修正済み・closed |
+| 5 | unit 11/11 | 変更なし | 一致 |
+| 6 | 配備コミット不明 | meta＋設定「配信ビルド」で特定 | 解消 |
+| 7 | ロール割当の実機未確認 | 社用ドメイン→`field`／所有者→`agent,hq,it`／未登録→403 | 確認済み |
+| 8 | API 4分停止 | health 200・CORS 204・ロール割当復旧 | 解消 |
+| 9 | 取込み実行 `unknown` | **13件すべて `passed` に終端化**（reconciled根拠付き）・ゲート `blockers=[]` | **解消** |
+| 10 | レポート v2 が最終 | **v3 = version 3 として保存済み**（15:28 / 6,592文字 / hash `77cc5370`） | **作成済み**（下記訂正） |
+| 11 | releaseゲート pending | 5件 pending（新規 `gate_mwolm5o4_c78d9b27` を含む）・承認なし | 妥当 |
 
-## 2. ワークベンチ実測（読み取り）
+> **訂正（2026-11-20 15:35）**：前版の突合記録で「v3未作成」と記したが、これは**文書数（reports=5）と版数（versions）を混同**したもの。
+> 主要レポート文書 `doc_mwoj7m2l_80ff01c9` は **version 3** を持ち、そこに修正後の再検証が記載されている。
 
-`~/.dsh/dsh-qa/data.json` を読み取りで確認（最終更新 2026-11-20 15:26 JST）。
+## 2. ワークベンチ実測（15:28 時点・読み取り）
 
 | 項目 | 値 |
 | :-- | :-- |
-| 欠陥 | **3件すべて closed**（DEF-01/02/03） |
+| 欠陥 | **3/3 closed**（未クローズ0） |
 | テストケース | executed **39** / reviewed 12（計51） |
-| 取込み実行 | **unknown 13** |
-| ゲート | 4件 pending（release×2 / requirements-review / testcase-review） |
-| レポート | 5件（v2まで。**v3は未作成**） |
+| 取込み実行 | **13/13 `passed`**（revision 2・`reconciled` 付与・summary不変） |
+| ゲート評価 | `blockers=[]`（「未完了のテスト実行」ブロック解消） |
+| レポート | v3（version 3）まで保存。v2は履歴 |
+| ゲート | 5件 pending（release×3 / requirements-review / testcase-review） |
 
-## 3. Go条件（7項）の現状
+### 2.1 v3の「4件passed」の扱い（ユーザー選択1に対応）
 
-| # | Go条件 | 状態 |
+v3 §5 に明記済み。要旨：
+
+> `passed` は「検証作業が完了し、検出事項は欠陥/issue/riskとして別管理」の分類（既存のreconciled慣例）。
+> 当時の失敗は summary に保持され、DEF-01は修正済み、RI-01/RR-03は要件として追跡。
+> この終端化は「失敗履歴の消去」ではない。
+
+対象は #5（55/59・3 failed）／#6（23/24・1 failed）／#9（11/16・5 failed）／#11（defect recheck）。
+**要約と欠陥・issue・riskに失敗が残っているため、履歴は失われていない。**
+
+## 3. v3が残したOps指摘への対応
+
+| v3の指摘（B2） | 現在 | 根拠 |
+| :-- | :-- | :-- |
+| 配備が `e8f6cd7-dirty`（dirtyビルド） | **解消** | `dirty` 判定を配備物に影響するパスへ限定し、`19a5f6a` から再ビルド。meta は **`19a5f6a`**（dirtyなし） |
+| どのコミットを検証したか厳密に未確定 | **解消** | 配信ビルド＝`19a5f6a`、コード差分は `fc61e1a`〜`19a5f6a` の4コミット（修正＋ツール＋docs）で追跡可能 |
+
+## 4. 残Go条件（v3の7項を現在値で更新）
+
+| # | 条件 | 状態 |
 | :-: | :-- | :-- |
-| 1 | DEF-01/02/03 の修正または文書受容 | **達成**（修正 `fc61e1a`・テストで担保） |
-| 2 | 未実行17件の実行/waive | 一部実行（executed 34→39）。**残り未整理** |
-| 3 | Access保護外の受容判断 | **記録済み**（[docs/security/pages-dev-exposure.md](../security/pages-dev-exposure.md)・暫定受容） |
-| 4 | 配備コミット特定 | **達成**（`sas-commit`／設定画面） |
-| 5 | API常設化 | **未達**（nohup運用のまま。systemd unitは用意済み・有効化は人間） |
-| 6 | 取込み実行の終端化 | **未達**（unknown 13） |
-| 7 | レポート v3（修正後の再判定） | **未作成** |
+| 1 | P0 2件（RF05-01 run作成／AC-08 Access未登録メール）の実行 or waive | **未達**（waivedのまま・理由記録あり） |
+| 2 | 部分検証4件の残り実行 or waive | **未達**（reviewedのまま） |
+| 3 | クリーンコミットからの再配備と `sas-commit` 非dirty | **達成**（`19a5f6a`） |
+| 4 | Access保護外の受容または保護拡大 | **判断待ち**（[pages-dev-exposure.md](../security/pages-dev-exposure.md) に受容記録・閉鎖手順・トークン手順） |
+| 5 | API常設化（systemd等） | **未達**（nohup。unitは `deploy/systemd/` に用意・有効化は人間） |
+| 6 | 性能/a11y/クロスブラウザの対象外明示 or 基準定義 | **未達** |
+| 7 | requirements-review / testcase-review ゲート処理 | **pending**（人） |
 
-## 4. 残アクション（QAセッション）
+## 5. 判定（AI推奨・承認は人）
 
-1. 取込み実行 **13件** を終端状態へ確定（`unknown` を残さない）。実行記録と突合できないものは `waived`＋理由
-2. 未実行ケースの整理（実行 or waived）と executed 件数の更新
-3. レポート **v3** を保存（v2は保持）。quality_status と残条件を修正後に合わせる
-4. releaseゲートは**申請のみ**（承認・decideは人）。先行 `gate_mwojaxec_cd5bb9e5` と最新 `gate_mwojyuju_b0e309f5` の関係を整理
+- **プレビュー限定：条件付きGO**（欠陥0・取込み実行全終端・ゲートblockers空・クリーン配備）
+- **本番：No-Go**（P0未実行・Access保護外・API nohup・非機能未定義）
+- 承認は人が行う（AIはゲートを decide しない）
 
-## 5. 再現コマンド（突合の再実行用）
+## 6. 再現コマンド
 
 ```bash
-# DEF-01
-curl -s -o - -w '\n%{http_code}\n' -X POST http://127.0.0.1:7450/api/approvals/AP-999999/decision \
+# 欠陥の再確認
+curl -s -o /dev/null -w '%{http_code}\n' -X POST http://127.0.0.1:7450/api/approvals/AP-999999/decision \
   -H 'content-type: application/json' -H 'origin: https://spatial-agent-studio-preview.mirai-dx-platform.com' \
-  -H 'cookie: <managerセッション>' -d '{"decision":"approve"}'
-# → 404 {"error":{"code":"APPROVAL_NOT_FOUND",...}}（22P02を含まない）
+  -H 'cookie: <managerセッション>' -d '{"decision":"approve"}'   # → 404
 
-# DEF-02 / DEF-03
-node scripts/preview-smoke.mjs
-# → PREVIEW SMOKE: PASS（AI: DEMO badge を含む）
+# 修正後のスモーク
+node scripts/preview-smoke.mjs                                    # → PASS 8/8
 
-# 配備コミット
-curl -s https://spatial-agent-studio-preview.pages.dev/ | grep sas-commit
+# 配備commit（clean）
+curl -s https://spatial-agent-studio-preview.pages.dev/ | grep sas-commit   # → 19a5f6a
 ```
