@@ -148,6 +148,32 @@
     } catch (err) {
       if (err.status !== 401) throw err;
     }
+
+    // 1) Access 配下なら、まず Access の本人情報でセッションを確立する。
+    //    本番はサーバ側が JWT を検証するため、本文の email は使われない。
+    const identity = await readAccessIdentity();
+    const email = identity && identity.email ? identity.email : '';
+    try {
+      const res = await api('/auth/access', {
+        method: 'POST',
+        body: JSON.stringify(email ? { email } : {}),
+      });
+      if (res && res.user) {
+        if (res.token) writeToken(res.token);
+        if (Array.isArray(res.roles)) {
+          auth.roles = res.roles;
+          auth.defaultRole = res.defaultRole || res.roles[0];
+          window.__SAS_ALLOWED_ROLES__ = res.roles;
+        }
+        auth.behindAccess = true;
+        return res.user;
+      }
+    } catch (err) {
+      if (err.status && err.status >= 500) throw err;
+      // Access 経由でない/ロール未割当などはデモへフォールバック（開発用）
+    }
+
+    // 2) 開発・プレビューの互換経路（本番では 401 になり未ログイン表示になる）
     return signInAs('manager');
   }
 
