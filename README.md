@@ -181,6 +181,7 @@ Previewは次の2部品で構成しています。
 | 部品 | 実体 | URL |
 | :-- | :-- | :-- |
 | WebUI | Cloudflare Pages（静的SPA） | <https://spatial-agent-studio-preview.pages.dev> |
+| WebUI（Access保護） | Pagesカスタムドメイン + Cloudflare Access（メールOTP） | <https://spatial-agent-studio-preview.mirai-dx-platform.com> |
 | API | ローカルFastify + Cloudflare Tunnel | <https://sas-api.mirai-dx-platform.com> |
 | DB | ローカルPostgreSQL `spatial_agent_studio_preview` | localhost only |
 
@@ -193,7 +194,8 @@ Previewは次の2部品で構成しています。
 再配備手順・検証手順：[docs/deploy.md](docs/deploy.md)
 
 > **本番ではありません。** Cloudflare PagesのPreviewプロジェクトと、ローカルAPIのTunnelです。
-> 本番正式環境への昇格、DNS/Accessポリシーの変更は行っていません。
+> 2026-11-20にPreviewカスタムドメインとCloudflare Access（メールOTP）を追加しました。
+> 本番正式環境への昇格は行っていません。
 
 ---
 
@@ -216,7 +218,7 @@ Previewは次の2部品で構成しています。
 - **GitHub ActionsのCIワークフローは未適用**：ハーネスの `DEPLOY=critical` ポリシーが `.github/workflows/**` へのAI書き込みを拒否します。代わりに**ローカルCIランナー**（`pnpm ci:local`）が実際の全検証を実行し、GitHubのコミットステータス `ci/local-verify` を投稿します。mainのrulesetはこのステータスを**Required Check**として要求するため、CI未実施のPRはマージできません。PR #8では **BLOCKED → `ci/local-verify` success → auto-merge** を実際に確認済みです（[証跡](docs/progress/evidence/ci-gate-proof.md)）。GitHub Actions用テンプレートは人間の適用用に [templates/ci/ci.yml](templates/ci/ci.yml) へ残しています。
 - **V2.1原本がUI正本**：2026-11-20のユーザー指示により、添付のV2.1システム版（9画面）を静的UIシェルとして採用。React版 `src/web/` は開発初期のレガシーで、現在のビルド対象外です。
 - **V2.1の5画面はサンプル表示**：ダッシュボード/3Dビュー/承認/監査は実データ、データ取得/3D基盤/連携/統制/構成/導入計画はV2.1のサンプルコンテンツ（一部の監査値は実データ）です。
-- **Cloudflare Access OTPは未導入**：現在はV2.1 UI上のログインオーバーレイ（デモアカウント）で認証。Access OTPと本番カスタムドメインは次の段階です。
+- **Cloudflare Access OTP（Preview）**：`spatial-agent-studio-preview.mirai-dx-platform.com` はAccessのメールOTPで保護（許可メール2件・セッション8時間）。V2.1のログインオーバーレイ（デモアカウント）はそのまま残ります。**`*.pages.dev` の直URLはAccess対象外**で、`sas-api` も公開のまま（アプリ認証のみ）です。
 
 ---
 
