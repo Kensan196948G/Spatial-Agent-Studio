@@ -57,6 +57,38 @@ test('V2.1 UI: ログアウト→再サインイン', async ({ page }) => {
   await login(page);
 });
 
+test('V2.1 UI: Accessロール（現場担当者）がメールで決まる', async ({ page }) => {
+  await page.route('**/cdn-cgi/access/get-identity', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ email: 'staff@example.com' }),
+    }),
+  );
+  await login(page);
+  await expect(page.locator('#bdgAccess')).toContainText('Access 認証済み');
+  await expect(page.locator('#roleName')).toHaveText('現場担当者');
+  await page.locator('#roleBtn').click();
+  await expect(page.locator('#roleMenu .ritem')).toHaveCount(1);
+  await expect(page.locator('#roleMenu .ritem')).toContainText('現場担当者');
+});
+
+test('V2.1 UI: Accessロール（管理者メール）は3ロールを切替できる', async ({ page }) => {
+  await page.route('**/cdn-cgi/access/get-identity', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ email: 'manager@example.com' }),
+    }),
+  );
+  await login(page);
+  await expect(page.locator('#roleName')).toHaveText('現場代理人・所長');
+  await page.locator('#roleBtn').click();
+  await expect(page.locator('#roleMenu .ritem')).toHaveCount(3);
+  await page.locator('#roleMenu .ritem[data-r="hq"]').click();
+  await expect(page.locator('#roleName')).toHaveText('本社（工務・安全・品質）');
+});
+
 test('V2.1 UI: AI出来形→人の承認→レポート→承認履歴→監査', async ({ page }) => {
   await login(page);
   await page.locator('#nav .nb[data-pg="viewer"]').click();

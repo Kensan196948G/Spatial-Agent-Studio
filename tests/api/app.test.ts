@@ -16,6 +16,11 @@ const config = loadConfig({
   sessionTtlHours: 8,
   staticDir: '/nonexistent-for-api-tests',
   corsOrigins: ['https://spatial-agent-studio-preview.pages.dev'],
+  accessRoles: {
+    'manager@example.com': ['agent', 'hq', 'it'],
+    'staff@example.com': ['field'],
+  },
+  accessRoleDomains: { 'example.org': ['field'] },
 });
 
 let app: FastifyInstance;
@@ -266,6 +271,44 @@ describe('Spatial Agent Studio API', () => {
     });
     expect(res.statusCode).toBe(400);
     expect(res.json().error.code).toBe('INVALID_BODY');
+  });
+
+  it('maps Cloudflare Access emails to roles (staff / manager) and rejects unknown emails', async () => {
+    const staff = await app.inject({
+      method: 'POST',
+      url: '/api/auth/access',
+      payload: { email: 'staff@example.com' },
+    });
+    expect(staff.statusCode).toBe(200);
+    expect(staff.json().roles).toEqual(['field']);
+    expect(staff.json().defaultRole).toBe('field');
+    expect(staff.json().user.role).toBe('staff');
+
+    const manager = await app.inject({
+      method: 'POST',
+      url: '/api/auth/access',
+      payload: { email: 'Manager@Example.com' },
+    });
+    expect(manager.statusCode).toBe(200);
+    expect(manager.json().roles).toEqual(['agent', 'hq', 'it']);
+    expect(manager.json().defaultRole).toBe('agent');
+    expect(manager.json().user.role).toBe('manager');
+
+    const unknown = await app.inject({
+      method: 'POST',
+      url: '/api/auth/access',
+      payload: { email: 'nobody@example.com' },
+    });
+    expect(unknown.statusCode).toBe(403);
+    expect(unknown.json().error.code).toBe('ROLE_NOT_MAPPED');
+
+    const byDomain = await app.inject({
+      method: 'POST',
+      url: '/api/auth/access',
+      payload: { email: 'someone@example.org' },
+    });
+    expect(byDomain.statusCode).toBe(200);
+    expect(byDomain.json().roles).toEqual(['field']);
   });
 
   it('keeps the audit log append-only at the database level', async () => {

@@ -1,0 +1,32 @@
+{
+  "url": "https://spatial-agent-studio-preview.pages.dev/",
+  "checkedAt": "2026-11-20T04:12:20.525Z",
+  "cases": [
+    {
+      "label": "field",
+      "emailMasked": "so***@takamatsu-cg.co.jp",
+      "badge": "Access 認証済み",
+      "role": "現場担当者",
+      "chipMasked": "so***@takamatsu-cg.co.jp",
+      "roleMenuItems": 1,
+      "roleNames": [
+        "現場担当者"
+      ],
+      "consoleErrors": 0
+    },
+    {
+      "label": "manager",
+      "emailMasked": "ke***@gmail.com",
+      "badge": "Access 認証済み",
+      "role": "現場代理人・所長",
+      "chipMasked": "ke***@gmail.com",
+      "roleMenuItems": 3,
+      "roleNames": [
+        "現場代理人・所長",
+        "本社（工務・安全・品質）",
+        "IT・DX部門"
+      ],
+      "consoleErrors": 0
+    }
+  ]
+}

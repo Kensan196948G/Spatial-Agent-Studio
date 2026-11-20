@@ -1,5 +1,9 @@
 import path from 'node:path';
 
+export type RoleKey = 'field' | 'agent' | 'hq' | 'it';
+
+export const ROLE_KEYS: RoleKey[] = ['field', 'agent', 'hq', 'it'];
+
 export type AppConfig = {
   port: number;
   databaseUrl: string;
@@ -9,7 +13,52 @@ export type AppConfig = {
   sessionTtlHours: number;
   staticDir: string;
   corsOrigins: string[];
+  /** Cloudflare Access のメールアドレス → 許可ロール（先頭が既定ロール）。 */
+  accessRoles: Record<string, RoleKey[]>;
+  /** メールドメイン → 許可ロール（個別指定が無い場合のフォールバック）。 */
+  accessRoleDomains: Record<string, RoleKey[]>;
 };
+
+/**
+ * `SAS_ACCESS_ROLES` は `{"user@example.com":["agent","hq","it"]}` 形式のJSON。
+ * メールアドレスは公開リポジトリへ入れないため、コードではなく環境変数で渡す。
+ */
+export function parseAccessRoles(raw: string | undefined): Record<string, RoleKey[]> {
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const out: Record<string, RoleKey[]> = {};
+    for (const [email, roles] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!Array.isArray(roles)) continue;
+      const clean = roles.filter((r): r is RoleKey => ROLE_KEYS.includes(r as RoleKey));
+      const key = email.trim().toLowerCase();
+      if (key && clean.length > 0) out[key] = clean;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
+
+/** `SAS_ACCESS_ROLE_DOMAINS` は `{"example.co.jp":["field"]}` 形式のJSON。 */
+export function parseAccessRoleDomains(raw: string | undefined): Record<string, RoleKey[]> {
+  if (!raw) return {};
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+    const out: Record<string, RoleKey[]> = {};
+    for (const [domain, roles] of Object.entries(parsed as Record<string, unknown>)) {
+      if (!Array.isArray(roles)) continue;
+      const clean = roles.filter((r): r is RoleKey => ROLE_KEYS.includes(r as RoleKey));
+      const key = domain.trim().toLowerCase().replace(/^@/, '');
+      if (key && clean.length > 0) out[key] = clean;
+    }
+    return out;
+  } catch {
+    return {};
+  }
+}
 
 function loadDotEnv(): void {
   try {
@@ -46,5 +95,8 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean),
+    accessRoles: overrides.accessRoles ?? parseAccessRoles(process.env.SAS_ACCESS_ROLES),
+    accessRoleDomains:
+      overrides.accessRoleDomains ?? parseAccessRoleDomains(process.env.SAS_ACCESS_ROLE_DOMAINS),
   };
 }
