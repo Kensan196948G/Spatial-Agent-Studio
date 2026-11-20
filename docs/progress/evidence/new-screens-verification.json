@@ -1,0 +1,83 @@
+{
+  "url": "https://spatial-agent-studio-preview.pages.dev/",
+  "checkedAt": "2026-11-20T04:25:56.836Z",
+  "checks": [
+    {
+      "name": "audit page",
+      "ok": true,
+      "detail": "data-page=audit"
+    },
+    {
+      "name": "audit rows",
+      "ok": true,
+      "detail": "rows=36"
+    },
+    {
+      "name": "audit kpis",
+      "ok": true,
+      "detail": "kpis=4"
+    },
+    {
+      "name": "audit chain verified",
+      "ok": true,
+      "detail": "VERIFIED（全件一致） 検証件数 36 件 HEADハッシュ 15ad5f7e1d3a1310f96cacfca1fb11c49e3938b22dcafbf9c73d9f6116113514 検証方式 直前ハッシュ＋日時＋主体＋種別＋"
+    },
+    {
+      "name": "record hash recompute",
+      "ok": true,
+      "detail": "一致 — 改変されていません"
+    },
+    {
+      "name": "audit filter",
+      "ok": true,
+      "detail": "filtered=7/36"
+    },
+    {
+      "name": "settings page",
+      "ok": true,
+      "detail": "data-page=settings"
+    },
+    {
+      "name": "settings version",
+      "ok": true,
+      "detail": "version 0.1.0"
+    },
+    {
+      "name": "settings access state",
+      "ok": true,
+      "detail": "access row present"
+    },
+    {
+      "name": "settings role matrix",
+      "ok": true,
+      "detail": "rows=4"
+    },
+    {
+      "name": "settings counts",
+      "ok": true,
+      "detail": "counts present"
+    },
+    {
+      "name": "health check toast",
+      "ok": true,
+      "detail": "ヘルスチェック：API 正常 / DB up / v0.1.0"
+    }
+  ],
+  "audit": {
+    "rows": 36,
+    "kpis": 4,
+    "chain": "VERIFIED（全件一致） 検証件数 36 件 HEADハッシュ 15ad5f7e1d3a1310f96cacfca1fb11c49e3938b22dcafbf9c73d9f6116113514 検証方式 直前ハッシュ＋日時＋主体＋種別＋",
+    "recheck": "一致 — 改変されていません",
+    "filtered": 7
+  },
+  "settings": {
+    "roleRows": 4,
+    "hasVersion": true,
+    "hasCounts": true
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 404 ()",
+    "Failed to load resource: the server responded with a status of 401 ()"
+  ],
+  "ok": true
+}

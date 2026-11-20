@@ -12,7 +12,7 @@ test.describe.configure({ mode: 'serial' });
 
 test('V2.1 UI: ログイン→ホーム（実データ・5現場・9画面）', async ({ page }) => {
   await login(page);
-  await expect(page.locator('#nav .nb')).toHaveCount(9);
+  await expect(page.locator('#nav .nb')).toHaveCount(11);
   await expect(page.locator('#sites .site')).toHaveCount(5);
   await expect(page.locator('#nav .nb[data-pg="dash"]')).toHaveClass(/on/);
   await expect(page.locator('#themeBtn')).toBeVisible();
@@ -87,6 +87,42 @@ test('V2.1 UI: Accessロール（管理者メール）は3ロールを切替で�
   await expect(page.locator('#roleMenu .ritem')).toHaveCount(3);
   await page.locator('#roleMenu .ritem[data-r="hq"]').click();
   await expect(page.locator('#roleName')).toHaveText('本社（工務・安全・品質）');
+});
+
+test('V2.1 UI: 監査ログ画面（一覧・絞り込み・詳細・ハッシュ再計算）', async ({ page }) => {
+  await login(page);
+  await page.locator('#nav .nb[data-pg="audit"]').click();
+  await expect(page.locator('body')).toHaveAttribute('data-page', 'audit');
+  await expect(page.locator('#auKpis .stat')).toHaveCount(4);
+  await expect(page.locator('#auTable tbody tr').first()).toBeVisible({ timeout: 20_000 });
+  const rows = await page.locator('#auTable tbody tr').count();
+  expect(rows).toBeGreaterThan(10);
+
+  await page.locator('#auType').selectOption({ index: 1 });
+  await expect(page.locator('#auTable tbody tr').first()).toBeVisible();
+
+  await page.locator('#auSearch').fill('zzz-no-match');
+  await expect(page.locator('#auTable .empty')).toBeVisible();
+  await page.locator('#auSearch').fill('');
+  await expect(page.locator('#auTable tbody tr').first()).toBeVisible();
+
+  await page.locator('#auTable tbody tr').first().click();
+  await expect(page.locator('#auDetail .kv')).toBeVisible();
+  await page.locator('#auRecheck').click();
+  await expect(page.locator('#auRecheckRes')).toContainText('一致', { timeout: 10_000 });
+});
+
+test('V2.1 UI: システム設定画面（環境・権限・データ・監査）', async ({ page }) => {
+  await login(page);
+  await page.locator('#nav .nb[data-pg="settings"]').click();
+  await expect(page.locator('body')).toHaveAttribute('data-page', 'settings');
+  await expect(page.locator('#stBody .kv').first()).toBeVisible({ timeout: 20_000 });
+  await expect(page.locator('#stBody')).toContainText('0.1.0');
+  await expect(page.locator('#stBody')).toContainText('Cloudflare Access');
+  await expect(page.locator('#stBody table.tbl tbody tr')).toHaveCount(4);
+
+  await page.locator('#stHealth').click();
+  await expect(page.locator('.toast')).toContainText('ヘルスチェック');
 });
 
 test('V2.1 UI: AI出来形→人の承認→レポート→承認履歴→監査', async ({ page }) => {

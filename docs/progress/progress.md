@@ -1,6 +1,6 @@
 # 進捗・判断・証跡 — Spatial Agent Studio MVP
 
-最終更新：2026-11-20 13:00 JST
+最終更新：2026-11-20 13:27 JST
 
 ## 1. 現在の状態
 
@@ -21,7 +21,8 @@
 | UI正本 | **V2.1システム版（9画面）原本を静的UIシェルとして採用**（`web-v21/`＋`bridge.js`、PR #11） |
 | CIゲート | **`ci/local-verify`（ローカルCI）をRequired Checkとして運用**。PR #8でBLOCKED→success→auto-mergeを実証 |
 | main HEAD（PR #11時点） | `7fb67799aef81967d908275b9393b979277ecde9` |
-| V2.1 UI | ダッシュボード/3D/承認/監査は実データ、他5画面はV2.1サンプル表示 |
+| V2.1 UI | **11画面**。ダッシュボード/3D/承認/監査/**監査ログ**/**システム設定**は実データ、他5画面はV2.1サンプル表示 |
+| 追加画面（2026-11-20） | **監査ログ**：全件一覧・種別/主体/検索絞り込み・レコード詳細・SHA-256再計算・CSV。**システム設定**：環境/認証/ロール/データ件数/監査チェーン/ヘルスチェック |
 | V2.1 Preview | **配備済み・V2.1 UIで実操作確認済み**（デプロイ `69ed0a62`） |
 | Previewカスタムドメイン | **ACTIVE**：`spatial-agent-studio-preview.mirai-dx-platform.com`（Pages検証・証明書ともにactive、CNAMEプロキシ済み） |
 | Cloudflare Access（Preview） | **適用済み**：同ドメインにメールOTP（許可メール2件・8時間セッション）。Edgeは302でチームドメインへ |

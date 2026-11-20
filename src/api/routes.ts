@@ -121,6 +121,9 @@ const loginAttempts = new Map<string, { count: number; firstAt: number }>();
 const LOGIN_WINDOW_MS = 10 * 60 * 1000;
 const LOGIN_MAX_ATTEMPTS = 5;
 
+/** /api/system/info の稼働時間表示用。プロセス起動時刻で固定。 */
+const startedAt = new Date();
+
 function attemptKey(req: FastifyRequest, email: string): string {
   return `${req.ip}|${email.toLowerCase()}`;
 }
@@ -696,6 +699,58 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
     const client = await pool.connect();
     try {
       return { verify: await verifyAuditChain(client) };
+    } finally {
+      client.release();
+    }
+  });
+
+  /**
+   * システム設定画面向けの環境情報。秘密情報（接続文字列・実メールアドレス）は返さない。
+   */
+  app.get('/api/system/info', { preHandler: guard }, async () => {
+    const client = await pool.connect();
+    try {
+      const counts = await pool.query<{
+        sites: number;
+        users: number;
+        approvals: number;
+        reports: number;
+        audit_events: number;
+        database: string;
+      }>(`
+        SELECT
+          (SELECT count(*) FROM sites)::int AS sites,
+          (SELECT count(*) FROM users)::int AS users,
+          (SELECT count(*) FROM approvals)::int AS approvals,
+          (SELECT count(*) FROM reports)::int AS reports,
+          (SELECT count(*) FROM audit_events)::int AS audit_events,
+          current_database() AS database
+      `);
+      const verify = await verifyAuditChain(client);
+      const row = counts.rows[0]!;
+      return {
+        version: '0.1.0',
+        nodeEnv: config.nodeEnv,
+        aiMode: 'demo-deterministic',
+        startedAt: startedAt.toISOString(),
+        uptimeSec: Math.round(process.uptime()),
+        session: { ttlHours: config.sessionTtlHours, cookieSecure: config.cookieSecure },
+        access: {
+          mappedAddresses: Object.keys(config.accessRoles).length,
+          mappedDomains: Object.keys(config.accessRoleDomains).length,
+          roles: ['field', 'agent', 'hq', 'it'],
+        },
+        db: { up: true, name: row.database },
+        counts: {
+          sites: row.sites,
+          users: row.users,
+          approvals: row.approvals,
+          reports: row.reports,
+          auditEvents: row.audit_events,
+        },
+        audit: verify,
+        cors: { origins: new Set([config.appOrigin, ...config.corsOrigins]).size },
+      };
     } finally {
       client.release();
     }

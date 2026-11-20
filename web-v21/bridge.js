@@ -335,6 +335,441 @@
     }
   }
 
+  /* =========================================================
+     監査ログ（専用画面）— 追記専用・ハッシュ連鎖の検証
+     ========================================================= */
+
+  const ic = (name, cls = 'i') => `<svg class="${cls}"><use href="#i-${name}"/></svg>`;
+
+  const au = { q: '', type: 'all', actor: 'all', limit: 200, events: [], verify: null, selected: null };
+
+  const actorLabel = (a) => {
+    if (a === 'SYSTEM') return 'SYSTEM';
+    if (a === 'HUMAN') return 'HUMAN';
+    if (a.indexOf('HUMAN:') === 0) return a.slice(6);
+    if (a.indexOf('AI:') === 0) return a.slice(3);
+    return a;
+  };
+  const actorColor = (a) =>
+    a.indexOf('AI:') === 0 ? '#f0956a' : a.indexOf('HUMAN') === 0 ? '#3ee07f' : '#9fb0d8';
+  const fmtTime = (iso) => {
+    const d = new Date(iso);
+    return Number.isNaN(d.getTime()) ? '—' : d.toLocaleString('ja-JP', { hour12: false });
+  };
+  const shortHash = (h) => (h ? `${h.slice(0, 8)}…${h.slice(-4)}` : '—');
+
+  function auFiltered() {
+    const q = au.q.trim().toLowerCase();
+    return au.events.filter((e) => {
+      if (au.type !== 'all' && e.type !== au.type) return false;
+      if (au.actor !== 'all' && actorLabel(e.actor) !== au.actor) return false;
+      if (!q) return true;
+      return `${e.seq} ${e.actor} ${e.type} ${e.detail} ${e.hash}`.toLowerCase().includes(q);
+    });
+  }
+
+  function renderAuKpis() {
+    const box = $('#auKpis');
+    if (!box) return;
+    const now = Date.now();
+    const day = au.events.filter((e) => now - new Date(e.ts).getTime() < 86400000).length;
+    const types = new Set(au.events.map((e) => e.type)).size;
+    const v = au.verify;
+    const chain = v
+      ? v.ok
+        ? `<span style="color:var(--gr)">VERIFIED</span>`
+        : `<span style="color:var(--rd)">BROKEN #${v.firstBadSeq}</span>`
+      : '<span style="color:var(--tx3)">未検証</span>';
+    const items = [
+      ['記録件数', au.events.length.toLocaleString(), 'list', '#38e1ff'],
+      ['直近24時間', day.toLocaleString(), 'clock', '#8b7bff'],
+      ['種別', String(types), 'layers', '#ffb547'],
+      ['ハッシュ連鎖', chain, 'shield', v && v.ok ? '#3ee07f' : '#ff5d6c'],
+    ];
+    box.innerHTML = items
+      .map(
+        ([label, value, icon, color]) =>
+          `<div class="stat" style="--c:${color}"><small>${ic(icon, 'i sm')} ${label}</small><b style="color:${color}">${value}</b></div>`,
+      )
+      .join('');
+  }
+
+  function renderAuFilters() {
+    const box = $('#auFilters');
+    if (!box) return;
+    const types = ['all', ...Array.from(new Set(au.events.map((e) => e.type))).sort()];
+    const actors = ['all', ...Array.from(new Set(au.events.map((e) => actorLabel(e.actor)))).sort()];
+    const typeOpts = types
+      .map(
+        (t) =>
+          `<option value="${esc(t)}"${au.type === t ? ' selected' : ''}>${t === 'all' ? 'すべての種別' : esc(t)}</option>`,
+      )
+      .join('');
+    const actorOpts = actors
+      .map(
+        (a) =>
+          `<option value="${esc(a)}"${au.actor === a ? ' selected' : ''}>${a === 'all' ? 'すべての主体' : esc(a)}</option>`,
+      )
+      .join('');
+    box.innerHTML = `
+      <label class="sas-field" style="margin:0"><span>検索（内容・主体・ハッシュ）</span>
+        <input id="auSearch" type="search" placeholder="例：承認 / APPLY / 出来形" value="${esc(au.q)}" />
+      </label>
+      <label class="sas-field" style="margin:0"><span>種別</span><select id="auType">${typeOpts}</select></label>
+      <label class="sas-field" style="margin:0"><span>主体</span><select id="auActor">${actorOpts}</select></label>
+      <label class="sas-field" style="margin:0"><span>取得件数</span>
+        <select id="auLimit">${[50, 100, 200, 500].map((n) => `<option value="${n}"${au.limit === n ? ' selected' : ''}>最新 ${n} 件</option>`).join('')}</select>
+      </label>`;
+    $('#auSearch').addEventListener('input', (e) => {
+      au.q = e.target.value;
+      renderAuTable();
+    });
+    $('#auType').addEventListener('change', (e) => {
+      au.type = e.target.value;
+      renderAuTable();
+    });
+    $('#auActor').addEventListener('change', (e) => {
+      au.actor = e.target.value;
+      renderAuTable();
+    });
+    $('#auLimit').addEventListener('change', (e) => {
+      au.limit = Number(e.target.value) || 200;
+      loadAuditPage();
+    });
+  }
+
+  function renderAuTable() {
+    const box = $('#auTable');
+    if (!box) return;
+    const rows = auFiltered();
+    $('#auCount').textContent = `${rows.length} / ${au.events.length} 件`;
+    if (!rows.length) {
+      box.innerHTML = `<div class="empty">${ic('info', 'i')} 条件に一致する記録がありません。</div>`;
+      return;
+    }
+    box.innerHTML = `<div style="max-height:430px;overflow:auto"><table class="tbl">
+      <thead><tr><th style="width:52px">#</th><th style="width:150px">日時</th><th style="width:130px">主体</th><th style="width:120px">種別</th><th>内容</th><th style="width:130px">ハッシュ</th></tr></thead>
+      <tbody>${rows
+        .map((e) => {
+          const on = au.selected === e.seq ? ' style="background:rgba(56,225,255,.08)"' : '';
+          return `<tr data-seq="${e.seq}"${on}><td style="font-family:var(--mono)">${e.seq}</td><td style="font-family:var(--mono)">${esc(fmtTime(e.ts))}</td><td style="color:${actorColor(e.actor)}">${esc(actorLabel(e.actor))}</td><td><span class="pill" style="--c:${actorColor(e.actor)}">${esc(e.type)}</span></td><td>${esc(e.detail)}</td><td style="font-family:var(--mono)" title="${esc(e.hash || '')}">${esc(shortHash(e.hash))}</td></tr>`;
+        })
+        .join('')}</tbody></table></div>`;
+    box.querySelectorAll('tr[data-seq]').forEach((tr) => {
+      tr.style.cursor = 'pointer';
+      tr.addEventListener('click', () => {
+        au.selected = Number(tr.dataset.seq);
+        renderAuTable();
+        renderAuDetail();
+      });
+    });
+  }
+
+  async function sha256Hex(text) {
+    if (!window.crypto || !window.crypto.subtle) return null;
+    const buf = await window.crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+    return Array.from(new Uint8Array(buf))
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('');
+  }
+
+  function renderAuDetail() {
+    const box = $('#auDetail');
+    if (!box) return;
+    const e = au.events.find((x) => x.seq === au.selected);
+    if (!e) {
+      box.innerHTML = `<div class="empty">${ic('ptr', 'i')} 行を選択すると、前レコードとの連鎖とハッシュを表示します。</div>`;
+      return;
+    }
+    box.innerHTML = `<dl class="kv" style="grid-template-columns:150px 1fr">
+      <dt>seq</dt><dd>#${e.seq}</dd>
+      <dt>日時</dt><dd>${esc(fmtTime(e.ts))}</dd>
+      <dt>主体</dt><dd style="color:${actorColor(e.actor)}">${esc(actorLabel(e.actor))}</dd>
+      <dt>種別</dt><dd><span class="pill" style="--c:${actorColor(e.actor)}">${esc(e.type)}</span></dd>
+      <dt>内容</dt><dd style="font-family:inherit">${esc(e.detail)}</dd>
+      <dt>前ハッシュ</dt><dd style="word-break:break-all;font-size:11px">${esc(e.prev || '(genesis)')}</dd>
+      <dt>この記録のハッシュ</dt><dd style="word-break:break-all;font-size:11px">${esc(e.hash || '—')}</dd>
+    </dl>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+      <button class="mini" id="auRecheck">${ic('refresh')}この記録を再計算して照合</button>
+      <span id="auRecheckRes" style="font-size:12px;color:var(--tx3)">前ハッシュ＋日時＋主体＋種別＋内容から SHA-256 を再計算します。</span>
+    </div>`;
+    $('#auRecheck').addEventListener('click', async () => {
+      const res = $('#auRecheckRes');
+      res.textContent = '計算中…';
+      const calc = await sha256Hex(`${e.prev}|${new Date(e.ts).toISOString()}|${e.actor}|${e.type}|${e.detail}`);
+      if (!calc) {
+        res.textContent = 'この環境では暗号APIを利用できません（HTTPSで開いてください）。';
+        return;
+      }
+      const ok = calc === e.hash;
+      res.innerHTML = ok
+        ? `<span style="color:var(--gr)">${ic('checkc')} 一致 — 改変されていません</span>`
+        : `<span style="color:var(--rd)">${ic('alert')} 不一致 — 記録が改変されています（再計算 ${esc(calc.slice(0, 16))}…）</span>`;
+    });
+  }
+
+  function downloadAuditCsv() {
+    const rows = auFiltered();
+    const cells = (v) => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+    const csv = [
+      ['seq', 'time', 'actor', 'type', 'detail', 'prev_hash', 'hash'].map(cells).join(','),
+      ...rows.map((e) => [e.seq, e.ts, e.actor, e.type, e.detail, e.prev, e.hash].map(cells).join(',')),
+    ].join('\r\n');
+    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `spatial-agent-studio-audit-${new Date().toISOString().slice(0, 19).replace(/[:T]/g, '')}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    A.toast(`CSVを書き出しました（${rows.length}件）`, 'download', '#38e1ff');
+  }
+
+  function renderAuVerify() {
+    const box = $('#auVerify');
+    if (!box) return;
+    const v = au.verify;
+    if (!v) {
+      box.innerHTML = `<span style="color:var(--tx3)">検証結果がありません。再読込してください。</span>`;
+      return;
+    }
+    box.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:${v.ok ? 'var(--gr)' : 'var(--rd)'}">
+        ${ic(v.ok ? 'checkc' : 'alert', 'i')}${v.ok ? 'VERIFIED（全件一致）' : `BROKEN（seq ${v.firstBadSeq} で不一致）`}
+      </div>
+      <dl class="kv" style="grid-template-columns:110px 1fr">
+        <dt>検証件数</dt><dd>${v.checked} 件</dd>
+        <dt>HEADハッシュ</dt><dd style="word-break:break-all;font-size:11px">${esc(v.headHash || '—')}</dd>
+        <dt>検証方式</dt><dd style="font-family:inherit">${esc(v.reason || '直前ハッシュ＋日時＋主体＋種別＋内容の SHA-256 連鎖')}</dd>
+      </dl>
+      <div style="margin-top:8px;font-size:11px;color:var(--tx3)">${ic('info', 'i sm')} DB側は追記専用（UPDATE/DELETE をトリガで拒否）。改ざん検知はこの画面の再計算とサーバ検証の二段構えです。</div>`;
+  }
+
+  async function loadAuditPage() {
+    const table = $('#auTable');
+    if (table) table.innerHTML = `<div class="empty">${ic('clock')} 読み込み中…</div>`;
+    try {
+      const res = await api(`/audit?limit=${au.limit}`);
+      applyAudit(res.events || [], res.verify || null);
+      au.events = state.audit;
+      au.verify = state.verify;
+      renderAuKpis();
+      renderAuFilters();
+      renderAuVerify();
+      renderAuTable();
+      renderAuDetail();
+    } catch (err) {
+      if (table) table.innerHTML = `<div class="empty">${ic('alert')} 読み込みに失敗しました：${esc(err.message || '')}</div>`;
+    }
+  }
+
+  A.P.audit = {
+    init() {
+      const root = $('#pg-audit');
+      if (!root) return;
+      root.innerHTML = `
+        <div class="pg-h" style="--c:#38e1ff"><div class="pi">${ic('key', 'i lg')}</div>
+          <div><h2>監査ログ ─ 追記専用・ハッシュ連鎖</h2>
+          <p>人の操作・AIの実行・承認・連携をすべて記録し、直前の記録のハッシュを含めて連鎖させます。1件でも書き換えると以降の検証が崩れるため、事後の改変を検知できます（J-SOX・ISO 27001 の証跡要件を想定）。</p></div>
+          <div class="act"><button class="hbtn" id="auReload">${ic('refresh')}再読込</button><button class="hbtn" id="auCsv">${ic('download')}CSV書出</button></div></div>
+        <div class="stats" id="auKpis"></div>
+        <div class="g mt" style="grid-template-columns:1.6fr 1fr">
+          <div class="card"><h3>${ic('scan')}絞り込み<span class="r" id="auCount">—</span></h3><div id="auFilters" style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:8px"></div></div>
+          <div class="card"><h3>${ic('shield')}ハッシュ連鎖の状態</h3><div id="auVerify" style="font-size:12px;line-height:1.7"></div></div>
+        </div>
+        <div class="card mt"><h3>${ic('list')}イベント一覧<span class="r">最新 ${au.limit} 件を取得</span></h3><div id="auTable"></div></div>
+        <div class="card mt"><h3>${ic('key')}レコード詳細と改ざん検知</h3><div id="auDetail"></div></div>`;
+      $('#auReload').addEventListener('click', loadAuditPage);
+      $('#auCsv').addEventListener('click', downloadAuditCsv);
+      renderAuDetail();
+    },
+    refresh() {
+      loadAuditPage();
+    },
+  };
+
+  /* =========================================================
+     システム設定 — 環境・認証・データ・監査の状態を一覧
+     ========================================================= */
+
+  const sys = { info: null };
+
+  const fmtUptime = (s) => {
+    const sec = Math.max(0, Math.round(s || 0));
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    return h > 0 ? `${h}時間 ${m}分` : `${m}分 ${sec % 60}秒`;
+  };
+  const maskEmail = (e) => (e ? String(e).replace(/^(.{2})[^@]*@/, '$1***@') : '—');
+  const yesNo = (b) => (b ? `<span style="color:var(--gr)">有効</span>` : `<span style="color:var(--tx3)">無効</span>`);
+
+  function settingsStats(info) {
+    const v = info.audit || {};
+    const items = [
+      ['稼働状態', '稼働中', 'checkc', '#3ee07f'],
+      ['バージョン', esc(info.version || '—'), 'cube', '#38e1ff'],
+      ['稼働時間', esc(fmtUptime(info.uptimeSec)), 'clock', '#8b7bff'],
+      [
+        '監査連鎖',
+        v.ok ? `VERIFIED ${v.checked}件` : 'BROKEN',
+        'shield',
+        v.ok ? '#3ee07f' : '#ff5d6c',
+      ],
+    ];
+    return items
+      .map(
+        ([label, value, icon, color]) =>
+          `<div class="stat" style="--c:${color}"><small>${ic(icon, 'i sm')} ${label}</small><b style="color:${color}">${value}</b></div>`,
+      )
+      .join('');
+  }
+
+  function roleMatrix() {
+    const defs = A.ROLE && A.ROLE.defs ? A.ROLE.defs : {};
+    const rows = Object.entries(defs)
+      .map(([k, d]) => {
+        const on = A.ROLE.cur === k;
+        return `<tr${on ? ' style="background:rgba(56,225,255,.08)"' : ''}><td style="color:${d.c}">${esc(d.n)}</td>
+          <td class="${d.approve ? 'y' : 'n'}">${d.approve ? ic('checkc') : ic('x')}</td>
+          <td>${d.pages.length}</td><td style="font-size:11px;color:var(--tx2)">${esc(d.grp)}</td></tr>`;
+      })
+      .join('');
+    return `<table class="tbl"><thead><tr><th>ロール</th><th>承認</th><th>画面数</th><th>SSOグループ（模擬）</th></tr></thead><tbody>${rows}</tbody></table>`;
+  }
+
+  function renderSettings() {
+    const info = sys.info;
+    const body = $('#stBody');
+    if (!info || !body) return;
+    const acc = info.access || {};
+    const counts = info.counts || {};
+    const v = info.audit || {};
+    const session = info.session || {};
+    const db = info.db || {};
+    const roleNames = (auth.roles || []).map((k) => (A.ROLE.defs[k] ? A.ROLE.defs[k].n : k));
+    body.innerHTML = `
+      <div class="stats">${settingsStats(info)}</div>
+      <div class="g g3 mt">
+        <div class="card"><h3>${ic('cube')}環境情報</h3>
+          <dl class="kv">
+            <dt>バージョン</dt><dd>${esc(info.version)}</dd>
+            <dt>実行モード</dt><dd>${esc(info.nodeEnv)}</dd>
+            <dt>AIモード</dt><dd>${esc(info.aiMode)}</dd>
+            <dt>データベース</dt><dd>${esc(db.name || '—')}（${db.up ? '接続中' : '切断'}）</dd>
+            <dt>APIベース</dt><dd style="word-break:break-all;font-size:11px">${esc(API_BASE || location.origin)}</dd>
+            <dt>CORS許可</dt><dd>${Number(info.cors && info.cors.origins) || 0} Origin</dd>
+            <dt>起動時刻</dt><dd>${esc(fmtTime(info.startedAt))}</dd>
+            <dt>稼働時間</dt><dd>${esc(fmtUptime(info.uptimeSec))}</dd>
+            <dt>タイムゾーン</dt><dd>${esc(Intl.DateTimeFormat().resolvedOptions().timeZone || '—')}</dd>
+          </dl>
+        </div>
+        <div class="card"><h3>${ic('lock')}認証・権限</h3>
+          <dl class="kv">
+            <dt>Cloudflare Access</dt><dd>${auth.behindAccess ? '<span style="color:var(--gr)">認証済み</span>' : '<span style="color:var(--am)">未経由（デモ）</span>'}</dd>
+            <dt>サインイン</dt><dd>${esc((state.user && state.user.name) || '—')}</dd>
+            <dt>メール</dt><dd>${esc(maskEmail(auth.email))}</dd>
+            <dt>付与ロール</dt><dd>${roleNames.length ? esc(roleNames.join(' / ')) : '全ロール（デモ）'}</dd>
+            <dt>セッション</dt><dd>${Number(session.ttlHours) || 0} 時間</dd>
+            <dt>Cookie Secure</dt><dd>${yesNo(session.cookieSecure)}</dd>
+            <dt>Access割当</dt><dd>個別 ${Number(acc.mappedAddresses) || 0} 件 / ドメイン ${Number(acc.mappedDomains) || 0} 件</dd>
+          </dl>
+        </div>
+        <div class="card"><h3>${ic('db')}データ統計</h3>
+          <dl class="kv">
+            <dt>現場</dt><dd>${Number(counts.sites) || 0}</dd>
+            <dt>ユーザー</dt><dd>${Number(counts.users) || 0}</dd>
+            <dt>承認</dt><dd>${Number(counts.approvals) || 0}</dd>
+            <dt>レポート</dt><dd>${Number(counts.reports) || 0}</dd>
+            <dt>監査イベント</dt><dd>${Number(counts.auditEvents) || 0}</dd>
+            <dt>承認待ち</dt><dd>${state.approvals.filter((a) => a.status === 'pending').length}</dd>
+            <dt>選択中の現場</dt><dd>${esc((state.dashboard && state.dashboard.sites && (state.dashboard.sites.find((s) => s.id === state.selectedSiteId) || {}).name) || '—')}</dd>
+          </dl>
+        </div>
+      </div>
+      <div class="g mt" style="grid-template-columns:1.1fr 1fr">
+        <div class="card"><h3>${ic('shield')}監査・セキュリティ<span class="r"><button class="mini" id="stVerify">${ic('refresh')}再検証</button></span></h3>
+          <dl class="kv">
+            <dt>ハッシュ連鎖</dt><dd>${v.ok ? `<span style="color:var(--gr)">一致（${v.checked}件）</span>` : `<span style="color:var(--rd)">不一致（seq ${esc(String(v.firstBadSeq))}）</span>`}</dd>
+            <dt>HEADハッシュ</dt><dd style="word-break:break-all;font-size:11px">${esc(v.headHash || '—')}</dd>
+            <dt>追記専用</dt><dd>DBトリガで UPDATE / DELETE を拒否</dd>
+            <dt>ハッシュ方式</dt><dd>SHA-256（前ハッシュ＋日時＋主体＋種別＋内容）</dd>
+            <dt>コンテンツ保護</dt><dd>CSP / X-Frame-Options: DENY / nosniff</dd>
+          </dl>
+          <div style="margin-top:10px"><button class="mini" data-goto="audit">${ic('key')}監査ログを開く</button></div>
+        </div>
+        <div class="card"><h3>${ic('users')}ロール別の権限</h3>${roleMatrix()}
+          <div style="font-size:10.5px;color:var(--tx3);margin-top:6px">${ic('info', 'i sm')} 画面数はこのアカウントで利用できるページ数。承認は「現場代理人・所長」のみ。</div>
+        </div>
+      </div>
+      <div class="g mt" style="grid-template-columns:1fr 1fr">
+        <div class="card"><h3>${ic('sun')}表示設定</h3>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+            <span style="font-size:12px;color:var(--tx2)">テーマ</span>
+            <button class="mini" id="stTheme">${ic('moon')}ライト／ダークを切替</button>
+            <span id="stThemeNow" style="font-size:11px;color:var(--tx3)"></span>
+          </div>
+          <p style="font-size:11px;color:var(--tx3);margin-top:10px">テーマはこの端末に保存されます（再読込後も維持）。</p>
+        </div>
+        <div class="card"><h3>${ic('info')}この環境について</h3>
+          <p style="font-size:12px;line-height:1.7;color:var(--tx2)">プレビュー環境です。AIは決定的なデモエンジンで、外部LLMへは接続しません。データは検証用で、現場・人物・数値はすべて架空です。本番昇格時は実LLM・SSO・外部連携の設計が必要です。</p>
+          <div style="margin-top:8px"><button class="mini" data-goto="governance">${ic('lock')}統制（ポリシー）を開く</button></div>
+        </div>
+      </div>`;
+    const now = document.documentElement.getAttribute('data-theme') || 'dark';
+    $('#stThemeNow').textContent = `現在：${now === 'light' ? 'ライト' : 'ダーク'}`;
+    $('#stTheme').addEventListener('click', () => {
+      const btn = $('#themeBtn');
+      if (btn) btn.click();
+      const t = document.documentElement.getAttribute('data-theme') || 'dark';
+      $('#stThemeNow').textContent = `現在：${t === 'light' ? 'ライト' : 'ダーク'}`;
+    });
+    $('#stVerify').addEventListener('click', loadSettingsPage);
+  }
+
+  async function loadSettingsPage() {
+    const body = $('#stBody');
+    if (body) body.innerHTML = `<div class="empty">${ic('clock')} 読み込み中…</div>`;
+    try {
+      sys.info = await api('/system/info');
+      renderSettings();
+    } catch (err) {
+      if (body) body.innerHTML = `<div class="empty">${ic('alert')} 取得に失敗しました：${esc(err.message || '')}</div>`;
+    }
+  }
+
+  async function runHealthCheck() {
+    try {
+      const h = await api('/health');
+      A.toast(
+        `ヘルスチェック：API ${h.ok ? '正常' : '異常'} / DB ${h.db} / v${h.version}`,
+        h.ok ? 'checkc' : 'alert',
+        h.ok ? '#3ee07f' : '#ff5d6c',
+        4200,
+      );
+      if ($('#stBody')) loadSettingsPage();
+    } catch (err) {
+      A.toast(`ヘルスチェック失敗：${err.message || ''}`, 'alert', '#ff5d6c', 4200);
+    }
+  }
+
+  A.P.settings = {
+    init() {
+      const root = $('#pg-settings');
+      if (!root) return;
+      root.innerHTML = `
+        <div class="pg-h" style="--c:#8b7bff"><div class="pi">${ic('cog', 'i lg')}</div>
+          <div><h2>システム設定 ─ 環境・権限・データ</h2>
+          <p>このプレビューの実行環境、Cloudflare Access の認証状態、付与ロール、データ件数、監査チェーンの状態を一覧します。設定値はサーバの環境変数とDBから取得した実データです。</p></div>
+          <div class="act"><button class="hbtn" id="stReload">${ic('refresh')}再読込</button><button class="hbtn" id="stHealth">${ic('gauge')}ヘルスチェック</button></div></div>
+        <div id="stBody"></div>`;
+      $('#stReload').addEventListener('click', loadSettingsPage);
+      $('#stHealth').addEventListener('click', runHealthCheck);
+    },
+    refresh() {
+      loadSettingsPage();
+    },
+  };
+
   /* ---------------- dashboard / site selection ---------------- */
 
   function renderKpis() {
