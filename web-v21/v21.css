@@ -667,3 +667,6 @@ svg.ch{width:100%;height:auto;display:block}
 [data-theme=light] .site .al{color:#be123c;background:rgba(226,54,75,.1)}
 [data-theme=light] .conn,[data-theme=light] .farr,[data-theme=light] .prog,[data-theme=light] .road .rl,[data-theme=light] .map .ar{background:rgba(30,60,140,.12)}
 
+
+/* a11y: 視覚的には非表示だがスクリーンリーダーには読ませる */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
