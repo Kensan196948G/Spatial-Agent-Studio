@@ -8,7 +8,5 @@ ingress:
   # プレビュー用（既存）
   - hostname: sas-api.mirai-dx-platform.com
     service: http://127.0.0.1:7450
-  # 本番用（spatial-agent-studio-prod.service / port 7460）
-  - hostname: sas-api-prod.mirai-dx-platform.com
-    service: http://127.0.0.1:7460
+  # 本番APIは本番ホストと同一オリジンに統合済み（sas-api-prod は廃止・DNS削除）
   - service: http_status:404
