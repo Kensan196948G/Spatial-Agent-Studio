@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { loadAiConfig, type AiConfig } from './ai/provider';
 
 export type RoleKey = 'field' | 'agent' | 'hq' | 'it';
 
@@ -22,6 +23,8 @@ export type AppConfig = {
   accessRoleDomains: Record<string, RoleKey[]>;
   /** 割当ファイル（1行1件）。指定時はこのファイルが env より優先される。 */
   accessRolesFile?: string;
+  /** 実AI（LLM）プロバイダの設定。キー未設定なら demo。 */
+  ai: AiConfig;
 };
 
 /**
@@ -179,5 +182,6 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
     accessRoleDomains:
       overrides.accessRoleDomains ?? parseAccessRoleDomains(process.env.SAS_ACCESS_ROLE_DOMAINS),
     accessRolesFile: overrides.accessRolesFile ?? (process.env.SAS_ACCESS_ROLES_FILE || undefined),
+    ai: overrides.ai ?? loadAiConfig(),
   };
 }

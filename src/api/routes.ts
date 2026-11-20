@@ -16,6 +16,8 @@ import {
   setSessionCookie,
 } from './auth';
 import { verifyPassword } from './password';
+import { AiGateway, AiPolicyError } from './ai/gateway';
+import { createAiProvider } from './ai/provider';
 import {
   mapApproval,
   mapAudit,
@@ -112,6 +114,10 @@ const loginSchema = z.object({
   password: z.string().min(1).max(200),
 });
 const accessSchema = z.object({ email: z.string().trim().email().max(200) });
+const aiNarrateSchema = z.object({
+  siteId: z.string().trim().min(1).max(64),
+  task: z.enum(['asbuilt', 'safety']),
+});
 // runs / approvals / reports の id は uuid。形式不正をDBへ渡すと 22P02（500）になるため先に弾く。
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const isUuid = (value: string): boolean => UUID_RE.test(value);
@@ -237,6 +243,9 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
   const { pool, config } = deps;
   const guard = (req: FastifyRequest, reply: FastifyReply): Promise<void> =>
     authGuard(pool, req, reply);
+
+  // 実AI（LLM）はゲートウェイ経由。キー未設定なら demo プロバイダで動作する。
+  const aiGateway = new AiGateway(createAiProvider(config.ai), config.ai);
 
   // ---------- health ----------
   app.get('/api/health', async (_req, reply) => {
@@ -711,6 +720,54 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
   });
 
   /**
+   * AIによる文章生成（数値は計算エンジンの結果のみ。
+   * AIの出力は文章に限定し、判定・数値の算出は行わない）。
+   */
+  app.post('/api/ai/narrate', { preHandler: guard }, async (req, reply) => {
+    if (!isAllowedOrigin(req, config)) {
+      return sendError(reply, 403, 'ORIGIN_FORBIDDEN', '許可されていないOriginです。');
+    }
+    const parsed = aiNarrateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendError(reply, 400, 'INVALID_BODY', 'siteId と task を指定してください。');
+    }
+    const { siteId, task } = parsed.data;
+    const siteResult = await pool.query<SiteRow>('SELECT * FROM sites WHERE id = $1', [siteId]);
+    const site = siteResult.rows[0];
+    if (!site) return sendError(reply, 404, 'SITE_NOT_FOUND', '現場が見つかりません。');
+
+    // 数値・判定は決定的な計算エンジンから取得（AIには文章化だけをさせる）
+    const built = buildRun(task, { id: site.id, name: site.name, model: site.model });
+    try {
+      const { narration, meta } = await aiGateway.narrate({
+        siteName: site.name,
+        task: TASK_LABEL[task],
+        verdict: built.approval.verdict,
+        metrics: built.approval.metrics,
+      });
+      await audit(
+        pool,
+        `AI:${meta.provider}`,
+        'AI_CALL',
+        `${meta.model} site=${site.id} task=${task} tokens=${meta.usage.inputTokens + meta.usage.outputTokens} latency=${meta.latencyMs}ms live=${meta.live}`,
+      );
+      return { narration, meta };
+    } catch (error) {
+      if (error instanceof AiPolicyError) {
+        await audit(pool, 'SYSTEM', 'AI_BLOCKED', `${error.code} site=${site.id} task=${task}`);
+        const status =
+          error.code === 'AI_RATE_LIMITED' || error.code === 'AI_BUDGET_EXCEEDED'
+            ? 429
+            : error.code === 'AI_UPSTREAM_FAILED'
+              ? 502
+              : 422;
+        return sendError(reply, status, error.code, error.message);
+      }
+      throw error;
+    }
+  });
+
+  /**
    * システム設定画面向けの環境情報。秘密情報（接続文字列・実メールアドレス）は返さない。
    */
   app.get('/api/system/info', { preHandler: guard }, async () => {
@@ -744,6 +801,11 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
         access: {
           ...accessRoleSummary(config),
           roles: ['field', 'agent', 'hq', 'it'],
+        },
+        ai: {
+          ...aiGateway.usage(),
+          maxTokensPerCall: config.ai.maxTokensPerCall,
+          maxCallsPerMinute: config.ai.maxCallsPerMinute,
         },
         db: { up: true, name: row.database },
         counts: {

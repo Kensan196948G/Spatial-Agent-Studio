@@ -658,6 +658,12 @@
             )}</dd>
             <dt>実行モード</dt><dd>${esc(info.nodeEnv)}</dd>
             <dt>AIモード</dt><dd>${esc(info.aiMode)}</dd>
+            <dt>AIプロバイダ</dt><dd>${esc(
+              info.ai ? `${info.ai.provider} / ${info.ai.model}${info.ai.live ? '（実LLM）' : '（デモ）'}` : '—',
+            )}</dd>
+            <dt>AI利用（本日）</dt><dd>${esc(
+              info.ai ? `${info.ai.tokensToday} / ${info.ai.budget} tokens（${info.ai.callsToday}回）` : '—',
+            )}</dd>
             <dt>データベース</dt><dd>${esc(db.name || '—')}（${db.up ? '接続中' : '切断'}）</dd>
             <dt>APIベース</dt><dd style="word-break:break-all;font-size:11px">${esc(API_BASE || location.origin)}</dd>
             <dt>CORS許可</dt><dd>${Number(info.cors && info.cors.origins) || 0} Origin</dd>

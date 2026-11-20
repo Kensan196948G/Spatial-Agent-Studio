@@ -365,6 +365,48 @@ describe('Spatial Agent Studio API', () => {
     expect(JSON.stringify(body)).not.toContain('@');
   });
 
+  it('narrates through the AI gateway (demo) and audits the call', async () => {
+    const cookie = await login('manager@example.com', 'SasManager!2026');
+    const res = await app.inject({
+      method: 'POST',
+      url: '/api/ai/narrate',
+      headers: auth(cookie),
+      payload: { siteId: 'site-a', task: 'asbuilt' },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.narration.headline.length).toBeGreaterThan(0);
+    expect(body.narration.notes.length).toBeGreaterThan(0);
+    expect(body.meta.live).toBe(false);
+
+    const audit = await app.inject({
+      method: 'GET',
+      url: '/api/audit?limit=50',
+      headers: auth(cookie),
+    });
+    const types = audit.json().events.map((e: { type: string }) => e.type);
+    expect(types).toContain('AI_CALL');
+  });
+
+  it('rejects an invalid narrate payload and an unknown site', async () => {
+    const cookie = await login('manager@example.com', 'SasManager!2026');
+    const bad = await app.inject({
+      method: 'POST',
+      url: '/api/ai/narrate',
+      headers: auth(cookie),
+      payload: { siteId: 'site-a', task: 'unknown' },
+    });
+    expect(bad.statusCode).toBe(400);
+
+    const missing = await app.inject({
+      method: 'POST',
+      url: '/api/ai/narrate',
+      headers: auth(cookie),
+      payload: { siteId: 'no-such-site', task: 'asbuilt' },
+    });
+    expect(missing.statusCode).toBe(404);
+  });
+
   it('keeps the audit log append-only at the database level', async () => {
     const client = new Client({ connectionString: TEST_DB });
     await client.connect();

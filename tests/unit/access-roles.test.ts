@@ -22,6 +22,16 @@ function baseConfig(over: Partial<Config> = {}): AppConfig {
     corsOrigins: [],
     accessRoles: {},
     accessRoleDomains: {},
+    ai: {
+      kind: 'demo',
+      model: 'demo-deterministic',
+      baseUrl: 'https://api.openai.com/v1',
+      apiKey: '',
+      maxTokensPerCall: 400,
+      dailyBudgetTokens: 200000,
+      maxCallsPerMinute: 20,
+      timeoutMs: 15000,
+    },
     ...over,
   };
 }
