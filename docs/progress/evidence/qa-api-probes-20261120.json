@@ -1,0 +1,338 @@
+{
+  "target": {
+    "api": "https://sas-api.mirai-dx-platform.com",
+    "uiOrigin": "https://spatial-agent-studio-preview.pages.dev"
+  },
+  "startedAt": "2026-11-20T05:11:28.840Z",
+  "checks": [
+    {
+      "name": "health 200 x3 / db up",
+      "ok": true,
+      "detail": "{\"ok\":true,\"db\":\"up\",\"version\":\"0.1.0\",\"time\":\"2026-11-20T05:11:29.113Z\",\"aiMode\":\"demo-deterministic\"}"
+    },
+    {
+      "name": "CORS preflight 204 + allowed origin",
+      "ok": true,
+      "detail": "{\"status\":204,\"allowOrigin\":\"https://spatial-agent-studio-preview.pages.dev\",\"allowHeaders\":\"content-type, authorization\"}"
+    },
+    {
+      "name": "401 unauthenticated bootstrap",
+      "ok": true,
+      "detail": "401/UNAUTHENTICATED"
+    },
+    {
+      "name": "401 invalid token on /auth/me",
+      "ok": true,
+      "detail": "401/SESSION_EXPIRED"
+    },
+    {
+      "name": "403 disallowed origin",
+      "ok": true,
+      "detail": "403/ORIGIN_FORBIDDEN"
+    },
+    {
+      "name": "demo manager login",
+      "ok": true,
+      "detail": "status=200"
+    },
+    {
+      "name": "400 invalid task (ASBUILT)",
+      "ok": true,
+      "detail": "400/INVALID_BODY"
+    },
+    {
+      "name": "400 invalid task (empty)",
+      "ok": true,
+      "detail": "400/INVALID_BODY"
+    },
+    {
+      "name": "400 invalid task (unknown)",
+      "ok": true,
+      "detail": "400/INVALID_BODY"
+    },
+    {
+      "name": "400 invalid task (missing)",
+      "ok": true,
+      "detail": "400/INVALID_BODY"
+    },
+    {
+      "name": "400 invalid access email (empty, len=0)",
+      "ok": true,
+      "detail": "400/INVALID_BODY"
+    },
+    {
+      "name": "400 invalid access email (format, len=12)",
+      "ok": true,
+      "detail": "400/INVALID_BODY"
+    },
+    {
+      "name": "400 invalid access email (too-long, len=202)",
+      "ok": true,
+      "detail": "400/INVALID_BODY"
+    },
+    {
+      "name": "note=500 passes validation (404 for nonexistent uuid)",
+      "ok": true,
+      "detail": "404/APPROVAL_NOT_FOUND"
+    },
+    {
+      "name": "note=501 rejected 400",
+      "ok": true,
+      "detail": "400/INVALID_BODY"
+    },
+    {
+      "name": "404 nonexistent approval (valid uuid)",
+      "ok": true,
+      "detail": "404/APPROVAL_NOT_FOUND"
+    },
+    {
+      "name": "400 invalid decision value",
+      "ok": true,
+      "detail": "400/INVALID_BODY"
+    },
+    {
+      "name": "malformed approval id returns 4xx without DB error disclosure",
+      "ok": false,
+      "detail": "status=500 code=22P02"
+    },
+    {
+      "name": "audit chain VERIFIED",
+      "ok": true,
+      "detail": "ok=true checked=48"
+    },
+    {
+      "name": "audit limit=-5 clamps to 1",
+      "ok": true,
+      "detail": "{\"status\":200,\"events\":1}"
+    },
+    {
+      "name": "audit limit=0/abc fall back to default (not clamped to 1)",
+      "ok": true,
+      "detail": "{\"zero\":{\"status\":200,\"events\":48},\"abc\":{\"status\":200,\"events\":48}}"
+    },
+    {
+      "name": "system info without emails/connection strings",
+      "ok": true,
+      "detail": "emails=0"
+    },
+    {
+      "name": "system info roles = field/agent/hq/it",
+      "ok": true,
+      "detail": "[\"field\",\"agent\",\"hq\",\"it\"]"
+    },
+    {
+      "name": "no approval/report writes from probes (only LOGIN)",
+      "ok": true,
+      "detail": "new=[]"
+    }
+  ],
+  "defects": [
+    {
+      "id": "QA-DEF-01",
+      "title": "承認IDに非UUID文字列を渡すとHTTP 500（内部DBエラーの露出）",
+      "endpoint": "POST /api/approvals/:id/decision",
+      "observed": {
+        "status": 500,
+        "code": "22P02",
+        "message": "invalid input syntax for type uuid: \"AP-999999\""
+      },
+      "expected": "HTTP 400 INVALID_ID または 404 APPROVAL_NOT_FOUND（DBエラーを露出しない）",
+      "severity": "minor"
+    }
+  ],
+  "api": {
+    "health": [
+      {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "db": "up",
+          "version": "0.1.0",
+          "time": "2026-11-20T05:11:29.113Z",
+          "aiMode": "demo-deterministic"
+        }
+      },
+      {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "db": "up",
+          "version": "0.1.0",
+          "time": "2026-11-20T05:11:29.259Z",
+          "aiMode": "demo-deterministic"
+        }
+      },
+      {
+        "status": 200,
+        "body": {
+          "ok": true,
+          "db": "up",
+          "version": "0.1.0",
+          "time": "2026-11-20T05:11:29.355Z",
+          "aiMode": "demo-deterministic"
+        }
+      }
+    ],
+    "preflight": {
+      "status": 204,
+      "allowOrigin": "https://spatial-agent-studio-preview.pages.dev",
+      "allowHeaders": "content-type, authorization"
+    },
+    "unauthenticated": {
+      "bootstrap": {
+        "status": 401,
+        "code": "UNAUTHENTICATED"
+      },
+      "badTokenMe": {
+        "status": 401,
+        "code": "SESSION_EXPIRED"
+      }
+    },
+    "badOriginLogin": {
+      "status": 403,
+      "code": "ORIGIN_FORBIDDEN",
+      "hasToken": false
+    },
+    "login": {
+      "status": 200,
+      "gotToken": true,
+      "userRole": "manager"
+    },
+    "invalidTasks": [
+      {
+        "label": "ASBUILT",
+        "status": 400,
+        "code": "INVALID_BODY"
+      },
+      {
+        "label": "empty",
+        "status": 400,
+        "code": "INVALID_BODY"
+      },
+      {
+        "label": "unknown",
+        "status": 400,
+        "code": "INVALID_BODY"
+      },
+      {
+        "label": "missing",
+        "status": 400,
+        "code": "INVALID_BODY"
+      }
+    ],
+    "invalidEmails": [
+      {
+        "label": "empty",
+        "length": 0,
+        "status": 400,
+        "code": "INVALID_BODY"
+      },
+      {
+        "label": "format",
+        "length": 12,
+        "status": 400,
+        "code": "INVALID_BODY"
+      },
+      {
+        "label": "too-long",
+        "length": 202,
+        "status": 400,
+        "code": "INVALID_BODY"
+      }
+    ],
+    "auditBefore": {
+      "checked": 48,
+      "headHashPrefix": "09dc359b45ca01c0",
+      "latestEvent": {
+        "seq": 48,
+        "type": "LOGIN",
+        "actor": "HUMAN:現場代理人・所長（デモ）"
+      }
+    },
+    "decisionBoundary": {
+      "note500": {
+        "status": 404,
+        "code": "APPROVAL_NOT_FOUND"
+      },
+      "note501": {
+        "status": 400,
+        "code": "INVALID_BODY"
+      },
+      "notFound": {
+        "status": 404,
+        "code": "APPROVAL_NOT_FOUND"
+      },
+      "invalidDecision": {
+        "status": 400,
+        "code": "INVALID_BODY"
+      }
+    },
+    "malformedApprovalId": {
+      "status": 500,
+      "bodyCode": "22P02",
+      "errorCode": "Internal Server Error",
+      "message": "invalid input syntax for type uuid: \"AP-999999\"",
+      "exposesDbError": true
+    },
+    "auditVerify": {
+      "status": 200,
+      "ok": true,
+      "checked": 48,
+      "firstBadSeq": null,
+      "headHashPrefix": "09dc359b45ca01c0",
+      "headHashLength": 64
+    },
+    "auditLimits": {
+      "0": {
+        "status": 200,
+        "events": 48
+      },
+      "9999": {
+        "status": 200,
+        "events": 48
+      },
+      "abc": {
+        "status": 200,
+        "events": 48
+      },
+      "-5": {
+        "status": 200,
+        "events": 1
+      }
+    },
+    "systemInfo": {
+      "status": 200,
+      "version": "0.1.0",
+      "aiMode": "demo-deterministic",
+      "roles": [
+        "field",
+        "agent",
+        "hq",
+        "it"
+      ],
+      "roleMatrixRows": null,
+      "counts": {
+        "sites": 5,
+        "users": 2,
+        "approvals": 1,
+        "reports": 1,
+        "auditEvents": 48
+      },
+      "emailMatches": 0,
+      "hasPostgresUrl": false
+    },
+    "auditAfter": {
+      "checked": 48,
+      "headHashPrefix": "09dc359b45ca01c0",
+      "newEventTypes": []
+    }
+  },
+  "mutations": [
+    "POST /api/auth/login (demo) -> LOGIN audit event"
+  ],
+  "notes": [
+    "監査イベント総数が200件未満のため、limit上限500のクランプは観測不能（未検証）"
+  ],
+  "finishedAt": "2026-11-20T05:11:32.352Z",
+  "ok": false
+}

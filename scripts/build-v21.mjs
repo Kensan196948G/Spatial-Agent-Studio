@@ -31,7 +31,9 @@ if (!html.includes('__SAS_COMMIT__')) {
 const commit = (() => {
   try {
     const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
-    const dirty = execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' }).trim();
+    const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], {
+      encoding: 'utf8',
+    }).trim();
     return dirty ? `${sha}-dirty` : sha;
   } catch {
     return 'unknown';

@@ -1,0 +1,77 @@
+# QA DB / calculation checks — Spatial-Agent-Studio
+executedAtJst=2026-11-20T14:22:00+0900
+commit=0e4a8f7c23b2b44638a51bed43071f4cfbe8752c
+node=v22.22.3 pnpm=12.21.0
+
+## 1. audit_events append-only (test DB spatial_agent_studio_test)
+ERROR:  syntax error at or near "\"
+行 1: select count(*)||\"|\"||max(seq) from audit_events
+                       ^
+before: 
+UPDATE attempt:
+ERROR:  audit_events is append-only (attempted UPDATE)
+CONTEXT:  PL/pgSQL function audit_events_append_only() line 3 at RAISE
+exit=1
+DELETE attempt:
+ERROR:  audit_events is append-only (attempted DELETE)
+CONTEXT:  PL/pgSQL function audit_events_append_only() line 3 at RAISE
+exit=1
+ERROR:  syntax error at or near "\"
+行 1: select count(*)||\"|\"||max(seq) from audit_events
+                       ^
+after : 
+
+## 2. preview DB counts (read-only)
+ sites | users | approvals | reports | audit_events | runs 
+-------+-------+-----------+---------+--------------+------
+     5 |     2 |         1 |       1 |           56 |    1
+(1 行)
+
+  task   |  status  | count 
+---------+----------+-------
+ asbuilt | approved |     1
+(1 行)
+
+
+## 3. deterministic measurement engine (tsx)
+[WARN] Failed to replace env in config: ${NPM_TOKEN} in .npmrc key "_authToken"
+{
+  "deg1": {
+    "cutM3": 0,
+    "fillM3": 0,
+    "areaM2": 0,
+    "cells": 0
+  },
+  "deg2": {
+    "cutM3": 0,
+    "fillM3": 0,
+    "areaM2": 0,
+    "cells": 0
+  },
+  "deg3": {
+    "cutM3": 0,
+    "fillM3": 0,
+    "areaM2": 0,
+    "cells": 0
+  },
+  "scan": {
+    "radiusM": 7.5,
+    "minDistanceM": 5.0001272295031685,
+    "minWorker": "W-02",
+    "intruded": true,
+    "intrusionAtSeconds": 4.200000000000001,
+    "workersInside": 1,
+    "deterministic": true
+  },
+  "progress055": {
+    "passRate": 9.933035714285714,
+    "min": -2.1239568364453545,
+    "outUnder": 2421,
+    "outOver": 0,
+    "verdict": "fail"
+  },
+  "progress1": {
+    "passRate": 93.41517857142857,
+    "min": -0.5890124299006443
+  }
+}

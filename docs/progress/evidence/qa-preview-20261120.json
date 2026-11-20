@@ -1,0 +1,1388 @@
+{
+  "meta": {
+    "title": "プレビュー実機QA検証（読み取り専用）",
+    "mode": "read-only",
+    "purpose": "リリース判定の証拠収集（承認/却下/実行/ログアウト/設定保存なし）",
+    "base": "https://spatial-agent-studio-preview.pages.dev",
+    "api": "https://sas-api.mirai-dx-platform.com",
+    "repositoryHead": "0e4a8f7c23b2b44638a51bed43071f4cfbe8752c",
+    "previewDeployCommit": "不明",
+    "previewDeployCommitNote": null,
+    "startedAtIso": "2026-11-20T05:14:49.110Z",
+    "startedAtJst": "2026/11/20 14:14:49",
+    "finishedAtIso": "2026-11-20T05:16:54.576Z",
+    "finishedAtJst": "2026/11/20 14:16:54",
+    "durationMs": 125466,
+    "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/159.0.8154.6 Safari/537.36",
+    "browser": "Playwright chromium (headless)",
+    "viewport": "1440x1000",
+    "extraRun": {
+      "mode": "extra",
+      "purpose": "追加確認（lead依頼）: 承認ステータス別件数と承認画面（approvals）の表示件数",
+      "startedAtIso": "2026-11-20T05:19:29.974Z",
+      "startedAtJst": "2026/11/20 14:19:29",
+      "finishedAtIso": "2026-11-20T05:20:24.496Z",
+      "finishedAtJst": "2026/11/20 14:20:24",
+      "tokenReuse": "sessionStorage(sas_session_token) のUIトークンを再利用（追加のAPIログインPOSTなし）",
+      "loginRequests": 1,
+      "nonGetRequests": [
+        {
+          "method": "POST",
+          "url": "https://sas-api.mirai-dx-platform.com/api/auth/login",
+          "status": 200
+        }
+      ],
+      "note": "追加のAPIログインは行わず、UI自動サインインのセッショントークンを再利用。承認・却下は実行しない。"
+    }
+  },
+  "checks": [
+    {
+      "id": "ui.noLogin",
+      "name": "ログイン画面が表示されない（#sasLogin）",
+      "expected": "#sasLogin 件数 0 / 非表示",
+      "actual": "count=0, visible=false",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "ui.bootDash",
+      "name": "UI起動後にホームへ遷移",
+      "expected": "body[data-page]=dash",
+      "actual": "data-page=dash",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "ui.navCount",
+      "name": "ナビ項目数",
+      "expected": "11",
+      "actual": "11",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "ui.siteCount",
+      "name": "現場カード数",
+      "expected": "5",
+      "actual": "5",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "ui.accessBadge",
+      "name": "Accessバッジ文言",
+      "expected": "Access 未経由（直URL）",
+      "actual": "Access 未経由",
+      "verdict": "PASS",
+      "note": "直URLのため未経由表示が正（Access保護ドメインではない）"
+    },
+    {
+      "id": "ui.roleName",
+      "name": "ロール表示（#roleName）",
+      "expected": "デモ既定は現場代理人・所長",
+      "actual": "現場代理人・所長（デモ）",
+      "verdict": "PASS",
+      "note": "bridge.js applyUserUi がロール名をユーザー名で上書きするため、表示はユーザー名になる（コード読解）"
+    },
+    {
+      "id": "ui.pagesAgent",
+      "name": "既定ロールで遷移できた画面数",
+      "expected": "11（うち許可9・ロック2は遷移不可が正）",
+      "actual": "9/11 reached, blocked=pipeline,governance",
+      "verdict": "PASS",
+      "note": "現場代理人の許可は9画面（pipeline/governance はロック）"
+    },
+    {
+      "id": "audit.heading",
+      "name": "監査ログ画面の見出し",
+      "expected": "監査ログ ─ 追記専用・ハッシュ連鎖",
+      "actual": "監査ログ ─ 追記専用・ハッシュ連鎖",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "audit.rows",
+      "name": "監査ログ行数（取得件数）",
+      "expected": ">0",
+      "actual": "rows=53, count=53 / 53 件",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "audit.detail",
+      "name": "先頭行クリックで詳細表示（#auDetail）",
+      "expected": "seq/日時/主体/種別/内容/前ハッシュ/ハッシュ",
+      "actual": "seq #53 日時 2026/11/20 14:14:50 主体 現場代理人・所長（デモ） 種別 LOGIN 内容 ログイン 前ハッシュ 00daefe7aef1441f844ea73af47709137eda585445d11f9058e4a48baceb0699 この記録のハッシュ b4ec8bdc83c50fb…",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "audit.recheck",
+      "name": "再計算照合（#auRecheckRes）",
+      "expected": "一致 — 改変されていません",
+      "actual": "一致 — 改変されていません",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "audit.filter",
+      "name": "種別フィルタの件数表示",
+      "expected": "フィルタ後件数が表示される",
+      "actual": "type=ACCESS_LOGIN, count=10 / 53 件, rows=10",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "audit.searchZero",
+      "name": "検索0件の表示",
+      "expected": "条件に一致する記録がありません。",
+      "actual": "条件に一致する記録がありません。",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "settings.version",
+      "name": "設定画面のバージョン表示",
+      "expected": "0.1.0",
+      "actual": "0.1.0",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "settings.roleRows",
+      "name": "ロール表の行数",
+      "expected": "4",
+      "actual": "4",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "settings.accessRow",
+      "name": "Cloudflare Access 行",
+      "expected": "未経由（デモ）",
+      "actual": "未経由（デモ）",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "settings.counts",
+      "name": "件数表示（現場/承認/監査イベント等）",
+      "expected": "数値が表示される",
+      "actual": "{\"sites\":\"5\",\"users\":\"2\",\"approvals\":\"1\",\"reports\":\"1\",\"auditEvents\":\"53\",\"pending\":\"0\"}",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "settings.noEmail",
+      "name": "設定画面にメールが露出しない",
+      "expected": "false（マスク済み）",
+      "actual": "hasEmailPattern=false",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "settings.health",
+      "name": "ヘルスチェック（読み取り）",
+      "expected": "API 正常 / DB up",
+      "actual": "ヘルスチェック：API 正常 / DB up / v0.1.0",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "ui.viewer3d",
+      "name": "3Dビューの描画",
+      "expected": "canvas が存在し data-page=viewer",
+      "actual": "page=viewer, canvases=4, size=728x870",
+      "verdict": "PASS",
+      "note": "canvas のピクセル内容は目視確認していない（スクショPNG参照）"
+    },
+    {
+      "id": "roles.menu",
+      "name": "ロールメニュー項目",
+      "expected": "4（現場担当者/現場代理人・所長/本社/IT・DX）",
+      "actual": "count=4, names=現場担当者 / 現場代理人・所長 / 本社（工務・安全・品質） / IT・DX部門",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "roles.agent",
+      "name": "ロール「現場代理人・所長」の許可/ロック数",
+      "expected": "9許可/2ロック",
+      "actual": "9許可/2ロック (locked=pipeline,governance)",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "roles.hq",
+      "name": "ロール「本社（工務・安全・品質）」の許可/ロック数",
+      "expected": "9許可/2ロック",
+      "actual": "9許可/2ロック (locked=pipeline,governance)",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "roles.it",
+      "name": "ロール「IT・DX部門」の許可/ロック数",
+      "expected": "11許可/0ロック",
+      "actual": "11許可/0ロック (locked=なし)",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "roles.field",
+      "name": "ロール「現場担当者」の許可/ロック数",
+      "expected": "7許可/4ロック",
+      "actual": "7許可/4ロック (locked=integration,governance,audit,settings)",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "lock.noNavigate",
+      "name": "現場担当者でロック画面（audit）へ遷移しない",
+      "expected": "body[data-page] 不変",
+      "actual": "viewer → viewer (changed=false)",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "lock.toast",
+      "name": "ロック時のトースト文言",
+      "expected": "「現場担当者」ロールではこの画面を利用できません…",
+      "actual": "「現場担当者」ロールではこの画面を利用できません（Entra IDグループで制御・模擬）",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "approve.defs",
+      "name": "ROLE.defs.approve の実測",
+      "expected": "field=false, agent=true, hq=false, it=false",
+      "actual": "{\"field\":false,\"agent\":true,\"hq\":false,\"it\":false}",
+      "verdict": "PASS",
+      "note": "window.__SAS_APP.ROLE.defs を読み取り（状態変更なし）"
+    },
+    {
+      "id": "approve.disabledContext",
+      "name": "現場担当者で #apYes disabled を確認できる文脈",
+      "expected": "モーダル未表示でも disabled が確認できること",
+      "actual": "modalShown=false, apYes.disabled=false, disabledAttr=false, currentRole=field",
+      "verdict": "UNVERIFIED",
+      "note": "#apYes は承認モーダル(#mApprove)内にあり disabled は updateApproveRole()（モーダル表示時）でしか更新されない。モーダルを開かない制約下では UI の disabled 表示は確定根拠にならないため、承認可否の根拠は ROLE.defs.approve（上記checks）に置く。"
+    },
+    {
+      "id": "ui.pagesIT",
+      "name": "既定ロールでロックされていた画面をITロールで実測",
+      "expected": "2画面が到達可能",
+      "actual": "2/2 reached (pipeline,governance)",
+      "verdict": "PASS",
+      "note": "画面内容の実測はロールを明記して記録（role=it）"
+    },
+    {
+      "id": "api.health",
+      "name": "GET /api/health",
+      "expected": "200 / ok=true, db=up, version=0.1.0, aiMode=demo-deterministic, time あり",
+      "actual": "status=200 {\"ok\":true,\"db\":\"up\",\"version\":\"0.1.0\",\"time\":\"2026-11-20T05:16:52.830Z\",\"aiMode\":\"demo-deterministic\"}",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "api.cors",
+      "name": "OPTIONS /api/bootstrap（CORS preflight）",
+      "expected": "204/200, allow-origin=https://spatial-agent-studio-preview.pages.dev",
+      "actual": "status=204, origin=https://spatial-agent-studio-preview.pages.dev, headers=content-type, authorization",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "api.bootstrap401",
+      "name": "GET /api/bootstrap（トークンなし）",
+      "expected": "401 UNAUTHORIZED",
+      "actual": "status=401, code=UNAUTHENTICATED",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "api.me401",
+      "name": "GET /api/auth/me（不正トークン）",
+      "expected": "401 UNAUTHORIZED",
+      "actual": "status=401, code=SESSION_EXPIRED",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "api.login",
+      "name": "POST /api/auth/login（デモmanager）",
+      "expected": "200 + token取得",
+      "actual": "status=200, token=取得（値は非記録）, role=manager",
+      "verdict": "PASS",
+      "note": "トークン値・パスワードは記録しない"
+    },
+    {
+      "id": "api.runs400",
+      "name": "POST /api/sites/site-a/runs（task=invalid）",
+      "expected": "400 INVALID_BODY（レコード作成なし）",
+      "actual": "status=400, code=INVALID_BODY",
+      "verdict": "PASS",
+      "note": "runSchema.safeParse が site 参照より先に評価されるため DB 書込みは発生しない（コード読解）"
+    },
+    {
+      "id": "api.approvalsList",
+      "name": "GET /api/approvals（先頭ID取得）",
+      "expected": "200 + 1件以上のID（status=all）",
+      "actual": "既定(クエリなし)=0件, pending=0件, approved=1件, rejected=0件, all=1件, firstId=4debba93-507e-4db0-b82d-4a6aca2abb7b",
+      "verdict": "PASS",
+      "note": "再分類: GET /api/approvals の既定は status=pending（src/api/routes.ts）。承認待ち0件のため既定呼び出しが空配列になるのは実装どおりで、既存1件は approved（?status=all で実測）。当初の FAIL はタスク側の期待設定ミス（テスト設計の不足）であり、実装不具合ではない。"
+    },
+    {
+      "id": "api.decision400",
+      "name": "POST /api/approvals/:id/decision（decision=invalid）",
+      "expected": "400 INVALID_BODY（状態変更なし）",
+      "actual": "status=400, code=INVALID_BODY",
+      "verdict": "PASS",
+      "note": "decisionSchema.safeParse が DB 更新より先。実在IDへの approve/reject は実行しない"
+    },
+    {
+      "id": "api.decision404",
+      "name": "POST /api/approvals/AP-999999/decision（decision=approve）",
+      "expected": "404 APPROVAL_NOT_FOUND",
+      "actual": "status=500, code=null, message=invalid input syntax for type uuid: \"AP-999999\"",
+      "verdict": "FAIL",
+      "note": "存在しないIDのみ（実在IDへのapproveは未実行）。実測はタスク期待の404と異なる"
+    },
+    {
+      "id": "api.decision404body",
+      "name": "存在しないIDへのdecisionで内部エラー詳細を返さない（補足）",
+      "expected": "DBエラーコード(22P02)・SQLメッセージを含まない",
+      "actual": "code=22P02, message=invalid input syntax for type uuid: \"AP-999999\"",
+      "verdict": "FAIL",
+      "note": "500応答本文の実測。原因の断定はせず、観測された status/code/message のみ記録"
+    },
+    {
+      "id": "api.getApproval404",
+      "name": "GET /api/approvals/AP-999999（読み取り・補足）",
+      "expected": "404 APPROVAL_NOT_FOUND",
+      "actual": "status=500, code=null, message=invalid input syntax for type uuid: \"AP-999999\"",
+      "verdict": "FAIL",
+      "note": "GETのみ（状態変更なし）。存在しないIDの404契約を補足確認"
+    },
+    {
+      "id": "api.auditVerify",
+      "name": "GET /api/audit/verify",
+      "expected": "ok=true",
+      "actual": "status=200, ok=true, checked=55, head=738f605543e38fac",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "api.auditList",
+      "name": "GET /api/audit?limit=5",
+      "expected": "200 + 最大5件",
+      "actual": "status=200, count=5, lastSeq=51, lastType=LOGIN",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "api.systemInfo",
+      "name": "GET /api/system/info",
+      "expected": "version/aiMode/ロール4行/メールなし",
+      "actual": "status=200, version=0.1.0, aiMode=demo-deterministic, roleRows=4, hasEmail=false",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "api.finalAuditVerify",
+      "name": "GET /api/audit/verify（全操作後）",
+      "expected": "ok=true",
+      "actual": "ok=true, checked=55",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "net.noWrites",
+      "name": "ブラウザ操作中の書込みAPI呼び出し",
+      "expected": "POST /api/auth/login 以外の非GETなし（承認/却下/実行/ログアウトなし）",
+      "actual": "nonGET=1 (login=1, unexpected=0), targets=なし",
+      "verdict": "PASS",
+      "note": "ブート時の自動サインインに伴う POST /api/auth/login のみ許可（トークン取得）。承認・却下・実行・ログアウトは検出されなかった"
+    },
+    {
+      "id": "console.knownOnly",
+      "name": "console error（重複排除）",
+      "expected": "既知の 401/404 のみ（ブート時の /api/auth/me 401・favicon等404）",
+      "actual": "unique=2, unknown=0, pageErrors=0",
+      "verdict": "PASS",
+      "note": "Failed to load resource: the server responded with a status of 404 () (x1) / Failed to load resource: the server responded with a status of 401 () (x1)"
+    },
+    {
+      "id": "shot.qa-preview-20261120-home.png",
+      "name": "スクリーンショット qa-preview-20261120-home.png",
+      "expected": "PNGが保存され 1KB 以上",
+      "actual": "497631 bytes (docs/progress/evidence/qa-preview-20261120-home.png)",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "shot.qa-preview-20261120-audit.png",
+      "name": "スクリーンショット qa-preview-20261120-audit.png",
+      "expected": "PNGが保存され 1KB 以上",
+      "actual": "329237 bytes (docs/progress/evidence/qa-preview-20261120-audit.png)",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "shot.qa-preview-20261120-settings.png",
+      "name": "スクリーンショット qa-preview-20261120-settings.png",
+      "expected": "PNGが保存され 1KB 以上",
+      "actual": "376972 bytes (docs/progress/evidence/qa-preview-20261120-settings.png)",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "shot.qa-preview-20261120-viewer-3d.png",
+      "name": "スクリーンショット qa-preview-20261120-viewer-3d.png",
+      "expected": "PNGが保存され 1KB 以上",
+      "actual": "932716 bytes (docs/progress/evidence/qa-preview-20261120-viewer-3d.png)",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "shot.qa-preview-20261120-role-field-nav.png",
+      "name": "スクリーンショット qa-preview-20261120-role-field-nav.png",
+      "expected": "PNGが保存され 1KB 以上",
+      "actual": "930329 bytes (docs/progress/evidence/qa-preview-20261120-role-field-nav.png)",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "api.approvalsStatusCounts",
+      "name": "GET /api/approvals?status=（all/pending/approved/rejected）の件数",
+      "expected": "all = pending + approved + rejected",
+      "actual": "all=1, pending=0, approved=1, rejected=0, all.byStatus={\"approved\":1}",
+      "verdict": "PASS",
+      "note": "トークンはUIのsessionStorageから再利用（追加のAPIログインなし）"
+    },
+    {
+      "id": "api.approvalsDefaultFilter",
+      "name": "GET /api/approvals（クエリなし）の既定フィルタ",
+      "expected": "クエリなし件数 = pending 件数",
+      "actual": "noQuery=0, pending=0",
+      "verdict": "PASS",
+      "note": "routes.ts の既定 status=pending を実測で確認"
+    },
+    {
+      "id": "ui.approvalsScreen.pending",
+      "name": "承認画面の「承認待ち」表示件数（pending）",
+      "expected": "pending=0件",
+      "actual": "pendingCards=0, emptyText=承認待ちはありません",
+      "verdict": "PASS",
+      "note": "#apPend .apc の件数を実測（0件時は「承認待ちはありません」）"
+    },
+    {
+      "id": "ui.approvalsScreen.history",
+      "name": "承認画面の「承認履歴」行数（decided）",
+      "expected": "1行（all - pending）",
+      "actual": "historyRows=1, statusPills=承認",
+      "verdict": "PASS",
+      "note": "#apHist の tbody tr 数を実測（承認/却下済みのみ表示）"
+    },
+    {
+      "id": "ui.approvalsScreen.badge",
+      "name": "ナビの承認バッジ（pending件数）",
+      "expected": "pending=0 のため非表示",
+      "actual": "text=0, display=none",
+      "verdict": "PASS",
+      "note": "ヘッダの承認バッジ（#apBadge）"
+    },
+    {
+      "id": "ui.approvalsScreen.page",
+      "name": "承認画面へ遷移できる",
+      "expected": "body[data-page]=approvals",
+      "actual": "data-page=approvals, heading=承認 ─ AIは下書きまで、確定は人",
+      "verdict": "PASS",
+      "note": null
+    },
+    {
+      "id": "ui.approvalsScreen.shot",
+      "name": "承認画面のスクリーンショット",
+      "expected": "PNGが保存され 1KB 以上",
+      "actual": "380772 bytes (docs/progress/evidence/qa-preview-20261120-approvals.png)",
+      "verdict": "PASS",
+      "note": null
+    }
+  ],
+  "api": {
+    "health": {
+      "status": 200,
+      "body": {
+        "ok": true,
+        "db": "up",
+        "version": "0.1.0",
+        "time": "2026-11-20T05:16:52.830Z",
+        "aiMode": "demo-deterministic"
+      },
+      "recordedAtJst": "2026/11/20 14:16:52"
+    },
+    "cors": {
+      "status": 204,
+      "allowOrigin": "https://spatial-agent-studio-preview.pages.dev",
+      "allowHeaders": "content-type, authorization",
+      "allowMethods": "GET, HEAD, POST, OPTIONS",
+      "allowCredentials": "true",
+      "vary": "Origin"
+    },
+    "contract": {
+      "bootstrapNoToken": {
+        "status": 401,
+        "code": "UNAUTHENTICATED",
+        "message": "ログインが必要です。"
+      },
+      "meInvalidToken": {
+        "status": 401,
+        "code": "SESSION_EXPIRED",
+        "message": "セッションが切れました。再ログインしてください。"
+      },
+      "login": {
+        "status": 200,
+        "credentialSource": "env",
+        "emailMasked": "ma***@example.com",
+        "tokenReceived": true,
+        "user": {
+          "name": "現場代理人・所長（デモ）",
+          "role": "manager",
+          "canApprove": true,
+          "emailMasked": "ma***@example.com"
+        }
+      },
+      "runsInvalidTask": {
+        "status": 400,
+        "code": "INVALID_BODY",
+        "message": "task は asbuilt または safety を指定してください。"
+      },
+      "approvalsList": {
+        "pendingStatus": 200,
+        "pendingCount": 0,
+        "allStatus": 200,
+        "allCount": 1,
+        "firstId": "4debba93-507e-4db0-b82d-4a6aca2abb7b",
+        "statuses": [
+          "approved"
+        ],
+        "defaultFilterNote": "GET /api/approvals の既定は status=pending（routes.ts）。承認待ち0件のため既定呼び出しは空配列。ID取得は status=all を使用"
+      },
+      "decisionInvalid": {
+        "approvalId": "4debba93-507e-4db0-b82d-4a6aca2abb7b",
+        "status": 400,
+        "code": "INVALID_BODY",
+        "message": "decision は approve または reject を指定してください。"
+      },
+      "decisionMissingId": {
+        "approvalId": "AP-999999",
+        "status": 500,
+        "code": null,
+        "responseBody": {
+          "statusCode": 500,
+          "code": "22P02",
+          "error": "Internal Server Error",
+          "message": "invalid input syntax for type uuid: \"AP-999999\""
+        }
+      },
+      "getApprovalMissingId": {
+        "approvalId": "AP-999999",
+        "status": 500,
+        "code": null,
+        "message": "invalid input syntax for type uuid: \"AP-999999\""
+      },
+      "auditVerify": {
+        "status": 200,
+        "ok": true,
+        "checked": 55,
+        "firstBadSeq": null,
+        "reason": null,
+        "headHashFirst16": "738f605543e38fac"
+      },
+      "auditList": {
+        "status": 200,
+        "count": 5,
+        "newest": {
+          "seq": 55,
+          "type": "LOGIN",
+          "actorMasked": "HUMAN:現場代理人・所長（デモ）"
+        },
+        "last": {
+          "seq": 51,
+          "type": "LOGIN",
+          "actorMasked": "HUMAN:現場代理人・所長（デモ）"
+        },
+        "orderNote": "APIは seq DESC（新しい順）。「最終行」は配列末尾を記録し、参考として先頭（最新）も併記"
+      },
+      "systemInfo": {
+        "status": 200,
+        "version": "0.1.0",
+        "aiMode": "demo-deterministic",
+        "nodeEnv": "production",
+        "dbName": "spatial_agent_studio_preview",
+        "roleMatrixRows": 4,
+        "roles": [
+          "field",
+          "agent",
+          "hq",
+          "it"
+        ],
+        "counts": {
+          "sites": 5,
+          "users": 2,
+          "approvals": 1,
+          "reports": 1,
+          "auditEvents": 55
+        },
+        "auditOk": true,
+        "hasEmailPattern": false,
+        "corsOrigins": 4
+      },
+      "approvalsStatusCounts": {
+        "all": {
+          "status": 200,
+          "count": 1,
+          "byStatus": {
+            "approved": 1
+          },
+          "ids": [
+            "4debba93-507e-4db0-b82d-4a6aca2abb7b"
+          ]
+        },
+        "pending": {
+          "status": 200,
+          "count": 0,
+          "byStatus": {},
+          "ids": []
+        },
+        "approved": {
+          "status": 200,
+          "count": 1,
+          "byStatus": {
+            "approved": 1
+          },
+          "ids": [
+            "4debba93-507e-4db0-b82d-4a6aca2abb7b"
+          ]
+        },
+        "rejected": {
+          "status": 200,
+          "count": 0,
+          "byStatus": {},
+          "ids": []
+        },
+        "defaultNoQuery": {
+          "status": 200,
+          "count": 0,
+          "byStatus": {},
+          "ids": []
+        }
+      }
+    },
+    "finalAuditVerify": {
+      "status": 200,
+      "ok": true,
+      "checked": 55,
+      "headHashFirst16": "738f605543e38fac",
+      "recordedAtJst": "2026/11/20 14:16:54"
+    }
+  },
+  "ui": {
+    "boot": {
+      "sasLoginCount": 0,
+      "sasLoginVisible": false,
+      "dataPage": "dash",
+      "navCount": 11,
+      "navPages": [
+        "dash",
+        "viewer",
+        "pipeline",
+        "data",
+        "approvals",
+        "integration",
+        "governance",
+        "audit",
+        "settings",
+        "arch",
+        "roadmap"
+      ],
+      "siteCount": 5,
+      "siteNames": [
+        "3Dビュー対応 現場A ○○川 築堤・護岸工事 撮影 11/17 最新 進捗 100%",
+        "3Dビュー対応 現場B △△橋 下部工 撮影 11/16 最新 進捗 55%",
+        "3Dビュー対応 現場C □□トンネル 坑口部 撮影 11/15 最新 進捗 30%",
+        "3Dビュー対応 現場D 国道△△号 法面補修工事 撮影 11/16 最新 進捗 78%",
+        "3Dビュー対応 現場E 海岸堤防 嵩上げ工事 撮影 11/14 最新 進捗 42%"
+      ],
+      "bdgAccess": "Access 未経由",
+      "roleName": "現場代理人・所長（デモ）",
+      "roleSub": "承認者・管理者",
+      "title": "○○川 築堤・護岸工事 ─ Spatial Agent Studio",
+      "bootOverlayHidden": false
+    },
+    "pages": [
+      {
+        "role": "agent",
+        "key": "dash",
+        "label": "ホーム",
+        "beforePage": "dash",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "dash",
+        "navOn": "dash",
+        "heading": "ホーム ─ 現場代理人・所長",
+        "stats": 0,
+        "cards": 5,
+        "tableRows": 0,
+        "canvases": 5,
+        "textExcerpt": "ホーム ─ 現場代理人・所長 全現場の「撮影 → 3DGS → AIチェック → 承認」を横断表示します（サンプルデータ＋このセッションの実行結果）。 現場Aを3Dで開く 承認待ちを確認 2現場 稼働現場 3版 今週の3D更新 +2 9件 AI下書き（今週） +1 0件 承認待ち 1件 安全アラート（今週） 12.1h 削減時間（今週・試算） 現場一覧 撮影 → 3DGS → AIチェックの最新状況 3Dビュー対応 現場A ○○川 築堤",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      },
+      {
+        "role": "agent",
+        "key": "viewer",
+        "label": "3Dビュー",
+        "beforePage": "dash",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "viewer",
+        "navOn": "viewer",
+        "heading": null,
+        "stats": 0,
+        "cards": 0,
+        "tableRows": 0,
+        "canvases": 4,
+        "textExcerpt": "AIがUIを自律操作中 Canvas2D（フォールバック） 10 fps ・ 10,906 splats 視点操作：ドラッグ回転 / 右ドラッグ移動 / ホイール拡大 全体 盛土 切土 重機 護岸 4D 版 10/02 10/16 10/30 11/06 11/13 11/18 横断面",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      },
+      {
+        "role": "agent",
+        "key": "pipeline",
+        "label": "データ取得",
+        "beforePage": "viewer",
+        "clickError": null,
+        "clicked": true,
+        "reached": false,
+        "dataPage": "viewer",
+        "navOn": "viewer",
+        "heading": null,
+        "stats": 0,
+        "cards": 0,
+        "tableRows": 0,
+        "canvases": 0,
+        "textExcerpt": "",
+        "rootFound": true,
+        "rootVisible": false,
+        "newToasts": [
+          "「現場代理人・所長」ロールではこの画面を利用できません（Entra IDグループで制御・模擬）"
+        ]
+      },
+      {
+        "role": "agent",
+        "key": "data",
+        "label": "3D基盤",
+        "beforePage": "viewer",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "data",
+        "navOn": "data",
+        "heading": "3Dデータ基盤 ─ 同じ座標で重ねて、日付ごとに版管理",
+        "stats": 0,
+        "cards": 4,
+        "tableRows": 10,
+        "canvases": 0,
+        "textExcerpt": "3Dデータ基盤 ─ 同じ座標で重ねて、日付ごとに版管理 3DGS・点群・設計データを同一座標系で統合し、撮影日ごとの「版」として保管します。版を並べると時間軸付きの4Dになります。 重ね合わせを実演 現場A の版（4D） ○○川 築堤・護岸工事 10/02 盛土 35% ・ 10,894 splats 開く 10/16 盛土 55% ・ 11,204 splats 開く 10/30 盛土 72% ・ 11,514 splats 開く 1",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      },
+      {
+        "role": "agent",
+        "key": "approvals",
+        "label": "承認",
+        "beforePage": "data",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "approvals",
+        "navOn": "approvals",
+        "heading": "承認 ─ AIは下書きまで、確定は人",
+        "stats": 0,
+        "cards": 3,
+        "tableRows": 1,
+        "canvases": 0,
+        "textExcerpt": "承認 ─ AIは下書きまで、確定は人 AIの作成物（帳票・判定・停止指示）は、権限を持つ人が承認して初めて確定します。承認・却下はすべて監査ログに残ります。 AIが下書き 計測・判定・帳票 担当者が確認 内容・前提の確認 代理人が承認 確定・提出・停止 本社が閲覧 横断確認・分析 連携・保管 通知・保存・原価 承認待ち あなた（現場代理人・所長）は承認できます 承認待ちはありません 承認履歴 ID 現場 件名 結果 承認者 日時 4de",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      },
+      {
+        "role": "agent",
+        "key": "integration",
+        "label": "連携",
+        "beforePage": "approvals",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "integration",
+        "navOn": "integration",
+        "heading": "連携 ─ 通知・帳票・保存・原価・定期実行",
+        "stats": 0,
+        "cards": 5,
+        "tableRows": 0,
+        "canvases": 0,
+        "textExcerpt": "連携 ─ 通知・帳票・保存・原価・定期実行 AIの結果をTeams通知、帳票出力、DirectCloud／SharePointへの保存、施工管理・原価システムへ連携します（すべて模擬・外部送信なし）。 Teams通知（連携イメージ） このセッションの通知 チャネル # 現場A-施工管理 6 # 現場B-下部工 # 安全衛生 # 全社-AI通知 # 現場A-施工管理 Bot：Spatial Agent Spatial Agent（Bot）",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      },
+      {
+        "role": "agent",
+        "key": "governance",
+        "label": "統制",
+        "beforePage": "integration",
+        "clickError": null,
+        "clicked": true,
+        "reached": false,
+        "dataPage": "integration",
+        "navOn": "integration",
+        "heading": null,
+        "stats": 0,
+        "cards": 0,
+        "tableRows": 0,
+        "canvases": 0,
+        "textExcerpt": "",
+        "rootFound": true,
+        "rootVisible": false,
+        "newToasts": []
+      },
+      {
+        "role": "agent",
+        "key": "audit",
+        "label": "監査ログ",
+        "beforePage": "integration",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "audit",
+        "navOn": "audit",
+        "heading": "監査ログ ─ 追記専用・ハッシュ連鎖",
+        "stats": 4,
+        "cards": 4,
+        "tableRows": 53,
+        "canvases": 0,
+        "textExcerpt": "監査ログ ─ 追記専用・ハッシュ連鎖 人の操作・AIの実行・承認・連携をすべて記録し、直前の記録のハッシュを含めて連鎖させます。1件でも書き換えると以降の検証が崩れるため、事後の改変を検知できます（J-SOX・ISO 27001 の証跡要件を想定）。 再読込 CSV書出 記録件数 53 直近24時間 53 種別 10 ハッシュ連鎖 VERIFIED 絞り込み 53 / 53 件 検索（内容・主体・ハッシュ） 種別 すべての種別 ACCE",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      },
+      {
+        "role": "agent",
+        "key": "settings",
+        "label": "システム設定",
+        "beforePage": "audit",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "settings",
+        "navOn": "settings",
+        "heading": "システム設定 ─ 環境・権限・データ",
+        "stats": 4,
+        "cards": 7,
+        "tableRows": 4,
+        "canvases": 0,
+        "textExcerpt": "システム設定 ─ 環境・権限・データ このプレビューの実行環境、Cloudflare Access の認証状態、付与ロール、データ件数、監査チェーンの状態を一覧します。設定値はサーバの環境変数とDBから取得した実データです。 再読込 ヘルスチェック 稼働状態 稼働中 バージョン 0.1.0 稼働時間 41分 24秒 監査連鎖 VERIFIED 53件 環境情報 バージョン 0.1.0 実行モード production AIモード dem",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      },
+      {
+        "role": "agent",
+        "key": "arch",
+        "label": "構成",
+        "beforePage": "settings",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "arch",
+        "navOn": "arch",
+        "heading": "システム構成 ─ 7つの層",
+        "stats": 0,
+        "cards": 3,
+        "tableRows": 0,
+        "canvases": 0,
+        "textExcerpt": "システム構成 ─ 7つの層 層をクリックすると、役割・主な技術・このサンプルでの実装・本番での考慮点を表示します。 エージェントループ図 API連携イメージ 7層の構成 下から上へデータが流れます 1 現場データの取得 ドローン・360°カメラ・地上LiDARで定期撮影し、GPUサーバで3DGSを自動生成 ドローン 360°カメラ LiDAR 2 3Dデータ基盤 3DGS・点群・設計データを同じ座標で重ね合わせ、版とアクセス権を管理 3",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      },
+      {
+        "role": "agent",
+        "key": "roadmap",
+        "label": "導入計画",
+        "beforePage": "arch",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "roadmap",
+        "navOn": "roadmap",
+        "heading": "導入計画・期待効果・注意点",
+        "stats": 1,
+        "cards": 3,
+        "tableRows": 0,
+        "canvases": 0,
+        "textExcerpt": "導入計画・期待効果・注意点 小さく始めて、精度と運用を確かめながら広げます。期間・効果の数値は目安（サンプル）です。 導入ステップ いまここ Phase 0 構想共有・PoC いま やること 本サンプル（完全オフライン）で関係者の合意形成 対象業務・対象現場の候補出し 次へ進む条件 対象業務と現場の決定 予算・体制の合意 Phase 1 1現場でビューア＋手動ツール 目安 約3か月 やること 撮影→3D化の運用を固める 計測ツールを現場",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      },
+      {
+        "role": "it",
+        "key": "pipeline",
+        "label": "データ取得",
+        "beforePage": "viewer",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "pipeline",
+        "navOn": "pipeline",
+        "heading": "データ取得 ─ 撮影から3DGS生成まで",
+        "stats": 7,
+        "cards": 7,
+        "tableRows": 3,
+        "canvases": 1,
+        "textExcerpt": "データ取得 ─ 撮影から3DGS生成まで ドローン・360°カメラ・地上LiDARの撮影データをGPUサーバで自動処理し、3DGSの「版」として3D基盤に登録します（処理は模擬）。 撮影データをアップロード（模擬） ドローン写真測量 広域・盛土/切土の面管理向け。週1回〜。RTK-GNSSと標定点で位置精度を確保。 360°カメラ巡回 歩行撮影で日次更新。足場・構造物まわりの状況記録と安全確認向け。 地上LiDAR 正式な出来形計測の精",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      },
+      {
+        "role": "it",
+        "key": "governance",
+        "label": "統制",
+        "beforePage": "pipeline",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "governance",
+        "navOn": "governance",
+        "heading": "統制 ─ AIゲートウェイ・ポリシー・監査",
+        "stats": 5,
+        "cards": 7,
+        "tableRows": 43,
+        "canvases": 0,
+        "textExcerpt": "統制 ─ AIゲートウェイ・ポリシー・監査 IT・DX部門向け。APIキーはゲートウェイで保持し、ロール・操作の許可・人の承認・匿名化・費用・監査ログを一元管理します。ここでの変更はAIエージェントに即時反映されます。 テスト送信 ポリシー違反をテスト AIゲートウェイの流れ 呼び出しごとにパケット表示 Web画面（ブラウザ） キーは持たない 社内AIゲートウェイ Entra ID SSO・ロール確認 DLP・匿名化チェック レート制限",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      }
+    ],
+    "roles": {
+      "menu": {
+        "shown": true,
+        "itemCount": 4,
+        "items": [
+          {
+            "key": "field",
+            "name": "現場担当者",
+            "sub": "SG-現場A-施工管理"
+          },
+          {
+            "key": "agent",
+            "name": "現場代理人・所長",
+            "sub": "SG-現場A-代理人 ・ 承認権限あり"
+          },
+          {
+            "key": "hq",
+            "name": "本社（工務・安全・品質）",
+            "sub": "SG-本社-工務安全品質"
+          },
+          {
+            "key": "it",
+            "name": "IT・DX部門",
+            "sub": "SG-IT-DX-Admin"
+          }
+        ]
+      },
+      "measurements": [
+        {
+          "key": "agent",
+          "expected": {
+            "allowed": 9,
+            "locked": [
+              "pipeline",
+              "governance"
+            ]
+          },
+          "navCount": 11,
+          "lockedCount": 2,
+          "lockedPages": [
+            "pipeline",
+            "governance"
+          ],
+          "allowedCount": 9,
+          "roleName": "現場代理人・所長（デモ）",
+          "roleSub": "承認者・管理者",
+          "dataPage": "viewer"
+        },
+        {
+          "key": "hq",
+          "expected": {
+            "allowed": 9,
+            "locked": [
+              "pipeline",
+              "governance"
+            ]
+          },
+          "navCount": 11,
+          "lockedCount": 2,
+          "lockedPages": [
+            "pipeline",
+            "governance"
+          ],
+          "allowedCount": 9,
+          "roleName": "本社（工務・安全・品質）",
+          "roleSub": "承認者・管理者",
+          "dataPage": "viewer"
+        },
+        {
+          "key": "it",
+          "expected": {
+            "allowed": 11,
+            "locked": []
+          },
+          "navCount": 11,
+          "lockedCount": 0,
+          "lockedPages": [],
+          "allowedCount": 11,
+          "roleName": "IT・DX部門",
+          "roleSub": "承認者・管理者",
+          "dataPage": "viewer"
+        },
+        {
+          "key": "field",
+          "expected": {
+            "allowed": 7,
+            "locked": [
+              "integration",
+              "governance",
+              "audit",
+              "settings"
+            ]
+          },
+          "navCount": 11,
+          "lockedCount": 4,
+          "lockedPages": [
+            "integration",
+            "governance",
+            "audit",
+            "settings"
+          ],
+          "allowedCount": 7,
+          "roleName": "現場担当者",
+          "roleSub": "承認者・管理者",
+          "dataPage": "viewer"
+        }
+      ],
+      "lockAttempt": {
+        "role": "field",
+        "clicked": "audit",
+        "beforePage": "viewer",
+        "afterPage": "viewer",
+        "pageChanged": false,
+        "toast": "「現場担当者」ロールではこの画面を利用できません（Entra IDグループで制御・模擬）"
+      },
+      "approveGating": {
+        "currentRole": "field",
+        "approveDefs": {
+          "field": false,
+          "agent": true,
+          "hq": false,
+          "it": false
+        },
+        "apYesExists": true,
+        "apYesDisabled": false,
+        "apYesHasDisabledAttr": false,
+        "approveModalShown": false,
+        "apRoleText": "承認者：現場代理人"
+      }
+    },
+    "auditUi": {
+      "dataPage": "audit",
+      "kpiCount": 4,
+      "kpiTexts": [
+        "記録件数 53",
+        "直近24時間 53",
+        "種別 10",
+        "ハッシュ連鎖 VERIFIED"
+      ],
+      "verifyText": "VERIFIED（全件一致） 検証件数 53 件 HEADハッシュ b4ec8bdc83c50fba78cfa8746ddbe6d8eb90423270aad58b587eafb4f1f7c45d 検証方式 直前ハッシュ＋日時＋主体＋種別＋内容の SHA-256 連鎖 DB側は追記専用（UPDATE/DELETE をトリガで拒否）。改ざん検知はこの画面の再計算とサーバ検証の二段構えです。",
+      "countText": "53 / 53 件",
+      "rowCount": 53,
+      "typeOptions": [
+        "all",
+        "ACCESS_LOGIN",
+        "ACCESS_ROLE_UNMAPPED",
+        "APPROVAL_REQUESTED",
+        "APPROVED",
+        "LOGIN",
+        "LOGOUT",
+        "REPORT_CREATED",
+        "RUN_COMPLETED",
+        "RUN_REQUESTED",
+        "SEED"
+      ],
+      "heading": "監査ログ ─ 追記専用・ハッシュ連鎖",
+      "detailText": "seq #53 日時 2026/11/20 14:14:50 主体 現場代理人・所長（デモ） 種別 LOGIN 内容 ログイン 前ハッシュ 00daefe7aef1441f844ea73af47709137eda585445d11f9058e4a48baceb0699 この記録のハッシュ b4ec8bdc83c50fba78cfa8746ddbe6d8eb90423270aad58b587eafb4f1f7c45d この記録を再計算して照合 前ハッシュ＋日時＋主体＋種別＋内容から SHA-256 を再計算します。",
+      "recheckText": "一致 — 改変されていません",
+      "filterResult": {
+        "selectedType": "ACCESS_LOGIN",
+        "countText": "10 / 53 件",
+        "rowCount": 10
+      },
+      "searchZero": {
+        "query": "ZZZ-NO-MATCH-9999",
+        "emptyText": "条件に一致する記録がありません。",
+        "countText": "0 / 53 件",
+        "rowCount": 0
+      }
+    },
+    "settingsUi": {
+      "found": true,
+      "heading": "システム設定 ─ 環境・権限・データ",
+      "stats": [
+        "稼働状態 稼働中",
+        "バージョン 0.1.0",
+        "稼働時間 41分 52秒",
+        "監査連鎖 VERIFIED 53件"
+      ],
+      "version": "0.1.0",
+      "aiMode": "demo-deterministic",
+      "db": "spatial_agent_studio_preview（接続中）",
+      "accessState": "未経由（デモ）",
+      "accessMapped": "個別 1 件 / ドメイン 1 件",
+      "sessionTtl": "8 時間",
+      "counts": {
+        "sites": "5",
+        "users": "2",
+        "approvals": "1",
+        "reports": "1",
+        "auditEvents": "53",
+        "pending": "0"
+      },
+      "roleRows": 4,
+      "roleRowTexts": [
+        "現場担当者 7 SG-現場A-施工管理",
+        "現場代理人・所長 9 SG-現場A-代理人",
+        "本社（工務・安全・品質） 9 SG-本社-工務安全品質",
+        "IT・DX部門 11 SG-IT-DX-Admin"
+      ],
+      "chainText": "一致（53件）",
+      "hasEmailPattern": false,
+      "healthButton": true,
+      "verifyButton": true,
+      "healthToast": "ヘルスチェック：API 正常 / DB up / v0.1.0"
+    },
+    "viewer": {
+      "dataPage": "viewer",
+      "canvases": 4,
+      "gpuWidth": 728,
+      "gpuHeight": 870,
+      "hudText": "AIがUIを自律操作中 Canvas2D（フォールバック） 10 fps ・ 10,906 splats 視点操作：ドラッグ回転 / 右ドラッグ移動 / ホイール拡大 全体 盛土 切土 重機 護岸 4D 版 10/02 10/16 10/30 11/06 11/13 11/18 横断面"
+    },
+    "pagesUnderIT": [
+      {
+        "role": "it",
+        "key": "pipeline",
+        "label": "データ取得",
+        "beforePage": "viewer",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "pipeline",
+        "navOn": "pipeline",
+        "heading": "データ取得 ─ 撮影から3DGS生成まで",
+        "stats": 7,
+        "cards": 7,
+        "tableRows": 3,
+        "canvases": 1,
+        "textExcerpt": "データ取得 ─ 撮影から3DGS生成まで ドローン・360°カメラ・地上LiDARの撮影データをGPUサーバで自動処理し、3DGSの「版」として3D基盤に登録します（処理は模擬）。 撮影データをアップロード（模擬） ドローン写真測量 広域・盛土/切土の面管理向け。週1回〜。RTK-GNSSと標定点で位置精度を確保。 360°カメラ巡回 歩行撮影で日次更新。足場・構造物まわりの状況記録と安全確認向け。 地上LiDAR 正式な出来形計測の精",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      },
+      {
+        "role": "it",
+        "key": "governance",
+        "label": "統制",
+        "beforePage": "pipeline",
+        "clickError": null,
+        "clicked": true,
+        "reached": true,
+        "dataPage": "governance",
+        "navOn": "governance",
+        "heading": "統制 ─ AIゲートウェイ・ポリシー・監査",
+        "stats": 5,
+        "cards": 7,
+        "tableRows": 43,
+        "canvases": 0,
+        "textExcerpt": "統制 ─ AIゲートウェイ・ポリシー・監査 IT・DX部門向け。APIキーはゲートウェイで保持し、ロール・操作の許可・人の承認・匿名化・費用・監査ログを一元管理します。ここでの変更はAIエージェントに即時反映されます。 テスト送信 ポリシー違反をテスト AIゲートウェイの流れ 呼び出しごとにパケット表示 Web画面（ブラウザ） キーは持たない 社内AIゲートウェイ Entra ID SSO・ロール確認 DLP・匿名化チェック レート制限",
+        "rootFound": true,
+        "rootVisible": true,
+        "newToasts": []
+      }
+    ],
+    "approvalsScreen": {
+      "dataPage": "approvals",
+      "heading": "承認 ─ AIは下書きまで、確定は人",
+      "pendingCards": 0,
+      "pendingEmptyText": "承認待ちはありません",
+      "historyRows": 1,
+      "historyHeaders": [
+        "ID",
+        "現場",
+        "件名",
+        "結果",
+        "承認者",
+        "日時"
+      ],
+      "historyStatusPills": [
+        "承認"
+      ],
+      "firstHistoryRow": "4debba93-507e-4db0-b82d-4a6aca2abb7b ○○川 築堤・護岸工事 出来形管理帳票（ドラフト）を確定 承認 現場代理人・所長（デモ） 11/20 11:01",
+      "apWho": "あなた（現場代理人・所長）は承認できます",
+      "navBadge": {
+        "text": "0",
+        "display": "none"
+      },
+      "statCount": 0,
+      "textExcerpt": "承認 ─ AIは下書きまで、確定は人 AIの作成物（帳票・判定・停止指示）は、権限を持つ人が承認して初めて確定します。承認・却下はすべて監査ログに残ります。 AIが下書き 計測・判定・帳票 担当者が確認 内容・前提の確認 代理人が承認 確定・提出・停止 本社が閲覧 横断確認・分析 連携・保管 通知・保存・原価 承認待ち あなた（現場代理人・所長）は承認できます 承認待ちはありません 承認履歴 ID 現場 件名 結果 承認者 日時 4debba93-507e-4db0-b82d",
+      "screenshot": {
+        "name": "qa-preview-20261120-approvals.png",
+        "path": "docs/progress/evidence/qa-preview-20261120-approvals.png",
+        "bytes": 380772,
+        "takenAtJst": "2026/11/20 14:20:00"
+      }
+    }
+  },
+  "console": {
+    "errors": [
+      {
+        "context": "boot",
+        "type": "console.error",
+        "text": "Failed to load resource: the server responded with a status of 404 ()"
+      },
+      {
+        "context": "boot",
+        "type": "console.error",
+        "text": "Failed to load resource: the server responded with a status of 401 ()"
+      }
+    ],
+    "pageErrors": [],
+    "uniqueErrors": [
+      {
+        "text": "Failed to load resource: the server responded with a status of 404 ()",
+        "count": 1,
+        "contexts": [
+          "boot"
+        ]
+      },
+      {
+        "text": "Failed to load resource: the server responded with a status of 401 ()",
+        "count": 1,
+        "contexts": [
+          "boot"
+        ]
+      }
+    ],
+    "uniquePageErrors": []
+  },
+  "network": {
+    "httpErrors": [
+      {
+        "context": "boot",
+        "method": "GET",
+        "status": 404,
+        "url": "https://spatial-agent-studio-preview.pages.dev/cdn-cgi/access/get-identity"
+      },
+      {
+        "context": "boot",
+        "method": "GET",
+        "status": 401,
+        "url": "https://sas-api.mirai-dx-platform.com/api/auth/me"
+      }
+    ],
+    "nonGet": [
+      {
+        "context": "boot",
+        "method": "POST",
+        "url": "https://sas-api.mirai-dx-platform.com/api/auth/login",
+        "status": 200,
+        "resourceType": "fetch",
+        "classification": "ALLOWED_AUTH_LOGIN"
+      }
+    ],
+    "writeDetection": {
+      "totalNonGet": 1,
+      "authLogin": 1,
+      "unexpectedWrites": 0,
+      "forbiddenTargets": [],
+      "verdict": "PASS（承認/却下/実行/ログアウトのAPI呼び出しなし）"
+    }
+  },
+  "screenshots": [
+    {
+      "name": "qa-preview-20261120-home.png",
+      "path": "docs/progress/evidence/qa-preview-20261120-home.png",
+      "bytes": 497631,
+      "takenAtJst": "2026/11/20 14:15:17"
+    },
+    {
+      "name": "qa-preview-20261120-audit.png",
+      "path": "docs/progress/evidence/qa-preview-20261120-audit.png",
+      "bytes": 329237,
+      "takenAtJst": "2026/11/20 14:15:52"
+    },
+    {
+      "name": "qa-preview-20261120-settings.png",
+      "path": "docs/progress/evidence/qa-preview-20261120-settings.png",
+      "bytes": 376972,
+      "takenAtJst": "2026/11/20 14:16:01"
+    },
+    {
+      "name": "qa-preview-20261120-viewer-3d.png",
+      "path": "docs/progress/evidence/qa-preview-20261120-viewer-3d.png",
+      "bytes": 932716,
+      "takenAtJst": "2026/11/20 14:16:08"
+    },
+    {
+      "name": "qa-preview-20261120-role-field-nav.png",
+      "path": "docs/progress/evidence/qa-preview-20261120-role-field-nav.png",
+      "bytes": 930329,
+      "takenAtJst": "2026/11/20 14:16:25"
+    }
+  ],
+  "gaps": [
+    "プレビュー配備コミットは画面/APIに露出していない（/api/health も /api/system/info も version=0.1.0 のみ）。リポジトリHEAD 0e4a8f7c と配備内容の一致は未確認。",
+    "#apYes の disabled 表示は承認モーダル表示時にしか更新されないため、モーダルを開かない制約下では「UI上の承認不可」を直接実測できていない（ROLE.defs.approve の実測で代替）。",
+    "3Dビューの canvas は DOM 上存在するが、描画ピクセルの内容は画像目視でのみ確認可能（数値では検証していない）。",
+    "staff権限の403は監査DENYが書かれるため本検証では実施していない（制約どおり）。",
+    "API の 400/404 応答が DB へ副作用を残さないことはコード読解（スキーマ検証が先行）に基づく。DBを直接参照した確認は行っていない。"
+  ],
+  "fatalError": null,
+  "summary": {
+    "pass": 55,
+    "fail": 3,
+    "unverified": 1,
+    "total": 59,
+    "fatalError": false,
+    "recalculatedAtJst": "2026/11/20 14:20:24"
+  }
+}
