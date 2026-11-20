@@ -24,7 +24,7 @@
 | 7 | ロール割当の実機未確認 | 社用ドメイン→`field`／所有者→`agent,hq,it`／未登録→403 | 確認済み |
 | 8 | API 4分停止 | health 200・CORS 204・ロール割当復旧 | 解消 |
 | 9 | 取込み実行 `unknown` | **13件すべて `passed` に終端化**（reconciled根拠付き）・ゲート `blockers=[]` | **解消** |
-| 10 | レポート v2 が最終 | **v3 = version 3 として保存済み**（15:28 / 6,592文字 / hash `77cc5370`） | **作成済み**（下記訂正） |
+| 10 | レポート v2 が最終 | **v4 = version 4 として保存済み**（15:51 / 5,802文字。v1〜v3は履歴保持） | **作成済み** |
 | 11 | releaseゲート pending | 5件 pending（新規 `gate_mwolm5o4_c78d9b27` を含む）・承認なし | 妥当 |
 
 > **訂正（2026-11-20 15:35）**：前版の突合記録で「v3未作成」と記したが、これは**文書数（reports=5）と版数（versions）を混同**したもの。
@@ -35,10 +35,10 @@
 | 項目 | 値 |
 | :-- | :-- |
 | 欠陥 | **3/3 closed**（未クローズ0） |
-| テストケース | executed **39** / reviewed 12（計51） |
+| テストケース | executed **43** / reviewed 8（計51・reviewedはすべてwaived） |
 | 取込み実行 | **13/13 `passed`**（revision 2・`reconciled` 付与・summary不変） |
 | ゲート評価 | `blockers=[]`（「未完了のテスト実行」ブロック解消） |
-| レポート | v3（version 3）まで保存。v2は履歴 |
+| レポート | **v4**（version 4・5,802文字）まで保存。v1〜v3は履歴 |
 | ゲート | 5件 pending（release×3 / requirements-review / testcase-review） |
 
 ### 2.1 v3の「4件passed」の扱い（ユーザー選択1に対応）
@@ -63,13 +63,13 @@ v3 §5 に明記済み。要旨：
 
 | # | 条件 | 状態 |
 | :-: | :-- | :-- |
-| 1 | P0 2件（RF05-01 run作成／AC-08 Access未登録メール）の実行 or waive | **未達**（waivedのまま・理由記録あり） |
-| 2 | 部分検証4件の残り実行 or waive | **未達**（reviewedのまま） |
-| 3 | クリーンコミットからの再配備と `sas-commit` 非dirty | **達成**（`19a5f6a`） |
-| 4 | Access保護外の受容または保護拡大 | **判断待ち**（[pages-dev-exposure.md](../security/pages-dev-exposure.md) に受容記録・閉鎖手順・トークン手順） |
-| 5 | API常設化（systemd等） | **未達**（nohup。unitは `deploy/systemd/` に用意・有効化は人間） |
-| 6 | 性能/a11y/クロスブラウザの対象外明示 or 基準定義 | **未達** |
-| 7 | requirements-review / testcase-review ゲート処理 | **pending**（人） |
+| 1 | P0 2件（RF05-01／AC-08）の実行 or waive | **達成**（両方 executed。AC-08は監査 `ACCESS_ROLE_UNMAPPED` を1件追記＝期待どおり） |
+| 2 | 部分検証4件の残り実行 or waive | **達成**（RN05-01・RISK-01 を executed／RN01-02・RN07-01 は理由付き waived） |
+| 3 | クリーンコミットからの再配備と `sas-commit` 非dirty | **達成**（`19a5f6a`・dirtyなし） |
+| 4 | Access保護外の受容または保護拡大 | **達成**（受容を確定。[pages-dev-exposure.md](../security/pages-dev-exposure.md)） |
+| 5 | API常設化（systemd等） | **未達**（unit更新済み・手順あり。有効化は人間） |
+| 6 | 性能/a11y/クロスブラウザの対象外明示 or 基準定義 | **達成**（[nonfunctional-scope.md](nonfunctional-scope.md)） |
+| 7 | requirements-review / testcase-review ゲート処理、waived 8件の受容、release判定 | **pending**（人） |
 
 ## 5. 判定（AI推奨・承認は人）
 
@@ -91,3 +91,28 @@ node scripts/preview-smoke.mjs                                    # → PASS 8/8
 # 配備commit（clean）
 curl -s https://spatial-agent-studio-preview.pages.dev/ | grep sas-commit   # → 19a5f6a
 ```
+
+## 7. QA最終状態（15:51時点）と申し送りの訂正
+
+| 項目 | 値 |
+| :-- | :-- |
+| ケース | **executed 43 / reviewed 8**（reviewed 8はすべてwaived・P0は15/15 executed） |
+| 欠陥 | **3/3 closed** |
+| テスト実行 | **13/13 passed**（reconciled付き） |
+| 品質ゲート | **passed / blockers=[]** |
+| レポート | **v4**（5,802文字）／実行記録 **v2** |
+| releaseゲート | 既存 pending `gate_mwolm5o4_c78d9b27` をv4で評価する形（新規申請なし） |
+
+### 訂正：Go条件「配備が `e8f6cd7-dirty`」
+
+QAセッションの最終申し送り（15:28観測）は **`e8f6cd7-dirty`** を前提にしていますが、
+その後 15:36 に **`19a5f6a`（dirtyなし）** へ再配備済みです。ビルドの `dirty` 判定は
+配備物に影響するパス（src/web-v21/scripts/db/package.json/lockfile）へ限定しました。
+
+```text
+$ curl -s https://spatial-agent-studio-preview.pages.dev/ | grep sas-commit
+<meta name="sas-commit" content="19a5f6a">
+```
+
+したがって**Go条件2は達成済み**であり、残るのは「waived 8件の受容判断」「reviewゲート2件」
+「release判定」「API常設化（人間）」です。
