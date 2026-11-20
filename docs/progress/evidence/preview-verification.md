@@ -1,6 +1,6 @@
 # Cloudflare Preview 検証記録
 
-実施日時：2026-11-20 11:00〜11:10 JST（UTC 02:00〜02:10）
+実施日時：2026-11-20 11:00〜11:22 JST（UTC 02:00〜02:22）
 実施者：DeepSeek Harness 主エージェント（CTO権限委譲）
 対象コミット：`0134a1c63276cbd0f511377b87f874bbc4e76977`（PR #1 マージコミット）
 
@@ -25,7 +25,7 @@ curl -s https://sas-api.mirai-dx-platform.com/api/health
 ```
 
 ```json
-{"ok":true,"db":"up","version":"0.1.0","time":"2026-11-20T02:10:03.363Z","aiMode":"demo-deterministic"}
+{"ok":true,"db":"up","version":"0.1.0","time":"2026-11-20T02:21:30.462Z","aiMode":"demo-deterministic"}
 ```
 
 **結果：PASS**
@@ -70,22 +70,30 @@ Playwright（Chromium headless）で以下を実行。
 
 - 初回：`046f4340` デプロイ、API health 02:00:18Z、CORS 204、UIフロー成功、監査 rows=8。
 - マージ後：`0134a1c` から再ビルドして `45b9e8ff` に再配備。安定URLで再スモークし、監査 rows=9 を確認。
+- CORS修正後（PR #4 `ae2dfb5`）：APIを再起動し、`45b9e8ff` Originのプリフライトと再スモークを確認（監査 rows=10）。
 - **対象コミット `0134a1c` とデプロイの対応を確認済み。**
 
 ## 5. DB状態（Preview、マージ後スモーク時点）
 
 ```text
-users=2  sites=3  runs=1  approvals=1  reports=1  audit_events=9
+users=2  sites=3  runs=1  approvals=1  reports=1  audit_events=10
 approval: status=approved, verdict=是正要（不足部の手直し後に再計測）, decided_atあり
 site-a latest version: 2026-11-18 progress=1.000
 ```
 
-監査ログHEAD（seq 9）：
+監査ログHEAD（seq 10）：
 
 ```text
-seq=9  actor=HUMAN:現場代理人・所長（デモ）  type=LOGIN
-hash=c5c7c7c3428d1004b2682f1b57940d8fc62cf5fc70ccb11436927be83ed769cf
+seq=10  actor=HUMAN:現場代理人・所長（デモ）  type=LOGIN
+hash=bb5b007a3c008e2b40e185a1b9e81f8398a52d6b93a1b19d26ac3d2979e255e9
 ```
+
+## 5.1 CORS修正後の再スモーク
+
+- PR #4（`ae2dfb5`）で Cloudflare Pages のデプロイ別サブドメインをCORS許可。
+- Preview API（port 7450）を再起動し、`OPTIONS /api/bootstrap`（Origin=`https://45b9e8ff...`）が
+  `204` + `access-control-allow-origin: https://45b9e8ff.spatial-agent-studio-preview.pages.dev` を返すことを確認。
+- `node scripts/preview-smoke.mjs` を再実行し、`PREVIEW SMOKE: PASS`（API health / CORS / ログイン / 3D / 監査VERIFIED、監査 rows=10）。
 
 ## 6. 監査・権限の確認
 

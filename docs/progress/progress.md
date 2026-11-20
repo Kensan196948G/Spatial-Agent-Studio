@@ -1,6 +1,6 @@
 # 進捗・判断・証跡 — Spatial Agent Studio MVP
 
-最終更新：2026-11-20 11:16 JST
+最終更新：2026-11-20 11:22 JST
 
 ## 1. 現在の状態
 
@@ -69,7 +69,7 @@
 | Lint | `pnpm run lint` | **PASS**（exit 0） |
 | Unit | `pnpm run test:unit` | **PASS 7/7** |
 | API Integration | `pnpm run test:api` | **PASS 8/8** |
-| E2E | `pnpm run test:e2e` | **PASS 3/3**（manager / staff / error） |
+| E2E | `pnpm run test:e2e` | **PASS 4/4**（manager出来形 / staff / manager安全離隔 / error） |
 | Build | `pnpm run build` | **PASS**（Vite 60 modules） |
 | Secret scan | `pnpm run secret-scan` | **PASS**（44 files） |
 | DB migrate/seed/verify | `db:migrate` / `db:seed` / `db:verify` | **PASS**（dev/test/preview） |
@@ -105,8 +105,9 @@
 - main HEAD（PR #4時点）：`ae2dfb5`（APIのCORS修正を含む。WebUI配備は`0134a1c`）
 - main保護：ruleset `main-protection`（PR必須 / deletion / non_fast_forward）
 - CI：`.github/workflows/**` はハーネスポリシーで追加不可。`templates/ci/ci.yml` を人間が適用する。
-- ローカル検証：typecheck / lint / unit 7 / API 8 / E2E 3 / build / secret-scan すべてPASS。
+- ローカル検証：typecheck / lint / unit 7 / API 8 / E2E 4 / build / secret-scan すべてPASS。
 - Preview再配備：`0134a1c` から再ビルドし `45b9e8ff` に配備、安定URLで再スモークPASS。
+- CORS修正後：API再起動＋`45b9e8ff` Originのプリフライト確認、再スモークPASS（監査10件）。
 - CORS追補：PR #4で `<hash>.spatial-agent-studio-preview.pages.dev` を許可。API再起動後に
   `45b9e8ff` Originのプリフライトが204 + allow-originになることを確認。
 
