@@ -85,6 +85,41 @@ curl -s -X OPTIONS https://sas-api.mirai-dx-platform.com/api/bootstrap \
 
 ---
 
+## 2.6 バックアップ（日次・復元訓練済み）
+
+```bash
+# 手動実行（DB名は既定 spatial_agent_studio_preview）
+scripts/backup-db.sh
+# → ~/.local/share/spatial-agent-studio/backups/<db>-<UTC>.dump + .sha256（14世代保持）
+```
+
+- `pg_dump` は**サーバと同一メジャー**を自動選択（PG16サーバなら 16 の pg_dump。新しいクライアントで
+  旧サーバをダンプすると restore できない形式・パラメータが混入する）。
+- 日次実行は `deploy/systemd/spatial-agent-studio-backup.{service,timer}`（03:10・Persistent）。
+  有効化は人間：`cp deploy/systemd/... ~/.config/systemd/user/ && systemctl --user enable --now spatial-agent-studio-backup.timer`
+
+**復元訓練（2026-11-20 実施・PASS）**
+
+```bash
+SCRATCH=sas_restore_drill_$(date +%s)
+createdb "$SCRATCH"
+/usr/lib/postgresql/16/bin/pg_restore --no-owner --no-privileges -d "$SCRATCH" <dump>
+psql -At -d "$SCRATCH" -c "select count(*) from sites" -c "select count(*) from audit_events"
+dropdb "$SCRATCH"
+# 実測: restore_exit=0 / sites=5 / users=2 / audit=83 / approvals=1
+```
+
+## 2.7 監視（外形・5分間隔）
+
+```bash
+scripts/healthcheck.sh    # 失敗時は非0。結果は ~/.local/state/spatial-agent-studio/last-health.txt
+```
+
+- タイマー：`deploy/systemd/spatial-agent-studio-health.{service,timer}`（OnBoot+2min / 5分ごと）。
+- 通知は未接続（本番昇格時に Webhook/メールを定義）。失敗は `journalctl --user -u spatial-agent-studio-health.service` で確認。
+
+---
+
 ## 3. APIの起動
 
 ### ローカル確認（開発）

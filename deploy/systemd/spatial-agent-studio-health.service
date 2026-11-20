@@ -1,0 +1,7 @@
+[Unit]
+Description=Spatial Agent Studio — health check
+
+[Service]
+Type=oneshot
+Environment=HEALTH_URL=http://127.0.0.1:7450/api/health
+ExecStart=/home/kensan/Projects/Business-Project/Spatial-Agent-Studio/scripts/healthcheck.sh
