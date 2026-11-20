@@ -91,6 +91,31 @@ export function requestToken(req: FastifyRequest): string | null {
   return typeof raw === 'string' && raw.length > 0 ? raw : null;
 }
 
+/**
+ * 許可Origin判定。Cloudflare Pages のデプロイ別サブドメイン
+ * （<hash>.project.pages.dev）も、設定済み pages.dev プロジェクト配下なら許可する。
+ */
+export function isAllowedOriginValue(origin: string, allowed: Set<string>): boolean {
+  if (allowed.has(origin)) return true;
+  try {
+    const url = new URL(origin);
+    if (url.protocol !== 'https:') return false;
+    for (const candidate of allowed) {
+      const base = new URL(candidate);
+      if (
+        base.protocol === 'https:' &&
+        base.hostname.endsWith('.pages.dev') &&
+        url.hostname.endsWith(`.${base.hostname}`)
+      ) {
+        return true;
+      }
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 /** Same-origin / configured origin のみ許可（SameSite=Lax と併用） */
 export function isAllowedOrigin(req: FastifyRequest, config: AppConfig): boolean {
   const origin = req.headers.origin;
@@ -103,5 +128,5 @@ export function isAllowedOrigin(req: FastifyRequest, config: AppConfig): boolean
     'http://127.0.0.1:5174',
     'http://localhost:5174',
   ]);
-  return allowed.has(origin);
+  return isAllowedOriginValue(origin, allowed);
 }
