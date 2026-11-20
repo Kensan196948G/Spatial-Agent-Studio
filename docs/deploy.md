@@ -22,7 +22,7 @@
 cd /home/kensan/Projects/Business-Project/Spatial-Agent-Studio
 
 # PagesからトンネルAPIを呼ぶためのAPIベースURLを埋め込む
-VITE_API_BASE_URL=https://sas-api.mirai-dx-platform.com pnpm run build
+SAS_API_BASE=https://sas-api.mirai-dx-platform.com pnpm run build
 
 npx wrangler pages deploy dist/web \
   --project-name spatial-agent-studio-preview \
@@ -31,9 +31,9 @@ npx wrangler pages deploy dist/web \
   --commit-message "Spatial Agent Studio MVP preview"
 ```
 
-- `public/_headers` がCSP等のヘッダーを付与（`connect-src` にAPI URL）。
-- `VITE_API_BASE_URL` が空のビルドは同一オリジンAPI向け（ローカル用）。
-- Pagesのビルド成果物は `dist/web`。
+- `web-v21/_headers` がCSP等のヘッダーを付与（`connect-src` にAPI URL）。
+- `SAS_API_BASE` が空のビルドは同一オリジンAPI向け（ローカル用）。V2.1 UIの `bridge.js` が meta タグ経由でAPIベースを読みます。
+- Pagesのビルド成果物は `dist/web`（V2.1 UI シェル）。
 
 ## 3. APIの起動
 

@@ -9,10 +9,10 @@
     "node": ">=22"
   },
   "scripts": {
-    "dev": "concurrently -k -n api,web -c blue,magenta \"pnpm run dev:api\" \"pnpm run dev:web\"",
+    "dev": "pnpm run build:v21 && pnpm run dev:api",
     "dev:api": "tsx watch src/api/server.ts",
     "dev:web": "vite",
-    "build": "vite build",
+    "build": "node scripts/build-v21.mjs",
     "start": "tsx src/api/server.ts",
     "start:e2e": "APP_ORIGIN=http://127.0.0.1:7440 COOKIE_SECURE=false NODE_ENV=test tsx src/api/server.ts",
     "typecheck": "tsc --noEmit",
@@ -21,14 +21,16 @@
     "test": "pnpm run db:test:reset && vitest run",
     "test:unit": "vitest run tests/unit",
     "test:api": "pnpm run db:test:reset && vitest run tests/api",
-    "test:e2e": "pnpm run db:test:reset && pnpm run build && playwright test",
+    "test:e2e": "pnpm run db:test:reset && pnpm run build:v21 && playwright test",
     "ci:local": "node scripts/ci-local.mjs",
     "db:migrate": "tsx scripts/db.ts migrate",
     "db:seed": "tsx scripts/db.ts seed",
     "db:verify": "tsx scripts/db.ts verify",
     "db:reset": "tsx scripts/db.ts reset",
     "db:test:reset": "ALLOW_DB_RESET=1 DATABASE_URL=${TEST_DATABASE_URL:-postgresql:///spatial_agent_studio_test?host=/var/run/postgresql} tsx scripts/db.ts reset && DATABASE_URL=${TEST_DATABASE_URL:-postgresql:///spatial_agent_studio_test?host=/var/run/postgresql} tsx scripts/db.ts migrate && DATABASE_URL=${TEST_DATABASE_URL:-postgresql:///spatial_agent_studio_test?host=/var/run/postgresql} tsx scripts/db.ts seed",
-    "secret-scan": "node scripts/secret-scan.mjs"
+    "secret-scan": "node scripts/secret-scan.mjs",
+    "build:v21": "node scripts/build-v21.mjs",
+    "build:react": "vite build"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

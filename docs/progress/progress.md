@@ -1,6 +1,6 @@
 # 進捗・判断・証跡 — Spatial Agent Studio MVP
 
-最終更新：2026-11-20 11:24 JST
+最終更新：2026-11-20 12:30 JST
 
 ## 1. 現在の状態
 
@@ -18,13 +18,15 @@
 | ドキュメントPR | **#2〜#5 MERGED** https://github.com/Kensan196948G/Spatial-Agent-Studio/pulls?q=is%3Apr |
 | テスト/証跡PR | **#6/#7 MERGED**（安全離隔E2E／最新main再配備） |
 | UI改善 | **ライト/ダーク切替・現場セレクタ（5現場）**（PR #10） |
+| UI正本 | **V2.1システム版（9画面）原本を静的UIシェルとして採用**（`web-v21/`＋`bridge.js`、PR #11） |
 | CIゲート | **`ci/local-verify`（ローカルCI）をRequired Checkとして運用**。PR #8でBLOCKED→success→auto-mergeを実証 |
-| main HEAD（PR #8時点） | `7702958f50c1a2871a1de862ed9d0e180ea593df` |
+| main HEAD（PR #10時点） | `8002486772ba30933d6a8df421915ee84c5bde99` |
+| V2.1 UI | ダッシュボード/3D/承認/監査は実データ、他5画面はV2.1サンプル表示 |
 | WebUI配備対象 | `930415d`（Pages `8b5bf4d3` で検証） |
 | APIコード | `ae2dfb5`（CORSのPagesサブドメイン対応を含む） |
 | main保護 | PR必須 / 削除禁止 / 強制Push禁止（ruleset `main-protection`） |
 | GitHub Actions CI | **未適用（任意）**。ハーネスポリシーでworkflow変更不可。`templates/ci/ci.yml` は人間適用用に残置 |
-| 設計仕様の承認 | 承認待ち（v1.0） |
+| 設計仕様 | V2.1原本をUI正本として採用（v1.0は設計履歴） |
 
 ## 2. 初動Assessment（事実）
 
@@ -72,7 +74,7 @@
 | Lint | `pnpm run lint` | **PASS**（exit 0） |
 | Unit | `pnpm run test:unit` | **PASS 7/7** |
 | API Integration | `pnpm run test:api` | **PASS 8/8** |
-| E2E | `pnpm run test:e2e` | **PASS 6/6**（manager出来形 / staff / manager安全離隔 / error / **theme / site selector**） |
+| E2E（V2.1 UI） | `pnpm run test:e2e` | **PASS 4/4**（ログイン/ホーム5現場9画面 / 現場B選択 / テーマ保持 / AI出来形→承認→レポート→承認履歴→監査） |
 | Build | `pnpm run build` | **PASS**（Vite 60 modules） |
 | Secret scan | `pnpm run secret-scan` | **PASS**（44 files） |
 | DB migrate/seed/verify | `db:migrate` / `db:seed` / `db:verify` | **PASS**（dev/test/preview） |
@@ -106,11 +108,14 @@
 - auto-merge：有効化して予約。必須チェック未設定のため即時マージ
 - PR #7：[docs: Previewを最新main 930415dから再配備・再検証](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/7)（MERGED）
 - PR #8：[feat: ローカルCIランナーと必須ステータスチェック](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/8)（MERGED / CIゲート実証）
+- PR #9：[docs: CI必須チェックとauto-mergeの実証記録](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/9)（MERGED）
+- PR #10：[feat: ライト/ダーク切替と現場セレクタ](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/10)（MERGED）
+- PR #11：[feat: V2.1原本のUIシェル＋APIブリッジ](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/11)（V2.1 UI）
 - マージコミット：PR #1=`0134a1c` / PR #2=`87aa915` / PR #3=`a44ad44` / PR #4=`ae2dfb5` / PR #5=`be60590` / PR #6=`930415d` / PR #7=`8850b67` / PR #8=`7702958`
-- main HEAD（PR #8時点）：`7702958`（ローカルCIランナー＋Required Checkを含む。WebUI配備は`930415d`/`8b5bf4d3`）
+- main HEAD（PR #10時点）：`8002486`（ライト/ダーク＋現場セレクタを含む）
 - main保護：ruleset `main-protection`（PR必須 / `ci/local-verify`必須 / deletion / non_fast_forward）
 - CI：`.github/workflows/**` はハーネスポリシーで追加不可。代わりにローカルCIが `ci/local-verify` を投稿し、PR #8で **BLOCKED → success → auto-merge** を実証。
-- ローカル検証：typecheck / lint / unit 7 / API 8 / E2E 6 / build / secret-scan すべてPASS。
+- ローカル検証：typecheck / lint / unit 7 / API 8 / E2E（V2.1）4 / build / secret-scan すべてPASS。
 - Preview再配備：`930415d` から再ビルドし `8b5bf4d3` に配備、安定URLで再スモークPASS（監査11件）。
 - CORS修正後：API再起動＋`45b9e8ff` Originのプリフライト確認、再スモークPASS（監査10件）。
 - 最新main再配備：`930415d` → `8b5bf4d3`、再スモークPASS（監査11件）。
@@ -136,7 +141,7 @@
 1. **GitHub Actions自体は未適用（任意）**：`.github/workflows/**` はハーネスポリシーでAIから変更できません。
    ただしCIゲートは**ローカルCI＋`ci/local-verify`必須チェック**で確立済み（PR #8で実証）。
    GitHub Actionsも併用したい場合のみ、人間が `templates/ci/ci.yml` を適用してください。
-2. **設計仕様の承認**：v1.0は承認待ち。実装は既存V2.1デザインのMVP適用として進行。
+2. **V2.1 UIの実データ範囲**：ダッシュボード/3D/承認/監査は実データ。データ取得/3D基盤/連携/統制/構成/導入計画はV2.1原本のサンプル表示。必要に応じて順次実データへ接続。
 3. **Previewの常設化**：現在は `nohup` でAPI/Tunnelを起動。systemd unitは
    `deploy/systemd/` に用意済みだが、ハーネスポリシーによりAIからのサービス操作は制限。
    人間が `~/.config/systemd/user/` へコピーして有効化可能。
@@ -146,8 +151,9 @@
 
 ## 8. 次の一手
 
-1. 設計仕様v1.0の承認判断（1/2/3）。
-2. Previewを常設化する場合、systemd unitを人間が有効化。
+1. Cloudflare Access OTPとpreview/prodカスタムドメインの設定（メールアドレスが必要）。
+2. V2.1の残り5画面を実データへ接続するか判断。
+3. Previewを常設化する場合、systemd unitを人間が有効化。
 3. 本番化する場合、実データ・認証・外部連携のBacklogを起票。
 4. マージ後の追加改修は新しいブランチ + PRで行い、`pnpm ci:local` で `ci/local-verify` を投稿する。
 5. GitHub Actionsを併用する場合のみ、CIテンプレートを人間が適用する。

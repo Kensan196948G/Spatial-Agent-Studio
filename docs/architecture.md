@@ -13,10 +13,10 @@
 ```text
 ┌────────────────────────────────────────────────────────────┐
 │ Browser                                                     │
-│  React 19 + Vite + TypeScript                               │
-│  ├─ Login / Dashboard / Site / Approvals / Audit            │
-│  ├─ Canvas2D 3D viewer（src/web/viewer/scene.ts）           │
-│  └─ API client（cookie or Bearer）                          │
+│  V2.1 static UI shell（web-v21/）                           │
+│  ├─ 9 screens（V2.1 CSS/HTML/JS 原本）                      │
+│  ├─ Canvas2D/WebGPU 3D viewer（v21-app.js）                 │
+│  └─ bridge.js（cookie or Bearer / approvals / audit）       │
 └──────────────────────────┬─────────────────────────────────┘
                            │ HTTPS (Pages → Tunnel) / same-origin (local)
 ┌──────────────────────────▼─────────────────────────────────┐
@@ -43,7 +43,7 @@
    `deviationStats` / `embankmentBalance` / `crossSection` を実行。
 3. `runs`（result/steps）と `approvals`（pending）を同一トランザクションで作成。
 4. `audit_events` に `RUN_REQUESTED` / `RUN_COMPLETED` / `APPROVAL_REQUESTED` を追記。
-5. WebUIは`steps`を順に表示し、3Dビューのカメラ・レイヤ・オーバーレイを操作。
+5. V2.1 UIは`steps`を順に表示し、3Dビューのカメラ・レイヤ・オーバーレイを操作。
 6. `POST /api/approvals/:id/decision {decision:"approve"}`。
    - `manager` のみ許可。`staff` は403 + `DENY` 監査。
    - 承認時は `reports` を作成し、`APPROVED` / `REPORT_CREATED` を追記。
