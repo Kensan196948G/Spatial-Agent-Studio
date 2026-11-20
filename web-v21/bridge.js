@@ -84,10 +84,13 @@
   /* ---------------- session (Cloudflare Access + silent demo account) ---------------- */
 
   // Cloudflare Access が本人確認を行うため、アプリ独自のログイン画面は持たない。
-  // Access 通過後にデモアカウントで API セッションを自動確立する（プレビュー用）。
-  const DEMO_ACCOUNT = { email: 'manager@example.com', password: 'SasManager!2026' };
+  // Access 通過後にAPIセッションを自動確立する（どのロールを許すかはサーバ側の設定）。
+  const DEMO_ACCOUNTS = {
+    manager: { email: 'manager@example.com', password: 'SasManager!2026' },
+    staff: { email: 'staff@example.com', password: 'SasStaff!2026' },
+  };
 
-  const auth = { behindAccess: false, email: '', signedOut: false };
+  const auth = { behindAccess: false, email: '', signedOut: false, roles: null, defaultRole: null };
 
   function setText(sel, text) {
     const el = $(sel);
@@ -107,6 +110,9 @@
     if (auth.email) {
       const small = $('#roleBtn small');
       if (small) small.textContent = auth.email;
+    } else {
+      const small = $('#roleBtn small');
+      if (small) small.textContent = 'Cloudflare Access 未経由（デモ）';
     }
   }
 
@@ -128,6 +134,13 @@
     }
   }
 
+  async function signInAs(kind) {
+    const account = DEMO_ACCOUNTS[kind] || DEMO_ACCOUNTS.manager;
+    const res = await api('/auth/login', { method: 'POST', body: JSON.stringify(account) });
+    if (res && res.token) writeToken(res.token);
+    return res.user;
+  }
+
   async function signInSilently() {
     try {
       const me = await api('/auth/me');
@@ -135,8 +148,21 @@
     } catch (err) {
       if (err.status !== 401) throw err;
     }
-    const res = await api('/auth/login', { method: 'POST', body: JSON.stringify(DEMO_ACCOUNT) });
+    return signInAs('manager');
+  }
+
+  /**
+   * Access のメールアドレスからAPIセッションを確立する。
+   * 許可ロールはサーバ側の環境変数で決まる（メールアドレスはリポジトリに置かない）。
+   */
+  async function signInWithAccess(email) {
+    const res = await api('/auth/access', { method: 'POST', body: JSON.stringify({ email }) });
     if (res && res.token) writeToken(res.token);
+    if (res && Array.isArray(res.roles)) {
+      auth.roles = res.roles;
+      auth.defaultRole = res.defaultRole || res.roles[0];
+      window.__SAS_ALLOWED_ROLES__ = res.roles;
+    }
     return res.user;
   }
 
@@ -556,21 +582,33 @@
 
   function applyUserUi() {
     if (!state.user) return;
-    A.setRole(state.user.role === 'manager' ? 'agent' : 'field', true);
-    const roleName = $('#roleName');
-    if (roleName) roleName.textContent = state.user.name || state.user.email;
+    // Access でメール→ロールが決まっている場合はそちらを優先する（上書きしない）
+    if (!auth.roles) {
+      A.setRole(state.user.role === 'manager' ? 'agent' : 'field', true);
+      const roleName = $('#roleName');
+      if (roleName) roleName.textContent = state.user.name || state.user.email;
+    }
     const small = $('#roleBtn small');
-    if (small) small.textContent = state.user.role === 'manager' ? '承認者・管理者' : '利用者';
+    if (small) {
+      small.textContent =
+        auth.email || (state.user.role === 'manager' ? '承認者・管理者' : '利用者');
+    }
     const btn = $('#roleBtn');
     if (btn) {
-      btn.style.pointerEvents = 'none';
-      btn.title = 'Cloudflare Access OTP（導入後）／ローカル認証';
+      btn.style.pointerEvents = '';
+      btn.title = auth.roles
+        ? `付与ロール: ${auth.roles.join(' / ')}（この範囲でのみ切替できます）`
+        : 'ロール切替（デモ）';
     }
     const menu = $('#roleMenu');
     if (menu) menu.classList.remove('show');
   }
 
   function afterBoot() {
+    // アプリ起動時に既定ロールへ戻ることがあるため、起動後に付与ロールを再適用する
+    if (auth.defaultRole && A.ROLE.defs[auth.defaultRole] && A.ROLE.cur !== auth.defaultRole) {
+      A.setRole(auth.defaultRole, true);
+    }
     applyUserUi();
     if (A.getPage() === 'dash') {
       A.P.dash.init();
@@ -615,7 +653,31 @@
     if (!bootRan) {
       bootRan = true;
       hideSignedOut();
+      // Access で決まった既定ロールをアプリへ反映してから起動する
+      if (auth.defaultRole && A.ROLE && A.ROLE.defs[auth.defaultRole]) {
+        A.setRole(auth.defaultRole, true);
+      }
       window.__SAS_BOOT__();
+    }
+  }
+
+  async function resolveAccessUser(email) {
+    try {
+      return await signInWithAccess(email);
+    } catch (err) {
+      if (err.code !== 'ROLE_NOT_MAPPED') throw err;
+      // ロール未設定のメールは最小権限（現場担当者）で通し、画面で警告する
+      auth.roles = ['field'];
+      auth.defaultRole = 'field';
+      window.__SAS_ALLOWED_ROLES__ = ['field'];
+      const user = await signInAs('staff');
+      A.toast(
+        'このアカウントにはロールが未設定のため、現場担当者（閲覧中心）で表示しています',
+        'lock',
+        '#ffb547',
+        6000,
+      );
+      return user;
     }
   }
 
@@ -628,7 +690,7 @@
     }
     renderAuthState();
     try {
-      const user = await signInSilently();
+      const user = identity ? await resolveAccessUser(identity.email) : await signInSilently();
       hideSignedOut();
       const logout = $('#btnLogout');
       if (logout) logout.hidden = false;

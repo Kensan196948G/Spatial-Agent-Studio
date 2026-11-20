@@ -110,6 +110,7 @@ const loginSchema = z.object({
   email: z.string().trim().email().max(200),
   password: z.string().min(1).max(200),
 });
+const accessSchema = z.object({ email: z.string().trim().email().max(200) });
 const runSchema = z.object({ task: z.enum(['asbuilt', 'safety']) });
 const decisionSchema = z.object({
   decision: z.enum(['approve', 'reject']),
@@ -300,6 +301,53 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
   });
 
   app.get('/api/auth/me', { preHandler: guard }, async (req) => ({ user: req.user as User }));
+
+  /**
+   * Cloudflare Access 通過後のサインイン。
+   *
+   * Access が本人確認を行い、SPA は同Originの /cdn-cgi/access/get-identity から
+   * メールアドレスを取得してこのエンドポイントへ渡す。どのロールを許すかは
+   * 環境変数 `SAS_ACCESS_ROLES`（個別）／`SAS_ACCESS_ROLE_DOMAINS`（ドメイン）で決まり、
+   * 未登録のメールは拒否する。実在のメールアドレスはリポジトリに置かない。
+   */
+  app.post('/api/auth/access', async (req, reply) => {
+    if (!isAllowedOrigin(req, config)) {
+      return sendError(reply, 403, 'ORIGIN_FORBIDDEN', '許可されていないOriginです。');
+    }
+    const parsed = accessSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return sendError(reply, 400, 'INVALID_BODY', 'メールアドレスを指定してください。');
+    }
+    const email = parsed.data.email.toLowerCase();
+    const domain = email.split('@')[1] || '';
+    const roles = config.accessRoles[email] ?? config.accessRoleDomains[domain];
+    if (!roles || roles.length === 0) {
+      await audit(pool, 'SYSTEM', 'ACCESS_ROLE_UNMAPPED', 'Accessメールにロールが未設定');
+      return sendError(
+        reply,
+        403,
+        'ROLE_NOT_MAPPED',
+        'このアカウントにはロールが割り当てられていません。管理者に連絡してください。',
+      );
+    }
+    // 現場担当者のみ staff（承認不可）。それ以外は manager 相当のデモアカウントを使う。
+    const accountEmail = roles.every((r) => r === 'field') ? 'staff@example.com' : 'manager@example.com';
+    const result = await pool.query<{
+      id: string;
+      email: string;
+      name: string;
+      role: 'manager' | 'staff';
+    }>('SELECT id, email, name, role FROM users WHERE email = $1', [accountEmail]);
+    const row = result.rows[0];
+    if (!row) {
+      return sendError(reply, 500, 'DEMO_USER_MISSING', 'デモアカウントが初期化されていません。');
+    }
+    const { token, expiresAt } = await createSession(pool, row.id, config.sessionTtlHours);
+    const maxAge = Math.max(1, Math.floor((expiresAt.getTime() - Date.now()) / 1000));
+    setSessionCookie(reply, token, config, maxAge);
+    await audit(pool, `HUMAN:${row.name}`, 'ACCESS_LOGIN', `Access認証: ${roles.join('/')}`);
+    return { user: mapUser(row), token, roles, defaultRole: roles[0] };
+  });
 
   app.get('/api/bootstrap', { preHandler: guard }, async (req) => {
     const dashboard = await buildDashboard(pool);

@@ -135,6 +135,18 @@ curl -s -i -X OPTIONS https://sas-api.mirai-dx-platform.com/api/bootstrap \
   「Spatial Agent Studio users」（2件）、セッション8時間。
   APIのCORSは同Originを許可済み（`CORS_ORIGINS`）。
   AccessアプリID：`082c00ee-21e7-4a1a-9fa5-93fb3f9c3e58`。
+- **メール→ロール割当**：SPAが `/cdn-cgi/access/get-identity` でメールアドレスを取得し、
+  `POST /api/auth/access` でセッションを確立します。割当はAPI側の環境変数で管理します。
+
+  | 変数 | 形式 | 用途 |
+  | :-- | :-- | :-- |
+  | `SAS_ACCESS_ROLES` | `{"mail@example.com":["agent","hq","it"]}` | 個別指定（先頭が既定ロール） |
+  | `SAS_ACCESS_ROLE_DOMAINS` | `{"example.co.jp":["field"]}` | ドメイン単位のフォールバック |
+
+  許可ロールキーは `field`（現場担当者）/ `agent`（現場代理人・所長）/ `hq`（本社）/ `it`（IT・DX部門）。
+  未割当のメールは403（`ROLE_NOT_MAPPED`）で拒否し、SPAは最小権限（現場担当者）で警告表示します。
+  **実在のメールアドレスはリポジトリへ入れず**、`~/.config/spatial-agent-studio/preview-api.env`（0600）で
+  プロセスに渡します（例：`set -a; . ~/.config/spatial-agent-studio/preview-api.env; set +a; npx tsx src/api/server.ts`）。
 - PagesのPreview URL（`*.pages.dev`）は**Access対象外**でインターネット公開です。
   デモアカウントはREADMEに記載されています。**実データ・個人情報を入れないでください。**
 - API Tunnelも公開されています。認証必須APIはセッション/Bearerが必要です。

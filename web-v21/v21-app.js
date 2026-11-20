@@ -696,7 +696,7 @@ const ROLE={cur:'agent',defs:{
   hq:{n:'本社（工務・安全・品質）',sub:'本社 工務部',grp:'SG-本社-工務安全品質',c:'#8b7bff',ic:'office',approve:false,pages:['dash','viewer','data','approvals','integration','arch','roadmap'],can:['現場に行かずに3Dで状況を確認する','点検・安全パトロールを一部リモートで行う','全社のKPI・傾向を分析する']},
   it:{n:'IT・DX部門',sub:'情報システム',grp:'SG-IT-DX-Admin',c:'#ffb547',ic:'gpu',approve:false,pages:['dash','viewer','pipeline','data','approvals','integration','governance','arch','roadmap'],can:['AIゲートウェイ・権限・監査ログを管理する','APIコスト・GPU資源を管理する','操作許可・承認要否のポリシーを設定する']}}};
 function setRole(k,silent){if(!ROLE.defs[k])return;ROLE.cur=k;const d=ROLE.defs[k];$('#roleName').textContent=d.n;const av=$('#roleAv');av.innerHTML=icon(d.ic);av.style.setProperty('--c',d.c);
-  if(!silent){audit('HUMAN','SIGN_IN',`Entra ID（模擬）：${d.n}／${d.grp}`);toast(`${d.n} としてサインイン（Entra ID グループ：${d.grp}・模擬）`,d.ic,d.c,3000)}
+  if(!silent){audit('HUMAN','SIGN_IN',`Cloudflare Access：${d.n}／${d.grp}`);toast(`${d.n} としてサインイン（${d.grp}）`,d.ic,d.c,3000)}
   if($('#mApprove').classList.contains('show'))updateApproveRole();SAS.emit('role',k)}
 function updateApproveRole(){const d=ROLE.defs[ROLE.cur];const can=d.approve;$('#apYes').disabled=!can;$('#apNo').disabled=!can;$('#apSwitch').style.display=can?'none':'';
   $('#apRole').innerHTML=can?`承認者：${d.n}（${d.grp}）`:`<span style="color:var(--am)">「${d.n}」には承認権限がありません</span>`}
@@ -1136,7 +1136,7 @@ SAS.goto=goto;
 function act(a){if(a==='report'){A.openReport();return}if(a==='approvals'||a==='data'||a==='dash'||a==='viewer')goto(a)}
 document.addEventListener('click',e=>{const g=e.target.closest('[data-goto]');if(g)goto(g.dataset.goto)});
 const rm=$('#roleMenu');
-function buildRoleMenu(){rm.innerHTML=`<div class="rh">${icon('lock')}Entra ID シングルサインオン（模擬）─ ロールを切替</div>`+Object.entries(A.ROLE.defs).map(([k,d])=>`<button class="ritem ${k===A.ROLE.cur?'on':''}" data-r="${k}" style="--c:${d.c}"><span class="ri">${icon(d.ic,'i')}</span><span><b>${d.n}</b><small>${d.grp}${d.approve?' ・ 承認権限あり':''}</small></span><svg class="i sm ok"><use href="#i-checkc"/></svg></button>`).join('');
+function buildRoleMenu(){const _allow=window.__SAS_ALLOWED_ROLES__;const _roles=Object.entries(A.ROLE.defs).filter(([k])=>!Array.isArray(_allow)||_allow.includes(k));rm.innerHTML=`<div class="rh">${icon('lock')}Cloudflare Access ─ 付与されたロール</div>`+_roles.map(([k,d])=>`<button class="ritem ${k===A.ROLE.cur?'on':''}" data-r="${k}" style="--c:${d.c}"><span class="ri">${icon(d.ic,'i')}</span><span><b>${d.n}</b><small>${d.grp}${d.approve?' ・ 承認権限あり':''}</small></span><svg class="i sm ok"><use href="#i-checkc"/></svg></button>`).join('');
   rm.querySelectorAll('.ritem').forEach(b=>b.addEventListener('click',()=>{rm.classList.remove('show');if(b.dataset.r!==A.ROLE.cur)A.setRole(b.dataset.r)}))}
 $('#roleBtn').addEventListener('click',e=>{e.stopPropagation();buildRoleMenu();const r=$('#roleBtn').getBoundingClientRect();rm.style.left=Math.max(8,r.right-330)+'px';rm.classList.toggle('show')});
 document.addEventListener('click',e=>{if(!e.target.closest('#roleMenu'))rm.classList.remove('show')});

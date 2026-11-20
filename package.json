@@ -14,7 +14,7 @@
     "dev:web": "vite",
     "build": "node scripts/build-v21.mjs",
     "start": "tsx src/api/server.ts",
-    "start:e2e": "APP_ORIGIN=http://127.0.0.1:7440 COOKIE_SECURE=false NODE_ENV=test tsx src/api/server.ts",
+    "start:e2e": "APP_ORIGIN=http://127.0.0.1:7440 COOKIE_SECURE=false NODE_ENV=test SAS_ACCESS_ROLES='{\"staff@example.com\":[\"field\"],\"manager@example.com\":[\"agent\",\"hq\",\"it\"]}' tsx src/api/server.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings=0",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"db/**/*.sql\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"e2e/**/*.ts\"",
