@@ -1,6 +1,6 @@
 # 進捗・判断・証跡 — Spatial Agent Studio MVP
 
-最終更新：2026-11-20 11:05 JST
+最終更新：2026-11-20 11:12 JST
 
 ## 1. 現在の状態
 
@@ -10,9 +10,11 @@
 | 主要フロー（出来形管理） | **E2E成功**（ローカル / Cloudflare Preview） |
 | 安全離隔フロー | **API/UI成功**（侵入判定・承認権限） |
 | 承認・監査 | **成功**（ハッシュ連鎖VERIFIED、改ざん拒否） |
-| Cloudflare Pages Preview | **配備済み・実操作確認済み** |
+| Cloudflare Pages Preview | **配備済み・実操作確認済み（対象コミット `0134a1c`）** |
 | Cloudflare Tunnel API | **稼働・疎通確認済み** |
-| GitHubリポジトリ / PR | 未実施（この直後に実施） |
+| GitHubリポジトリ | **PUBLIC** https://github.com/Kensan196948G/Spatial-Agent-Studio |
+| GitHub PR | **#1 MERGED** https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/1 |
+| マージコミット | `0134a1c63276cbd0f511377b87f874bbc4e76977`（2026-11-20 11:09 JST） |
 | GitHub Actions CI | **未適用（ハーネスポリシーでブロック）**。テンプレートを用意 |
 | 設計仕様の承認 | 承認待ち（v1.0） |
 
@@ -75,7 +77,7 @@
 
 ### Preview実操作の記録
 
-- URL：<https://spatial-agent-studio-preview.pages.dev>
+- URL：<https://spatial-agent-studio-preview.pages.dev>（マージ後デプロイ：<https://45b9e8ff.spatial-agent-studio-preview.pages.dev>）
 - ログイン：`manager@example.com`
 - 3D現場：`site-a`（○○川 築堤・護岸工事）
 - AI実行：盛土 出来形管理 → 6ステップ表示
@@ -85,6 +87,16 @@
 - API：`https://sas-api.mirai-dx-platform.com/api/health` → `{"ok":true,"db":"up"}`
 
 詳細：[evidence/preview-verification.md](evidence/preview-verification.md)
+
+## 5.1 GitHub
+
+- リポジトリ：[Kensan196948G/Spatial-Agent-Studio](https://github.com/Kensan196948G/Spatial-Agent-Studio)（PUBLIC）
+- PR #1：[feat: Spatial Agent Studio MVP](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/1)
+- auto-merge：有効化して予約。必須チェック未設定のため即時マージ（2026-11-20 11:09 JST）
+- マージコミット：`0134a1c63276cbd0f511377b87f874bbc4e76977`
+- CI：`.github/workflows/**` はハーネスポリシーで追加不可。`templates/ci/ci.yml` を人間が適用する。
+- ローカル検証：typecheck / lint / unit 7 / API 8 / E2E 3 / build / secret-scan すべてPASS。
+- Preview再配備：`0134a1c` から再ビルドし `45b9e8ff` に配備、安定URLで再スモークPASS。
 
 ## 6. デバッグ・修正履歴
 
@@ -114,8 +126,8 @@
 
 ## 8. 次の一手
 
-1. GitHubリポジトリ作成 → `feat/mvp` ブランチ → PR → ローカル検証証跡を本文に記載。
-2. CIテンプレートの人間適用（またはPR上でCI未実行を明示してマージ判断）。
-3. 設計仕様v1.0の承認判断（1/2/3）。
-4. Previewを常設化する場合、systemd unitを人間が有効化。
-5. 本番化する場合、実データ・認証・外部連携のBacklogを起票。
+1. CIテンプレートの人間適用（`cp templates/ci/ci.yml .github/workflows/ci.yml`）。
+2. 設計仕様v1.0の承認判断（1/2/3）。
+3. Previewを常設化する場合、systemd unitを人間が有効化。
+4. 本番化する場合、実データ・認証・外部連携のBacklogを起票。
+5. マージ後の追加改修は新しいブランチ + PRで行う。

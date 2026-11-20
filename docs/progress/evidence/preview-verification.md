@@ -1,36 +1,36 @@
 # Cloudflare Preview 検証記録
 
-実施日時：2026-11-20 11:00〜11:05 JST（UTC 02:00〜02:05）
+実施日時：2026-11-20 11:00〜11:10 JST（UTC 02:00〜02:10）
 実施者：DeepSeek Harness 主エージェント（CTO権限委譲）
+対象コミット：`0134a1c63276cbd0f511377b87f874bbc4e76977`（PR #1 マージコミット）
 
 ## 1. 配備対象
 
 | 項目 | 値 |
 | :-- | :-- |
-| WebUI | <https://spatial-agent-studio-preview.pages.dev> |
+| WebUI（安定URL） | <https://spatial-agent-studio-preview.pages.dev> |
+| マージ後デプロイ | <https://45b9e8ff.spatial-agent-studio-preview.pages.dev> |
+| 初回デプロイ（pre-merge） | <https://046f4340.spatial-agent-studio-preview.pages.dev> |
 | Pagesプロジェクト | `spatial-agent-studio-preview`（branch: `preview`） |
-| 直近デプロイ | <https://046f4340.spatial-agent-studio-preview.pages.dev> |
-| デプロイ時刻 | 2026-11-20 10:59 JST 頃 |
-| アップロード | 5 files + `_headers` |
+| 対象コミット | `0134a1c`（PR #1 squash merge） |
 | API | <https://sas-api.mirai-dx-platform.com> |
 | APIプロセス | ローカルFastify `127.0.0.1:7450`（`nohup`） |
 | Tunnel | `spatial-agent-studio` / `5290da16-d855-4b5b-9eac-0d2d566bfc39` |
 | DB | ローカルPostgreSQL `spatial_agent_studio_preview` |
-| 対象コミット | 初回MVPコミット（GitHub反映前のローカル状態） |
 
-## 2. APIヘルスチェック
+## 2. APIヘルスチェック（マージ後）
 
 ```bash
 curl -s https://sas-api.mirai-dx-platform.com/api/health
 ```
 
 ```json
-{"ok":true,"db":"up","version":"0.1.0","time":"2026-11-20T02:00:18.139Z","aiMode":"demo-deterministic"}
+{"ok":true,"db":"up","version":"0.1.0","time":"2026-11-20T02:10:03.363Z","aiMode":"demo-deterministic"}
 ```
 
 **結果：PASS**
 
-## 3. CORSプリフライト
+## 3. CORSプリフライト（マージ後）
 
 ```bash
 curl -i -X OPTIONS https://sas-api.mirai-dx-platform.com/api/bootstrap \
@@ -66,19 +66,25 @@ Playwright（Chromium headless）で以下を実行。
 
 再実行可能なスモーク：`node scripts/preview-smoke.mjs`（`PREVIEW SMOKE: PASS`）。
 
-## 5. DB状態（Preview）
+### 初回（pre-merge）とマージ後の確認
+
+- 初回：`046f4340` デプロイ、API health 02:00:18Z、CORS 204、UIフロー成功、監査 rows=8。
+- マージ後：`0134a1c` から再ビルドして `45b9e8ff` に再配備。安定URLで再スモークし、監査 rows=9 を確認。
+- **対象コミット `0134a1c` とデプロイの対応を確認済み。**
+
+## 5. DB状態（Preview、マージ後スモーク時点）
 
 ```text
-users=2  sites=3  runs=1  approvals=1  reports=1  audit_events=8
+users=2  sites=3  runs=1  approvals=1  reports=1  audit_events=9
 approval: status=approved, verdict=是正要（不足部の手直し後に再計測）, decided_atあり
 site-a latest version: 2026-11-18 progress=1.000
 ```
 
-監査ログHEAD（seq 8）：
+監査ログHEAD（seq 9）：
 
 ```text
-seq=8  actor=HUMAN:現場代理人・所長（デモ）  type=LOGIN
-hash=992263faa144e79d8121cd10d1782cfa638c2969f3f2e6f28b5826888d58d75a
+seq=9  actor=HUMAN:現場代理人・所長（デモ）  type=LOGIN
+hash=c5c7c7c3428d1004b2682f1b57940d8fc62cf5fc70ccb11436927be83ed769cf
 ```
 
 ## 6. 監査・権限の確認
@@ -89,9 +95,11 @@ hash=992263faa144e79d8121cd10d1782cfa638c2969f3f2e6f28b5826888d58d75a
 | staff の承認API | `HTTP 403` + 監査 `DENY` |
 | 二重承認 | `HTTP 409 ALREADY_DECIDED` |
 | 未認証 bootstrap | `HTTP 401 UNAUTHENTICATED` |
-| 監査チェーン検証 | `ok=true`, checked=8（Preview時点） |
+| 監査チェーン検証 | `ok=true`（PreviewスモークでVERIFIED） |
 
 ## 7. バックアップ・リストア訓練
+
+初回検証時点（監査8件）で実施。
 
 ```bash
 pg_dump -Fc -d spatial_agent_studio_preview -f /tmp/sas-preview.dump
@@ -104,7 +112,7 @@ dropdb spatial_agent_studio_restore_test
 結果：
 
 - ダンプ取得成功（31KB）。
-- リストア後：`audit=8`, `reports=1`, `approvals=1`。
+- リストア後：`audit=8`, `reports=1`, `approvals=1`（訓練時点）。
 - 警告：`transaction_timeout` はリストア先のバージョン差で無視（データ整合性に影響なし）。
 - 訓練用DBは削除済み。
 
@@ -123,5 +131,5 @@ dropdb spatial_agent_studio_restore_test
 - Cloudflare Access等のエッジ認証は未設定。Pages URLは公開（デモデータのみ）。
 - 実LLM/実3DGSは未接続（デモ）。
 - GitHub Actions CIは未適用（ハーネスポリシー）。ローカルで同一検証を実行済み。
-- Previewの対象コミットはGitHub反映前のローカル状態。GitHub反映後に同一ビルドを再配備し、
-  対象コミットとの対応を再確認する必要がある（未実施）。
+  `templates/ci/ci.yml` を人間が `.github/workflows/ci.yml` に適用する必要がある。
+- WebUI設計仕様 v1.0 は承認待ち。
