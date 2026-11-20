@@ -136,3 +136,7 @@
 | 2026-11-20 16:35 | **UI** システム設定にAIプロバイダ・本日利用量を表示 | 設定画面 |
 | 2026-11-20 16:41 | **D2** バックアップスクリプト＋日次タイマー | `scripts/backup-db.sh`・**復元訓練 PASS**（sites=5/users=2/audit=83） |
 | 2026-11-20 16:41 | **D3** 外形監視スクリプト＋5分タイマー | `scripts/healthcheck.sh`（実測OK）・タイマーunit追加 |
+| 2026-11-20 16:47 | **A9** 本番DB作成 | `spatial_agent_studio_prod`（migrate/seed/verify 済み） |
+| 2026-11-20 16:47 | **A8（準備）** 本番API unit | `spatial-agent-studio-prod.service`（port 7460・未起動） |
+| 2026-11-20 16:47 | **A4（追加）** 本番APIホスト | `sas-api-prod` のトンネルingress＋DNS（再起動で反映） |
+| 2026-11-20 16:48 | **E（草案）** 非機能目標 | [nonfunctional-targets.md](nonfunctional-targets.md)（承認待ち） |

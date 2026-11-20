@@ -1,0 +1,25 @@
+[Unit]
+Description=Spatial Agent Studio Production API (port 7460)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/kensan/Projects/Business-Project/Spatial-Agent-Studio
+
+# 0600 の env ファイル（Accessロール割当など）。PORT/DB/CORS は下の明示値で上書きする。
+EnvironmentFile=-%h/.config/spatial-agent-studio/preview-api.env
+
+Environment=NODE_ENV=production
+Environment=PORT=7460
+Environment=HOST=127.0.0.1
+Environment=COOKIE_SECURE=true
+Environment=APP_ORIGIN=https://spatial-agent-studio.mirai-dx-platform.com
+Environment=CORS_ORIGINS=https://spatial-agent-studio.mirai-dx-platform.com
+Environment=DATABASE_URL=postgresql:///spatial_agent_studio_prod?host=/var/run/postgresql
+
+ExecStart=/home/kensan/Projects/Business-Project/Spatial-Agent-Studio/node_modules/.bin/tsx src/api/server.ts
+Restart=on-failure
+RestartSec=3
+
+[Install]
+WantedBy=default.target

@@ -2,6 +2,10 @@ tunnel: 5290da16-d855-4b5b-9eac-0d2d566bfc39
 credentials-file: /home/kensan/.cloudflared/5290da16-d855-4b5b-9eac-0d2d566bfc39.json
 
 ingress:
+  # プレビュー用（既存）
   - hostname: sas-api.mirai-dx-platform.com
     service: http://127.0.0.1:7450
+  # 本番用（spatial-agent-studio-prod.service / port 7460）
+  - hostname: sas-api-prod.mirai-dx-platform.com
+    service: http://127.0.0.1:7460
   - service: http_status:404
