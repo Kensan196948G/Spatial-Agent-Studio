@@ -1,14 +1,14 @@
 {
   "base": "https://spatial-agent-studio-preview.pages.dev",
   "api": "https://sas-api.mirai-dx-platform.com",
-  "startedAt": "2026-11-20T02:21:30.268Z",
+  "startedAt": "2026-11-20T02:24:22.652Z",
   "health": {
     "status": 200,
     "body": {
       "ok": true,
       "db": "up",
       "version": "0.1.0",
-      "time": "2026-11-20T02:21:30.462Z",
+      "time": "2026-11-20T02:24:22.890Z",
       "aiMode": "demo-deterministic"
     }
   },
@@ -21,7 +21,7 @@
     {
       "name": "api health",
       "ok": true,
-      "detail": "{\"ok\":true,\"db\":\"up\",\"version\":\"0.1.0\",\"time\":\"2026-11-20T02:21:30.462Z\",\"aiMode\":\"demo-deterministic\"}"
+      "detail": "{\"ok\":true,\"db\":\"up\",\"version\":\"0.1.0\",\"time\":\"2026-11-20T02:24:22.890Z\",\"aiMode\":\"demo-deterministic\"}"
     },
     {
       "name": "cors preflight",
@@ -41,7 +41,7 @@
     {
       "name": "audit hash chain",
       "ok": true,
-      "detail": "rows=10"
+      "detail": "rows=11"
     }
   ],
   "screenshots": [
@@ -49,6 +49,6 @@
     "preview-site.png",
     "preview-audit.png"
   ],
-  "finishedAt": "2026-11-20T02:21:36.838Z",
+  "finishedAt": "2026-11-20T02:24:28.322Z",
   "ok": true
 }

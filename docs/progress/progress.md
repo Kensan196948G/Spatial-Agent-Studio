@@ -1,6 +1,6 @@
 # 進捗・判断・証跡 — Spatial Agent Studio MVP
 
-最終更新：2026-11-20 11:22 JST
+最終更新：2026-11-20 11:24 JST
 
 ## 1. 現在の状態
 
@@ -10,14 +10,15 @@
 | 主要フロー（出来形管理） | **E2E成功**（ローカル / Cloudflare Preview） |
 | 安全離隔フロー | **API/UI成功**（侵入判定・承認権限） |
 | 承認・監査 | **成功**（ハッシュ連鎖VERIFIED、改ざん拒否） |
-| Cloudflare Pages Preview | **配備済み・実操作確認済み（対象コミット `0134a1c`）** |
+| Cloudflare Pages Preview | **配備済み・実操作確認済み（対象コミット `930415d`）** |
 | Cloudflare Tunnel API | **稼働・疎通確認済み** |
 | GitHubリポジトリ | **PUBLIC** https://github.com/Kensan196948G/Spatial-Agent-Studio |
 | GitHub PR | **#1〜#4 MERGED** https://github.com/Kensan196948G/Spatial-Agent-Studio/pulls?q=is%3Apr |
 | マージコミット（PR #1） | `0134a1c63276cbd0f511377b87f874bbc4e76977`（2026-11-20 11:09 JST） |
-| ドキュメントPR | **#2 MERGED** https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/2 |
-| main HEAD（PR #4時点） | `ae2dfb50f02aeb676d5739a011e8528eae4a306c` |
-| WebUI配備対象 | `0134a1c`（Pages `45b9e8ff` で検証） |
+| ドキュメントPR | **#2〜#5 MERGED** https://github.com/Kensan196948G/Spatial-Agent-Studio/pulls?q=is%3Apr |
+| テスト/証跡PR | **#6 MERGED** https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/6 |
+| main HEAD（PR #6時点） | `930415d46e67a9c663c188e490d202bb5fa352ba` |
+| WebUI配備対象 | `930415d`（Pages `8b5bf4d3` で検証） |
 | APIコード | `ae2dfb5`（CORSのPagesサブドメイン対応を含む） |
 | main保護 | PR必須 / 削除禁止 / 強制Push禁止（ruleset `main-protection`） |
 | GitHub Actions CI | **未適用（ハーネスポリシーでブロック）**。テンプレートを用意 |
@@ -82,7 +83,7 @@
 
 ### Preview実操作の記録
 
-- URL：<https://spatial-agent-studio-preview.pages.dev>（マージ後デプロイ：<https://45b9e8ff.spatial-agent-studio-preview.pages.dev>）
+- URL：<https://spatial-agent-studio-preview.pages.dev>（最新デプロイ：<https://8b5bf4d3.spatial-agent-studio-preview.pages.dev>）
 - ログイン：`manager@example.com`
 - 3D現場：`site-a`（○○川 築堤・護岸工事）
 - AI実行：盛土 出来形管理 → 6ステップ表示
@@ -101,13 +102,14 @@
 - PR #3：[docs: PR #2 と main 保護ルールを進捗記録へ反映](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/3)（MERGED / 11:13 JST）
 - PR #4：[fix: Cloudflare Pages のデプロイ別サブドメインをCORS許可](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/4)（MERGED / 11:16 JST）
 - auto-merge：有効化して予約。必須チェック未設定のため即時マージ
-- マージコミット：PR #1=`0134a1c` / PR #2=`87aa915` / PR #3=`a44ad44` / PR #4=`ae2dfb5`
-- main HEAD（PR #4時点）：`ae2dfb5`（APIのCORS修正を含む。WebUI配備は`0134a1c`）
+- マージコミット：PR #1=`0134a1c` / PR #2=`87aa915` / PR #3=`a44ad44` / PR #4=`ae2dfb5` / PR #5=`be60590` / PR #6=`930415d`
+- main HEAD（PR #6時点）：`930415d`（E2E 4/4・CORS修正・証跡更新を含む。WebUI配備は`930415d`/`8b5bf4d3`）
 - main保護：ruleset `main-protection`（PR必須 / deletion / non_fast_forward）
 - CI：`.github/workflows/**` はハーネスポリシーで追加不可。`templates/ci/ci.yml` を人間が適用する。
 - ローカル検証：typecheck / lint / unit 7 / API 8 / E2E 4 / build / secret-scan すべてPASS。
-- Preview再配備：`0134a1c` から再ビルドし `45b9e8ff` に配備、安定URLで再スモークPASS。
+- Preview再配備：`930415d` から再ビルドし `8b5bf4d3` に配備、安定URLで再スモークPASS（監査11件）。
 - CORS修正後：API再起動＋`45b9e8ff` Originのプリフライト確認、再スモークPASS（監査10件）。
+- 最新main再配備：`930415d` → `8b5bf4d3`、再スモークPASS（監査11件）。
 - CORS追補：PR #4で `<hash>.spatial-agent-studio-preview.pages.dev` を許可。API再起動後に
   `45b9e8ff` Originのプリフライトが204 + allow-originになることを確認。
 
