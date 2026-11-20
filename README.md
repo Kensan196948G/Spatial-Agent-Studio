@@ -32,6 +32,9 @@
 | ローカルWeb（Vite） | <http://127.0.0.1:5174> |
 
 PreviewのAPIは、このホストのローカルPostgreSQL（`spatial_agent_studio_preview`）に接続しています。
+対象コミット：`0134a1c`（PR #1 merge）／GitHub：<https://github.com/Kensan196948G/Spatial-Agent-Studio>
+
+![Cloudflare Preview dashboard](docs/progress/evidence/preview-dashboard.png)
 
 ### デモアカウント
 
@@ -209,6 +212,7 @@ Previewは次の2部品で構成しています。
 - スマートフォン詳細最適化は未実施（PCブラウザ中心）。
 - Cloudflare PreviewのAPIはこのホストが起動している間のみ利用可能。
 - **GitHub ActionsのCIワークフローは未適用**：ハーネスの `DEPLOY=critical` ポリシーが `.github/workflows/**` へのAI書き込みを拒否するため、[templates/ci/ci.yml](templates/ci/ci.yml) を人間がコピーして適用する必要があります。ローカルでは同一内容の検証を実行済みです。
+- **WebUI設計仕様 v1.0 は承認待ち**：既存V2.1デザインのMVP適用として実装済み。
 
 ---
 
