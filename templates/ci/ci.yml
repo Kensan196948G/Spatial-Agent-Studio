@@ -1,0 +1,117 @@
+# Human-applied GitHub Actions workflow.
+#
+# The DeepSeek Harness self-evolution policy gate classifies
+# `.github/workflows/**` as DEPLOY=critical and denies AI writes there.
+# A human operator can copy this file to `.github/workflows/ci.yml`.
+#
+# This template is CI-only (no deployment). It runs the same checks that were
+# executed locally for the MVP:
+#   1. typecheck   2. lint   3. unit   4. API integration (Postgres service)
+#   5. build       6. secret scan   7. Playwright E2E
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    name: typecheck / lint / unit / api / build / secret-scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: sas_app
+          POSTGRES_PASSWORD: sas_ci_only
+          POSTGRES_DB: spatial_agent_studio_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sas_app -d spatial_agent_studio_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://sas_app:sas_ci_only@127.0.0.1:5432/spatial_agent_studio_test
+      TEST_DATABASE_URL: postgresql://sas_app:sas_ci_only@127.0.0.1:5432/spatial_agent_studio_test
+      APP_ORIGIN: http://127.0.0.1:7440
+      COOKIE_SECURE: 'false'
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm run typecheck
+      - name: Lint
+        run: pnpm run lint
+      - name: Unit tests
+        run: pnpm run test:unit
+      - name: API integration tests (migrate + seed test DB)
+        run: pnpm run test:api
+      - name: Build WebUI
+        run: pnpm run build
+      - name: Secret scan
+        run: pnpm run secret-scan
+
+  e2e:
+    name: Playwright E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    needs: verify
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: sas_app
+          POSTGRES_PASSWORD: sas_ci_only
+          POSTGRES_DB: spatial_agent_studio_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sas_app -d spatial_agent_studio_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://sas_app:sas_ci_only@127.0.0.1:5432/spatial_agent_studio_test
+      TEST_DATABASE_URL: postgresql://sas_app:sas_ci_only@127.0.0.1:5432/spatial_agent_studio_test
+      APP_ORIGIN: http://127.0.0.1:7440
+      COOKIE_SECURE: 'false'
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.21.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+      - name: E2E (reset DB + build + run)
+        run: pnpm run test:e2e
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7

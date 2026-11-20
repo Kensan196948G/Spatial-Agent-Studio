@@ -1,0 +1,121 @@
+# 進捗・判断・証跡 — Spatial Agent Studio MVP
+
+最終更新：2026-11-20 11:05 JST
+
+## 1. 現在の状態
+
+| 項目 | 状態 |
+| :-- | :-- |
+| ローカルMVP（WebUI + API + PostgreSQL） | **完成・検証済み** |
+| 主要フロー（出来形管理） | **E2E成功**（ローカル / Cloudflare Preview） |
+| 安全離隔フロー | **API/UI成功**（侵入判定・承認権限） |
+| 承認・監査 | **成功**（ハッシュ連鎖VERIFIED、改ざん拒否） |
+| Cloudflare Pages Preview | **配備済み・実操作確認済み** |
+| Cloudflare Tunnel API | **稼働・疎通確認済み** |
+| GitHubリポジトリ / PR | 未実施（この直後に実施） |
+| GitHub Actions CI | **未適用（ハーネスポリシーでブロック）**。テンプレートを用意 |
+| 設計仕様の承認 | 承認待ち（v1.0） |
+
+## 2. 初動Assessment（事実）
+
+- 作業ディレクトリ：`/home/kensan/Projects/Business-Project/Spatial-Agent-Studio`
+- 初期状態：Gitリポジトリなし。HTML 3ファイルのみ。
+  - 企画・構想案 V1.0（135KB）
+  - Standalone V1.1（172KB）
+  - システム版 Standalone V2.1（292KB）
+- 実行環境：Ubuntu 24.04 / Node 22.22 / pnpm 12.21 / PostgreSQL 18.6 / DSH 0.2.1-rc.4
+- 利用可能：GitHub CLI（Kensan196948G）、Cloudflare（wrangler OAuth）、OpenDesign（local daemon / project artifact）、Playwright
+- OpenDesign：`~/.dsh/profiles/open-design` と `~/Projects/open-design` のローカルアプリが稼働。`od artifacts create` で成果物登録可能。
+- 既存の同種プロジェクト：`Drawing-to-4D Studio`（Vite + TS + PostgreSQL + cloudflared tunnel）を参考。
+
+## 3. MVP範囲（確定）
+
+- 目的：現場の3D確認とAI下書きを、人が承認して確定できる個人利用MVP。
+- 利用者：現場代理人（manager、承認可）／現場担当者（staff、承認不可）。
+- 主要フロー：
+  1. 出来形管理：AI計測 → 帳票ドラフト → 承認 → レポート → 再読込
+  2. 重機 安全離隔：60秒走査 → 侵入判定 → 承認/却下
+  3. 承認・監査：一覧、承認/却下、ハッシュ連鎖検証
+- 対象外：実3DGS、実LLM、SSO、外部連携、本番配備、モバイル詳細最適化。
+
+## 4. 実装したもの
+
+- `src/shared/terrain.ts`：解析的現場モデル（盛土・地山・重機・作業員）
+- `src/shared/measurements.ts`：出来形偏差、土量、断面、安全離隔、多角形体積
+- `src/api/agent.ts`：6ステップのデモ・オーケストレーター
+- `src/api/routes.ts`：認証、現場、AI実行、承認、レポート、監査
+- `src/api/audit.ts`：SHA-256ハッシュ連鎖、検証
+- `db/migrations/001_init.sql`：8テーブル + 追記専用トリガ
+- `scripts/db.ts`：migrate / seed / verify / reset（ガード付き）
+- `src/web/`：ログイン、ホーム、3D現場、承認、監査の5画面
+- `src/web/viewer/scene.ts`：Canvas2D 3DGS風ビュー（V2.1から移植）
+- `tests/unit` / `tests/api` / `e2e`：7 + 8 + 3 テスト
+- `docs/design/webui-design-v1.html`：OpenDesign設計仕様 v1.0
+
+## 5. 検証証跡
+
+すべて 2026-11-20 に実行。
+
+| 検証 | コマンド / 対象 | 結果 |
+| :-- | :-- | :-- |
+| 型検査 | `pnpm run typecheck` | **PASS**（exit 0） |
+| Lint | `pnpm run lint` | **PASS**（exit 0） |
+| Unit | `pnpm run test:unit` | **PASS 7/7** |
+| API Integration | `pnpm run test:api` | **PASS 8/8** |
+| E2E | `pnpm run test:e2e` | **PASS 3/3**（manager / staff / error） |
+| Build | `pnpm run build` | **PASS**（Vite 60 modules） |
+| Secret scan | `pnpm run secret-scan` | **PASS**（44 files） |
+| DB migrate/seed/verify | `db:migrate` / `db:seed` / `db:verify` | **PASS**（dev/test/preview） |
+| 監査改ざん拒否 | `UPDATE audit_events` | **ERROR: append-only**（期待どおり） |
+| staff承認拒否 | `POST /approvals/:id/decision` | **HTTP 403 + DENY** |
+| Preview health | `GET https://sas-api.../api/health` | **200 / db up** |
+| Preview CORS | `OPTIONS /api/bootstrap`（Pages Origin） | **204 + allow-origin** |
+| Pages配備 | `wrangler pages deploy` | **200 / deployment complete** |
+| **Preview実操作** | ログイン→出来形→承認→再読込→監査 | **成功**（下記） |
+
+### Preview実操作の記録
+
+- URL：<https://spatial-agent-studio-preview.pages.dev>
+- ログイン：`manager@example.com`
+- 3D現場：`site-a`（○○川 築堤・護岸工事）
+- AI実行：盛土 出来形管理 → 6ステップ表示
+- 承認：`承認して確定` → レポート「出来形管理帳票」表示
+- 再読込：レポートがDBから復元
+- 監査：`ハッシュ連鎖は整合しています` / `VERIFIED`
+- API：`https://sas-api.mirai-dx-platform.com/api/health` → `{"ok":true,"db":"up"}`
+
+詳細：[evidence/preview-verification.md](evidence/preview-verification.md)
+
+## 6. デバッグ・修正履歴
+
+| # | 課題 | 原因 | 対応 |
+| :-- | :-- | :-- | :-- |
+| 1 | pnpm add が ERR_PNPM_IGNORED_BUILDS | pnpm 12のビルド承認 | `pnpm-workspace.yaml` に `onlyBuiltDependencies: [esbuild]` + `pnpm approve-builds --all` |
+| 2 | E2E staffテストが失敗 | 画面文言「現在のユーザーには権限がありません」に対しテストが「承認権限がありません」 | テストの正規表現を修正 |
+| 3 | 承認モーダルの閉じるボタンがバッジと重なる | 右上の配置競合 | `.modal .approval-head { padding-right: 40px }` + sticky action bar |
+| 4 | ログイン見出しが不自然に折返し | フォントサイズ大 | `clamp(21px, 2.3vw, 30px)` + nowrap（モバイルは折返し） |
+| 5 | Cloudflare TunnelのDNSが別tunnelを指した | `cloudflared tunnel route dns` が既存tunnelを選択 | Cloudflare APIでCNAMEを新tunnel IDへ修正 |
+| 6 | `.github/workflows/ci.yml` が書けない | ハーネス `DEPLOY=critical` ポリシー | テンプレート `templates/ci/ci.yml` を用意し、人間適用待ち |
+
+同じ原因で3ラウンド以上停滞した課題はありません。
+
+## 7. 未完了・ブロッカー
+
+1. **GitHub Actions CI**：`.github/workflows/**` はハーネスのself-evolution policy gateで
+   `DEPLOY=critical`（拒否）のため、AIから追加できません。`templates/ci/ci.yml` を用意済み。
+   人間が `cp templates/ci/ci.yml .github/workflows/ci.yml` で適用してください。
+2. **設計仕様の承認**：v1.0は承認待ち。実装は既存V2.1デザインのMVP適用として進行。
+3. **Previewの常設化**：現在は `nohup` でAPI/Tunnelを起動。systemd unitは
+   `deploy/systemd/` に用意済みだが、ハーネスポリシーによりAIからのサービス操作は制限。
+   人間が `~/.config/systemd/user/` へコピーして有効化可能。
+4. **Previewの公開範囲**：Pages URLはインターネット公開。デモアカウントで誰でもログイン可能。
+   実データを入れない。必要ならCloudflare Access等を人間が追加。
+5. **本番向け**：実3DGS/LLM/SSO/外部連携はBacklog。本番配備は未実施。
+
+## 8. 次の一手
+
+1. GitHubリポジトリ作成 → `feat/mvp` ブランチ → PR → ローカル検証証跡を本文に記載。
+2. CIテンプレートの人間適用（またはPR上でCI未実行を明示してマージ判断）。
+3. 設計仕様v1.0の承認判断（1/2/3）。
+4. Previewを常設化する場合、systemd unitを人間が有効化。
+5. 本番化する場合、実データ・認証・外部連携のBacklogを起票。

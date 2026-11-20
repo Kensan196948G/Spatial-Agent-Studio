@@ -1,0 +1,12 @@
+[Unit]
+Description=Spatial Agent Studio Cloudflare Tunnel (sas-api.mirai-dx-platform.com)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/cloudflared --no-autoupdate --config /home/kensan/Projects/Business-Project/Spatial-Agent-Studio/deploy/cloudflared/config.yml tunnel run
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

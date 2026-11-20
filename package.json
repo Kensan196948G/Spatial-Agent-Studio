@@ -1,0 +1,62 @@
+{
+  "name": "spatial-agent-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Spatial Agent Studio — 土木業務オートパイロット MVP（3D現場ビュー＋AI下書き＋人の承認＋監査）",
+  "license": "UNLICENSED",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web -c blue,magenta \"pnpm run dev:api\" \"pnpm run dev:web\"",
+    "dev:api": "tsx watch src/api/server.ts",
+    "dev:web": "vite",
+    "build": "vite build",
+    "start": "tsx src/api/server.ts",
+    "start:e2e": "APP_ORIGIN=http://127.0.0.1:7440 COOKIE_SECURE=false NODE_ENV=test tsx src/api/server.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css}\" \"db/**/*.sql\" \"scripts/**/*.ts\" \"tests/**/*.ts\" \"e2e/**/*.ts\"",
+    "test": "pnpm run db:test:reset && vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:api": "pnpm run db:test:reset && vitest run tests/api",
+    "test:e2e": "pnpm run db:test:reset && pnpm run build && playwright test",
+    "db:migrate": "tsx scripts/db.ts migrate",
+    "db:seed": "tsx scripts/db.ts seed",
+    "db:verify": "tsx scripts/db.ts verify",
+    "db:reset": "tsx scripts/db.ts reset",
+    "db:test:reset": "ALLOW_DB_RESET=1 DATABASE_URL=${TEST_DATABASE_URL:-postgresql:///spatial_agent_studio_test?host=/var/run/postgresql} tsx scripts/db.ts reset && DATABASE_URL=${TEST_DATABASE_URL:-postgresql:///spatial_agent_studio_test?host=/var/run/postgresql} tsx scripts/db.ts migrate && DATABASE_URL=${TEST_DATABASE_URL:-postgresql:///spatial_agent_studio_test?host=/var/run/postgresql} tsx scripts/db.ts seed",
+    "secret-scan": "node scripts/secret-scan.mjs"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.2",
+    "@fastify/cors": "^11.4.3",
+    "@fastify/static": "^8.2.0",
+    "fastify": "^5.4.0",
+    "pg": "^8.16.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@playwright/test": "^1.52.0",
+    "@types/node": "^22.15.0",
+    "@types/pg": "^8.15.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.4.0",
+    "concurrently": "^9.1.0",
+    "eslint": "^9.27.0",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^16.1.0",
+    "prettier": "^3.5.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.8.0",
+    "typescript-eslint": "^8.32.0",
+    "vite": "^6.3.0",
+    "vitest": "^3.1.0"
+  }
+}

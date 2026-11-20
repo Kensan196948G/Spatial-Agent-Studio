@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spatial Agent Studio — MVP WebUI 設計仕様 v1.0（承認待ち）</title>
+<style>
+  :root{
+    --bg:#eef3f8; --paper:#ffffff; --paper2:#f7fafc; --ink:#0f2030; --sub:#415a70; --mute:#72879a;
+    --line:#d8e2ec; --line2:#c0cfdd;
+    --navy:#0b2a44; --cyan:#0e7490; --cyan-bg:#e0f2f7; --vio:#6d28d9; --vio-bg:#efe9fd;
+    --am:#b45309; --am-bg:#fdf0dc; --gr:#15803d; --gr-bg:#e4f5ea; --rd:#b91c1c; --rd-bg:#fbe7e7;
+    --dark:#0a1226; --dark2:#101a37; --dark-line:rgba(120,160,255,.24); --dark-tx:#dfe8ff;
+    --sans:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI","Yu Gothic",Meiryo,system-ui,sans-serif;
+    --mono:ui-monospace,"SFMono-Regular",Consolas,Menlo,monospace;
+    --r:12px; --shadow:0 1px 2px rgba(15,32,48,.05),0 10px 28px rgba(15,32,48,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.8;font-variant-numeric:tabular-nums}
+  body::before{content:"";position:fixed;inset:0;z-index:-1;background-image:
+    linear-gradient(rgba(14,116,144,.035) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(14,116,144,.035) 1px,transparent 1px);
+    background-size:44px 44px;pointer-events:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:40px 28px 90px}
+  a{color:var(--cyan)}
+  .hero{background:linear-gradient(140deg,#0b2a44 0%,#0a1a30 55%,#08121f 100%);color:#eaf4ff;border-radius:18px;padding:38px 40px;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+  .hero::after{content:"";position:absolute;right:-120px;top:-120px;width:420px;height:420px;border-radius:50%;
+    background:radial-gradient(circle,rgba(56,225,255,.22),transparent 62%);pointer-events:none}
+  .kicker{font-family:var(--mono);font-size:11px;letter-spacing:.18em;color:#7fdcf1;text-transform:uppercase;margin:0 0 8px}
+  .hero h1{font-size:32px;line-height:1.3;margin:0 0 6px;letter-spacing:.01em}
+  .hero h1 span{font-size:17px;font-weight:500;color:#a9c4dd;letter-spacing:.08em}
+  .lede{max-width:78ch;color:#b9cee2;font-size:13.5px;line-height:1.95;margin:12px 0 0}
+  .meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-top:22px}
+  .meta div{background:rgba(255,255,255,.05);border:1px solid rgba(120,200,230,.18);border-radius:10px;padding:9px 12px}
+  .meta dt{font-size:10px;letter-spacing:.08em;color:#86a6c2;margin:0}
+  .meta dd{margin:1px 0 0;font-size:12.5px;font-weight:600;color:#eaf4ff}
+  .status-line{display:flex;align-items:center;gap:8px;margin-top:18px;font-size:11.5px;color:#ffd79a}
+  .status-line i{width:7px;height:7px;border-radius:50%;background:#f2b72a;box-shadow:0 0 10px #f2b72a}
+  .toc{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:18px 22px;margin:20px 0 24px;box-shadow:var(--shadow)}
+  .toc ol{margin:0;padding-left:1.4em;columns:2;column-gap:32px}
+  .toc li{break-inside:avoid;font-size:12.5px;margin:2px 0}
+  section{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:26px 28px;margin-bottom:18px;box-shadow:var(--shadow)}
+  h2{font-size:20px;margin:0 0 4px;line-height:1.4}
+  .sec-sub{color:var(--mute);font-size:11.5px;margin:0 0 16px}
+  h3{font-size:15px;margin:22px 0 8px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+  h4{font-size:12.5px;margin:16px 0 5px;color:var(--sub)}
+  p{margin:8px 0}
+  .muted{color:var(--mute)}
+  .small{font-size:12px}
+  table{width:100%;border-collapse:collapse;font-size:12.5px;margin:10px 0}
+  th,td{border-bottom:1px solid var(--line);padding:8px 9px;text-align:left;vertical-align:top}
+  th{color:var(--sub);font-weight:600;font-size:11.5px;background:var(--paper2)}
+  td code,code{font-family:var(--mono);font-size:11.5px;background:#eef4f9;border:1px solid #dce8f2;border-radius:5px;padding:0 4px}
+  .pill{display:inline-flex;align-items:center;gap:5px;padding:2px 8px;border-radius:999px;font-size:10.5px;font-weight:700;border:1px solid transparent;white-space:nowrap}
+  .pill.ok{color:var(--gr);background:var(--gr-bg);border-color:#bfe6cd}
+  .pill.warn{color:var(--am);background:var(--am-bg);border-color:#f3d6a4}
+  .pill.ng{color:var(--rd);background:var(--rd-bg);border-color:#f2c0c0}
+  .pill.info{color:var(--cyan);background:var(--cyan-bg);border-color:#b9e0ea}
+  .pill.vio{color:var(--vio);background:var(--vio-bg);border-color:#d8cdf7}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+  .card{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--paper2)}
+  .card h4{margin-top:0}
+  .note{border-left:3px solid var(--cyan);background:#eff8fb;padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;color:var(--sub)}
+  .warnbox{border-left:3px solid var(--am);background:#fdf6ea;padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;color:var(--sub)}
+  .redbox{border-left:3px solid var(--rd);background:#fdf0f0;padding:10px 14px;border-radius:0 8px 8px 0;font-size:12.5px;color:var(--sub)}
+  ul,ol{margin:8px 0;padding-left:1.5em}
+  li{margin:3px 0}
+  .flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .flow .step{background:var(--paper2);border:1px solid var(--line2);border-radius:9px;padding:8px 11px;font-size:12px;font-weight:600}
+  .flow .arrow{color:var(--cyan);font-weight:700}
+  /* wireframes */
+  .wf{background:var(--dark);border:1px solid #1d2a4d;border-radius:12px;padding:10px;margin:12px 0;color:var(--dark-tx);font-size:10.5px;overflow:hidden}
+  .wf-top{display:flex;align-items:center;gap:8px;height:34px;border-bottom:1px solid var(--dark-line);padding:0 8px;color:#a9bce0}
+  .wf-logo{width:18px;height:18px;border-radius:5px;background:linear-gradient(135deg,#38e1ff,#8b7bff)}
+  .wf-badge{margin-left:auto;border:1px solid var(--dark-line);border-radius:999px;padding:1px 7px;font-size:8.5px;color:#ffcf8b}
+  .wf-body{display:grid;grid-template-columns:150px 1fr;min-height:190px}
+  .wf-nav{border-right:1px solid var(--dark-line);padding:8px 6px;display:flex;flex-direction:column;gap:4px}
+  .wf-nav span{display:block;padding:4px 7px;border-radius:5px;color:#8fa4c9}
+  .wf-nav span.on{background:rgba(56,225,255,.14);color:#7fe7ff;border:1px solid rgba(56,225,255,.25)}
+  .wf-main{padding:10px}
+  .wf-h{font-size:12px;font-weight:700;color:#e8eeff;margin-bottom:2px}
+  .wf-sub{font-size:9px;color:#7f92b8;margin-bottom:8px}
+  .wf-kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin:8px 0}
+  .wf-kpi{border:1px solid var(--dark-line);border-radius:6px;padding:5px;background:rgba(255,255,255,.03)}
+  .wf-kpi b{display:block;font-size:12px;color:#7fe7ff}
+  .wf-kpi small{font-size:8px;color:#8fa4c9}
+  .wf-cols{display:grid;grid-template-columns:1.7fr 1fr;gap:6px}
+  .wf-card{border:1px solid var(--dark-line);border-radius:6px;padding:6px;background:rgba(255,255,255,.025)}
+  .wf-card b{font-size:9.5px;color:#dfe8ff}
+  .wf-line{height:4px;border-radius:3px;background:rgba(120,160,255,.18);margin:4px 0}
+  .wf-line.short{width:60%}
+  .wf-scene{height:96px;border-radius:6px;border:1px solid var(--dark-line);background:
+    radial-gradient(ellipse at 40% 50%,rgba(255,181,71,.35),transparent 35%),
+    radial-gradient(ellipse at 60% 60%,rgba(62,224,127,.28),transparent 40%),
+    linear-gradient(160deg,#0d1a38,#081024);position:relative;overflow:hidden}
+  .wf-scene::after{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(120,160,255,.08) 1px,transparent 1px),linear-gradient(90deg,rgba(120,160,255,.08) 1px,transparent 1px);background-size:18px 18px}
+  .wf-side{border-left:1px solid var(--dark-line);padding-left:7px;display:flex;flex-direction:column;gap:5px}
+  .wf-task{border:1px solid var(--dark-line);border-radius:6px;padding:5px;display:flex;gap:5px;align-items:center}
+  .wf-dot{width:16px;height:16px;border-radius:5px;background:rgba(56,225,255,.16);border:1px solid rgba(56,225,255,.3)}
+  .wf-dot.red{background:rgba(255,93,108,.16);border-color:rgba(255,93,108,.3)}
+  .wf-table{width:100%;border-collapse:collapse}
+  .wf-table td{border-bottom:1px solid var(--dark-line);padding:4px 3px;font-size:8.5px;color:#a9bce0}
+  .wf-tag{display:inline-block;border:1px solid var(--dark-line);border-radius:999px;padding:0 5px;font-size:7.5px;color:#9fb0d8}
+  .wf-tag.ok{color:#6ee7a8;border-color:rgba(62,224,127,.35)}
+  .wf-tag.warn{color:#ffcf8b;border-color:rgba(255,181,71,.35)}
+  .wf-tag.ng{color:#ff9aa5;border-color:rgba(255,93,108,.35)}
+  .ann{display:flex;gap:8px;margin:6px 0;font-size:11.5px;color:var(--sub)}
+  .ann b{flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:var(--cyan-bg);color:var(--cyan);font-size:9.5px;margin-top:2px}
+  .swatches{display:flex;flex-wrap:wrap;gap:8px}
+  .sw{border:1px solid var(--line);border-radius:8px;overflow:hidden;width:108px}
+  .sw i{display:block;height:34px}
+  .sw span{display:block;padding:5px 7px;font-size:9.5px;color:var(--sub);font-family:var(--mono)}
+  .type-scale div{margin:3px 0}
+  .approval{border:1px solid var(--cyan);border-radius:14px;background:linear-gradient(135deg,#effbfe,#f6f5ff);padding:20px 22px;margin-top:18px}
+  .approval h2{border:0;margin:0 0 4px}
+  .approval ol{font-weight:600}
+  .approval li{margin:6px 0}
+  .approval li span{font-weight:400;color:var(--sub)}
+  .footer{color:var(--mute);font-size:11px;text-align:center;margin-top:28px;line-height:1.8}
+  @media (max-width:820px){
+    .grid2,.grid3{grid-template-columns:1fr}
+    .wf-body{grid-template-columns:1fr}
+    .wf-nav{display:none}
+    .wf-cols{grid-template-columns:1fr}
+    .wf-kpis{grid-template-columns:repeat(3,1fr)}
+    .toc ol{columns:1}
+  }
+  @media print{
+    body{background:#fff}
+    body::before{display:none}
+    section,.hero,.toc{box-shadow:none;break-inside:avoid}
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="kicker">SPATIAL AGENT STUDIO / WEBUI DESIGN SPEC v1.0</p>
+  <h1>Spatial Agent Studio<br><span>空間AIエージェント・スタジオ ／ 土木業務オートパイロット MVP</span></h1>
+  <p class="lede">
+    現場を3Dで見て、AIが計測・集計・帳票の下書きまで進め、確定は人が行う。
+    本仕様は、既存の承認済みプロトタイプ（V2.1 システム版）のデザイン言語を継承し、
+    個人利用MVPの5画面・3フローに絞り込んだWebUI設計です。
+    AIはスクリプト化されたデモ、数値は決定的な計算エンジンが算出します。
+  </p>
+  <div class="meta">
+    <div><dt>版</dt><dd>v1.0（MVP）</dd></div>
+    <div><dt>作成日</dt><dd>2026-11-20</dd></div>
+    <div><dt>対象</dt><dd>個人利用MVP（PCブラウザ）</dd></div>
+    <div><dt>デザイン方向</dt><dd>OpenDesign / tech-utility</dd></div>
+    <div><dt>実装状態</dt><dd>縦断スライス実装済み</dd></div>
+    <div><dt>承認</dt><dd>承認待ち</dd></div>
+  </div>
+  <p class="status-line"><i></i>本仕様は「既存V2.1デザインのMVP適用」として提示しています。承認後に追加改修を行います。</p>
+</header>
+
+<nav class="toc" aria-label="目次">
+  <ol>
+    <li><a href="#scope">1. 目的・利用者・MVP範囲</a></li>
+    <li><a href="#flows">2. 主要フローと受入条件</a></li>
+    <li><a href="#ia">3. 画面一覧・ナビゲーション</a></li>
+    <li><a href="#screens">4. 画面詳細（Wireframe）</a></li>
+    <li><a href="#states">5. Loading / Empty / Error / Success</a></li>
+    <li><a href="#design">6. デザインシステム</a></li>
+    <li><a href="#api">7. API・DB・認証・監査</a></li>
+    <li><a href="#demo">8. デモと実接続の境界</a></li>
+    <li><a href="#accept">9. 受入条件</a></li>
+    <li><a href="#out">10. 対象外・バックログ</a></li>
+    <li><a href="#approval">11. 承認のお願い</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<section id="scope">
+  <h2>1. 目的・利用者・MVP範囲</h2>
+  <p class="sec-sub">Why / Who / What / Out</p>
+  <div class="grid2">
+    <div class="card">
+      <h4>解決する課題</h4>
+      <p class="small">夕方以降に集中する写真整理・Excel集計・帳票作成を減らし、人が「確認・判断・現場」に時間を使えるようにする。判断の根拠は日付つき3Dと監査ログで残す。</p>
+    </div>
+    <div class="card">
+      <h4>提供する価値</h4>
+      <p class="small">3D現場ビュー上でAIが計測・判定・下書きを作成。数値は計算エンジンが決定し、確定は権限を持つ人が承認。全操作はハッシュ連鎖の監査ログに残る。</p>
+    </div>
+  </div>
+  <h3>利用者</h3>
+  <table>
+    <thead><tr><th>ロール</th><th>できること</th><th>できないこと</th></tr></thead>
+    <tbody>
+      <tr><td>現場代理人・所長（<code>manager</code>）</td><td>AIタスク実行、下書きの確認、承認・却下、監査ログ閲覧</td><td>—</td></tr>
+      <tr><td>現場担当者（<code>staff</code>）</td><td>AIタスク実行、下書きの閲覧、レポート閲覧</td><td>承認・却下（403 + 監査ログにDENY）</td></tr>
+    </tbody>
+  </table>
+  <h3>MVPに含める</h3>
+  <div class="grid3">
+    <div class="card"><h4>3D現場ビュー</h4><p class="small">解析的サンプル地形のCanvas2D描画、視点プリセット、レイヤ表示、ヒートマップ、人物匿名化。</p></div>
+    <div class="card"><h4>AI下書き</h4><p class="small">出来形管理・安全離隔の2タスク。決定的計算エンジンの結果から帳票ドラフトを生成。</p></div>
+    <div class="card"><h4>承認・監査</h4><p class="small">承認待ち一覧、承認/却下、レポート登録、追記専用の監査ログとハッシュ連鎖検証。</p></div>
+  </div>
+  <h3>MVPに含めない（今回の対象外）</h3>
+  <ul class="small">
+    <li>実3DGS生成（GPUパイプライン）、実点群/LiDAR取込、WebGPUレンダラ</li>
+    <li>実LLM/computer-use API接続（Claude / OpenAI）、AIゲートウェイ</li>
+    <li>Entra ID SSO、Teams通知、DirectCloud/SharePoint、施工管理・原価連携</li>
+    <li>本番正式環境への配備、複数テナント、全社KPI、モバイル最適化</li>
+  </ul>
+</section>
+
+<section id="flows">
+  <h2>2. 主要フローと受入条件</h2>
+  <p class="sec-sub">縦断スライス：画面 → API → PostgreSQL → 再読込</p>
+
+  <h3>Flow 1：出来形管理（主フロー）</h3>
+  <div class="flow">
+    <span class="step">現場を開く</span><span class="arrow">→</span>
+    <span class="step">AIに「出来形管理」を依頼</span><span class="arrow">→</span>
+    <span class="step">3D上で計測・ヒートマップ・注記</span><span class="arrow">→</span>
+    <span class="step">帳票ドラフト生成</span><span class="arrow">→</span>
+    <span class="step">人が承認</span><span class="arrow">→</span>
+    <span class="step">レポート登録・監査記録</span><span class="arrow">→</span>
+    <span class="step">再読込で永続確認</span>
+  </div>
+  <table>
+    <thead><tr><th>項目</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td>開始条件</td><td>ログイン済み。現場 <code>site-a</code> を選択。</td></tr>
+      <tr><td>操作</td><td>「盛土 出来形管理」タスクをクリック。AIの6ステップを表示。</td></tr>
+      <tr><td>期待結果</td><td>評価点数2,688点、合格率93.4%、最大不足-0.59m等の下書きが生成され、承認待ちに登録される。</td></tr>
+      <tr><td>保存データ</td><td><code>runs</code>（結果・ステップ）、<code>approvals</code>（pending）、承認時に<code>reports</code>、<code>audit_events</code>。</td></tr>
+      <tr><td>エラー時</td><td>API失敗はトーストで通知し、実行前の状態を保持。承認失敗はモーダル内にエラー表示。</td></tr>
+      <tr><td>受入条件</td><td>承認後にレポートが一覧に出る。ページ再読込後も残る。監査ログが検証OKになる。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Flow 2：重機 安全離隔チェック</h3>
+  <p class="small">旋回中心・バケット先端・作業員3名の位置を60秒分（0.2秒刻み）走査。危険エリア半径7.5m、最小離隔5.0m（W-02）、侵入時刻4.2秒を算出。アラート送信・旋回停止は人の承認が必要。</p>
+
+  <h3>Flow 3：承認・監査</h3>
+  <p class="small">承認一覧で下書きを確認し、承認/却下。判断は監査ログに追記され、ハッシュ連鎖を再計算して検証できる。監査ログはDBトリガでUPDATE/DELETEを拒否（追記専用）。</p>
+
+  <div class="note">
+    <b>数値の責任分界：</b>距離・体積・合格率は <code>src/shared/measurements.ts</code> の決定的計算エンジンが算出します。AI（デモ）は手順と操作を担当し、数値を作りません。
+  </div>
+</section>
+
+<section id="ia">
+  <h2>3. 画面一覧・ナビゲーション</h2>
+  <div class="grid2">
+    <div>
+      <table>
+        <thead><tr><th>#</th><th>画面</th><th>パス</th><th>主な役割</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>ログイン</td><td><code>/login</code></td><td>認証、デモアカウント入力</td></tr>
+          <tr><td>2</td><td>ホーム</td><td><code>/</code></td><td>KPI、現場一覧、承認待ち、最近の動き</td></tr>
+          <tr><td>3</td><td>3D現場</td><td><code>/sites/:id</code></td><td>3Dビュー、AIタスク、承認、レポート</td></tr>
+          <tr><td>4</td><td>承認</td><td><code>/approvals</code></td><td>下書き一覧、詳細、承認/却下</td></tr>
+          <tr><td>5</td><td>監査ログ</td><td><code>/audit</code></td><td>イベント一覧、ハッシュ連鎖検証</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <h4>ナビゲーション原則</h4>
+      <ul class="small">
+        <li>左サイドナビは「ホーム / 3D現場 / 承認 / 監査ログ」の4項目。</li>
+        <li>3D現場は主要フロー（AI→承認）への最短経路。ホームの現場カードからも遷移。</li>
+        <li>承認と監査は常にワンクリック。個人利用MVPのため深い階層を作らない。</li>
+        <li>モバイル幅ではサイドナビを横スクロール、3DとAIパネルは縦積み。</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="screens">
+  <h2>4. 画面詳細（Wireframe）</h2>
+  <p class="sec-sub">ダークテーマ。3DビューとAIパネルを同時に見せる構成。</p>
+
+  <h3>4.1 ログイン</h3>
+  <div class="wf">
+    <div class="wf-top"><span class="wf-logo"></span> Spatial Agent Studio <span class="wf-badge">DEMO</span></div>
+    <div class="wf-body" style="grid-template-columns:1.2fr 1fr">
+      <div class="wf-main" style="border-right:1px solid var(--dark-line)">
+        <div class="wf-h">空間AIエージェント・スタジオ</div>
+        <div class="wf-sub">土木業務オートパイロット ／ 個人利用MVP</div>
+        <div class="wf-line"></div><div class="wf-line"></div><div class="wf-line short"></div>
+        <div class="wf-card" style="margin-top:6px"><b>3D現場ビュー</b><div class="wf-line short"></div></div>
+        <div class="wf-card" style="margin-top:4px"><b>AIは下書きまで</b><div class="wf-line short"></div></div>
+        <div class="wf-card" style="margin-top:4px"><b>確定は人・記録は改ざん検知</b><div class="wf-line short"></div></div>
+      </div>
+      <div class="wf-main">
+        <div class="wf-h">現場アカウントでログイン</div>
+        <div class="wf-sub">デモアカウントを用意</div>
+        <div class="wf-card"><div class="wf-line short"></div></div>
+        <div class="wf-card" style="margin-top:4px"><div class="wf-line short"></div></div>
+        <div class="wf-card" style="margin-top:4px;text-align:center"><b>ログイン →</b></div>
+        <div class="wf-sub" style="margin-top:6px">現場代理人 / 現場担当者（クリックで入力）</div>
+        <div class="wf-card"><div class="wf-line"></div><div class="wf-line short"></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="ann"><b>1</b><span>左はブランドと3つの価値。右はログインフォーム。デモアカウントはクリックで入力できる。</span></div>
+  <div class="ann"><b>2</b><span>パスワードはデモ用。共有・公開環境では必ず変更する旨を明記。</span></div>
+
+  <h3>4.2 ホーム（ダッシュボード）</h3>
+  <div class="wf">
+    <div class="wf-top"><span class="wf-logo"></span> Spatial Agent Studio <span class="wf-badge">AI: DEMO</span></div>
+    <div class="wf-body">
+      <div class="wf-nav"><span class="on">ホーム</span><span>3D現場</span><span>承認</span><span>監査ログ</span><span style="margin-top:auto;font-size:8px">個人利用MVP</span></div>
+      <div class="wf-main">
+        <div class="wf-h">ホーム ─ 現場の「AI下書き → 人の承認」を横断表示</div>
+        <div class="wf-sub">最終更新 2026/11/20 10:46 ／ 3現場</div>
+        <div class="wf-kpis">
+          <div class="wf-kpi"><b>1</b><small>稼働現場</small></div>
+          <div class="wf-kpi"><b>1</b><small>承認待ち</small></div>
+          <div class="wf-kpi"><b>2</b><small>AI下書き</small></div>
+          <div class="wf-kpi"><b>1</b><small>安全アラート</small></div>
+          <div class="wf-kpi"><b>3.3h</b><small>削減時間</small></div>
+        </div>
+        <div class="wf-cols">
+          <div class="wf-card">
+            <b>現場一覧</b>
+            <table class="wf-table">
+              <tr><td><span class="wf-tag ok">A-01</span> ○○川 築堤・護岸工事</td><td><span class="wf-tag ok">稼働中</span></td></tr>
+              <tr><td><span class="wf-tag warn">B-02</span> △△橋 下部工</td><td><span class="wf-tag warn">要注意</span></td></tr>
+              <tr><td><span class="wf-tag">C-03</span> □□トンネル 坑口部</td><td><span class="wf-tag">休止中</span></td></tr>
+            </table>
+            <div class="wf-line" style="margin-top:6px"></div>
+          </div>
+          <div>
+            <div class="wf-card"><b>承認待ち</b><div class="wf-line"></div><div class="wf-line short"></div></div>
+            <div class="wf-card" style="margin-top:5px"><b>最近の動き</b><div class="wf-line"></div><div class="wf-line"></div><div class="wf-line short"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ann"><b>1</b><span>KPIは「稼働現場・承認待ち・AI下書き（7日）・安全アラート（7日）・削減時間（試算）」の5枚。</span></div>
+  <div class="ann"><b>2</b><span>現場カードは3Dのミニ地形、状態、進捗、版、承認待ちを表示。カード全体が3D現場へのリンク。</span></div>
+  <div class="ann"><b>3</b><span>右列は承認待ちと監査ログ。空のときはEmptyStateで「タスクを実行すると表示」と案内。</span></div>
+
+  <h3>4.3 3D現場（メイン画面）</h3>
+  <div class="wf" style="padding:8px">
+    <div class="wf-top"><span class="wf-logo"></span> ○○川 築堤・護岸工事 <span class="wf-badge">A-01 ／ 盛土進捗 100%</span></div>
+    <div class="wf-body" style="grid-template-columns:1fr 128px">
+      <div class="wf-main">
+        <div class="wf-sub" style="display:flex;gap:4px;flex-wrap:wrap"><span class="wf-tag">全体</span><span class="wf-tag">盛土</span><span class="wf-tag">切土</span><span class="wf-tag">重機</span><span class="wf-tag">護岸</span><span class="wf-tag">地形</span><span class="wf-tag">設計面</span><span class="wf-tag">ヒートマップ</span><span class="wf-tag">人物を匿名化</span></div>
+        <div class="wf-scene" style="height:150px"></div>
+        <div class="wf-sub" style="margin-top:4px">Renderer: Canvas2D ／ 12,840 splats ／ ドラッグで回転・ホイールでズーム</div>
+      </div>
+      <div class="wf-side">
+        <div class="wf-h" style="font-size:10px">AIエージェント <span class="wf-tag ok">待機中</span></div>
+        <div class="wf-task"><span class="wf-dot"></span><div><b>盛土 出来形管理</b><div class="wf-line short"></div></div></div>
+        <div class="wf-task"><span class="wf-dot red"></span><div><b>重機 安全離隔</b><div class="wf-line short"></div></div></div>
+        <div class="wf-card" style="margin-top:2px"><b>承認待ち 1件</b><div class="wf-line"></div><div class="wf-line short"></div><div class="wf-line" style="background:rgba(56,225,255,.35)"></div></div>
+        <div class="wf-sub" style="margin-top:2px">確定レポート</div>
+        <div class="wf-card"><span class="wf-tag ok">合格</span> 出来形管理帳票</div>
+      </div>
+    </div>
+  </div>
+  <div class="ann"><b>1</b><span>上部ツールバー：視点プリセット、レイヤ表示、出来形ヒートマップ、人物匿名化。選択状態はシアンで表示。</span></div>
+  <div class="ann"><b>2</b><span>3DビューはCanvas2D。AIの注記（最大不足・最大過剰・危険域・離隔リンク）をオーバーレイ表示。</span></div>
+  <div class="ann"><b>3</b><span>右パネル：タスクカード2つ、実行ステップ（知覚→推論→操作→検証）、評価値、承認CTA、確定レポート。</span></div>
+  <div class="ann"><b>4</b><span>承認CTAでモーダルを開き、メトリクス・AI所見・判断メモ・「却下」「承認して確定」を表示。権限なしは無効化。</span></div>
+
+  <h3>4.4 承認</h3>
+  <div class="wf">
+    <div class="wf-top"><span class="wf-logo"></span> 承認 ─ AIは下書きまで、確定は人 <span class="wf-badge">HUMAN IN THE LOOP</span></div>
+    <div class="wf-main">
+      <div class="wf-sub" style="display:flex;gap:4px"><span class="wf-tag warn">承認待ち 1</span><span class="wf-tag">承認済み 2</span><span class="wf-tag">却下 0</span><span class="wf-tag">すべて 3</span></div>
+      <div class="wf-cols" style="margin-top:5px">
+        <div>
+          <div class="wf-card"><b>重機の安全離隔アラートを確認</b><div class="wf-sub">○○川 築堤・護岸工事 ／ 現場担当者</div><span class="wf-tag ng">侵入あり（要確認）</span></div>
+          <div class="wf-card" style="margin-top:4px"><b>出来形管理帳票</b><div class="wf-sub">承認済み ／ 現場代理人</div><span class="wf-tag ok">合格</span></div>
+        </div>
+        <div class="wf-card">
+          <b>重機の安全離隔アラートを確認</b>
+          <div class="wf-sub">影響度：高 ／ 承認待ち</div>
+          <table class="wf-table">
+            <tr><td>危険エリア半径</td><td>7.5 m</td></tr>
+            <tr><td>最小離隔</td><td>5.0 m（W-02）</td></tr>
+            <tr><td>侵入時刻</td><td>4.2 秒</td></tr>
+            <tr><td>監視時間</td><td>60 秒</td></tr>
+          </table>
+          <div class="wf-line"></div><div class="wf-line short"></div>
+          <div style="display:flex;gap:4px;justify-content:flex-end;margin-top:5px"><span class="wf-tag">却下する</span><span class="wf-tag ok">承認して確定</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="ann"><b>1</b><span>タブで状態を切り替え。件数バッジ付き。左一覧、右詳細の2ペイン。</span></div>
+  <div class="ann"><b>2</b><span>詳細には評価値、AI所見、依頼者・作成日時、判断メモ、承認/却下ボタン。判断は監査ログに記録。</span></div>
+
+  <h3>4.5 監査ログ</h3>
+  <div class="wf">
+    <div class="wf-top"><span class="wf-logo"></span> 監査ログ ─ 全操作をハッシュでつなぎ、改ざんを検知 <span class="wf-badge">HASH CHAIN</span></div>
+    <div class="wf-main">
+      <div class="wf-card" style="border-color:rgba(62,224,127,.35);background:rgba(62,224,127,.08)">
+        <b style="color:#6ee7a8">✓ ハッシュ連鎖は整合しています</b>
+        <div class="wf-sub">検証件数 18件 ／ HEAD e65b…3b9 ／ VERIFIED</div>
+      </div>
+      <table class="wf-table" style="margin-top:5px">
+        <tr><td>#18</td><td>10:48</td><td>SYSTEM</td><td>REPORT_CREATED</td><td>出来形管理帳票</td><td>e65b…3b9</td></tr>
+        <tr><td>#17</td><td>10:48</td><td>HUMAN</td><td>APPROVED</td><td>出来形管理帳票</td><td>a3b8…7e2</td></tr>
+        <tr><td>#16</td><td>10:47</td><td>SYSTEM</td><td>APPROVAL_REQUESTED</td><td>出来形管理帳票</td><td>ca67…c8a</td></tr>
+        <tr><td>#15</td><td>10:47</td><td>AI:デモ</td><td>RUN_COMPLETED</td><td>盛土 出来形管理</td><td>f3a0…d91</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="ann"><b>1</b><span>検証バナーでOK/NG、検証件数、HEADハッシュを表示。「ハッシュ連鎖を検証」で再実行。</span></div>
+  <div class="ann"><b>2</b><span>テーブルは Seq / 日時 / Actor / Type / Detail / Hash。UPDATE・DELETEはDBトリガで拒否。</span></div>
+</section>
+
+<section id="states">
+  <h2>5. Loading / Empty / Error / Success</h2>
+  <table>
+    <thead><tr><th>状態</th><th>表示</th><th>対象画面</th></tr></thead>
+    <tbody>
+      <tr><td><span class="pill info">Loading</span></td><td>スピナー + 「現場データを読み込み中」「AIタスク実行中 n/6」。ボタンはdisabled。</td><td>全画面 / 3D現場 / 承認</td></tr>
+      <tr><td><span class="pill">Empty</span></td><td>アイコン + 説明 + 次の行動。例：「承認待ちはありません」「確定レポートはまだありません」。</td><td>ホーム / 承認 / 監査 / レポート</td></tr>
+      <tr><td><span class="pill ng">Error</span></td><td>「読み込みに失敗しました」+ APIメッセージ + 再試行ボタン。実行エラーはトースト。</td><td>全画面 / モーダル</td></tr>
+      <tr><td><span class="pill ok">Success</span></td><td>トースト（承認/却下/更新）、バッジ（承認済み/却下/合格/是正要/侵入あり）、監査VERIFIED。</td><td>承認 / 3D現場 / 監査</td></tr>
+    </tbody>
+  </table>
+  <p class="small muted">入力エラー：ログインの認証失敗、承認の二重判断409、権限不足403、タスク不正400を個別に表示。</p>
+</section>
+
+<section id="design">
+  <h2>6. デザインシステム</h2>
+  <p class="sec-sub">OpenDesign design direction「tech-utility」（Datadog / GitHub系）を採用。V2.1のシアン／バイオレット／アンバーのアクセントを継承。</p>
+  <h3>カラー</h3>
+  <div class="swatches">
+    <div class="sw"><i style="background:#070b18"></i><span>#070b18 bg</span></div>
+    <div class="sw"><i style="background:#101a37"></i><span>#101a37 panel</span></div>
+    <div class="sw"><i style="background:#38e1ff"></i><span>#38e1ff cyan</span></div>
+    <div class="sw"><i style="background:#8b7bff"></i><span>#8b7bff violet</span></div>
+    <div class="sw"><i style="background:#ffb547"></i><span>#ffb547 amber</span></div>
+    <div class="sw"><i style="background:#3ee07f"></i><span>#3ee07f green</span></div>
+    <div class="sw"><i style="background:#ff5d6c"></i><span>#ff5d6c red</span></div>
+    <div class="sw"><i style="background:#e8eeff"></i><span>#e8eeff text</span></div>
+  </div>
+  <div class="grid2" style="margin-top:14px">
+    <div class="card">
+      <h4>タイポグラフィ</h4>
+      <div class="type-scale">
+        <div style="font-size:24px;font-weight:700">見出し 24px / 700</div>
+        <div style="font-size:15px;font-weight:700">画面見出し 15px / 700</div>
+        <div style="font-size:13px">本文 13px / 400（行間1.65）</div>
+        <div style="font-size:11px;color:var(--mute)">補助 11px / 600（ラベル・キャプション）</div>
+        <div style="font-family:var(--mono);font-size:12px">モノスペース：数値・ハッシュ・ID</div>
+      </div>
+    </div>
+    <div class="card">
+      <h4>コンポーネント</h4>
+      <ul class="small">
+        <li>ボタン：Primary（シアン→バイオレット）/ Ghost / Danger / Sm</li>
+        <li>バッジ：ok / warn / ng / info / accent / muted（ドット付き可）</li>
+        <li>カード：パネル、サイトカード、KPI、タスク、レポート</li>
+        <li>テーブル：ヘアライン罫線、数値は等幅、ヘッダーはスティッキー</li>
+        <li>モーダル：承認詳細。Esc・背景クリックで閉じる。フォーカスは閉じるボタンへ。</li>
+        <li>トースト：成功/警告/エラー/情報。4.4秒で自動消去。</li>
+      </ul>
+    </div>
+  </div>
+  <h3>アクセシビリティ / レスポンシブ</h3>
+  <ul class="small">
+    <li>キーボード：フォーカスリング（2px cyan）、モーダルEsc、ボタン/リンクはネイティブ要素。</li>
+    <li>色だけに依存せず、状態はテキスト（承認済み/却下/合格/是正要）を併記。</li>
+    <li>ラベル：フォームは<code>label</code>、テーブルは<code>caption</code>（sr-only）、ライブ状態は<code>aria-live</code>。</li>
+    <li>モバイル（&lt;920px）：ナビ横スクロール、3DとAIパネルを縦積み、KPI 2列。</li>
+    <li>PCブラウザ中心。スマートフォンの詳細最適化は対象外。</li>
+  </ul>
+</section>
+
+<section id="api">
+  <h2>7. API・DB・認証・監査</h2>
+  <h3>認証</h3>
+  <ul class="small">
+    <li>メール + パスワード（scryptハッシュ）。セッションは<code>sas_session</code> Cookie（HttpOnly, SameSite=Lax）とBearerトークンの両対応。</li>
+    <li>Cloudflare Pages からトンネルAPIを呼ぶ場合は <code>Authorization: Bearer</code> を使用（クロスオリジンCookieを回避）。</li>
+    <li>承認は <code>manager</code> のみ。権限なしは403 + 監査ログDENY。</li>
+  </ul>
+  <h3>API</h3>
+  <table>
+    <thead><tr><th>Method</th><th>Path</th><th>用途</th></tr></thead>
+    <tbody>
+      <tr><td>POST</td><td><code>/api/auth/login</code></td><td>ログイン（user + token）</td></tr>
+      <tr><td>POST</td><td><code>/api/auth/logout</code></td><td>ログアウト</td></tr>
+      <tr><td>GET</td><td><code>/api/bootstrap</code></td><td>ユーザー + ダッシュボード</td></tr>
+      <tr><td>GET</td><td><code>/api/sites/:id</code></td><td>現場詳細・版</td></tr>
+      <tr><td>POST</td><td><code>/api/sites/:id/runs</code></td><td>AIタスク実行（result/steps/approval）</td></tr>
+      <tr><td>GET</td><td><code>/api/approvals</code></td><td>承認一覧（status）</td></tr>
+      <tr><td>POST</td><td><code>/api/approvals/:id/decision</code></td><td>承認/却下 + レポート登録</td></tr>
+      <tr><td>GET</td><td><code>/api/sites/:id/reports</code></td><td>現場の確定レポート</td></tr>
+      <tr><td>GET</td><td><code>/api/audit</code> / <code>/api/audit/verify</code></td><td>監査ログ + ハッシュ検証</td></tr>
+      <tr><td>GET</td><td><code>/api/health</code></td><td>ヘルスチェック（DB）</td></tr>
+    </tbody>
+  </table>
+  <h3>DB（PostgreSQL）</h3>
+  <table>
+    <thead><tr><th>テーブル</th><th>主な列</th><th>役割</th></tr></thead>
+    <tbody>
+      <tr><td><code>users</code></td><td>email, password_hash, role</td><td>manager / staff</td></tr>
+      <tr><td><code>sessions</code></td><td>token_hash, user_id, expires_at</td><td>セッション</td></tr>
+      <tr><td><code>sites</code> / <code>site_versions</code></td><td>model jsonb, progress</td><td>現場・4D版</td></tr>
+      <tr><td><code>runs</code></td><td>task, result jsonb, steps jsonb</td><td>AI実行結果</td></tr>
+      <tr><td><code>approvals</code></td><td>status, risk, metrics, decided_by</td><td>人の判断</td></tr>
+      <tr><td><code>reports</code></td><td>verdict, metrics, findings</td><td>確定レポート</td></tr>
+      <tr><td><code>audit_events</code></td><td>seq, actor, type, prev_hash, hash</td><td>追記専用の監査ログ</td></tr>
+    </tbody>
+  </table>
+  <div class="note"><b>監査ハッシュ：</b><code>hash = SHA-256(prev_hash | createdAt | actor | type | detail)</code>。全件再計算し、prev_hashとhashの連鎖を検証。UPDATE/DELETEはトリガで拒否。</div>
+</section>
+
+<section id="demo">
+  <h2>8. デモと実接続の境界</h2>
+  <table>
+    <thead><tr><th>項目</th><th>本MVP</th><th>将来（Backlog）</th></tr></thead>
+    <tbody>
+      <tr><td>3Dデータ</td><td>解析的サンプル地形（決定的）</td><td>3DGS/点群/LiDARの実データ</td></tr>
+      <tr><td>AIエージェント</td><td>スクリプト化デモ（6ステップ）</td><td>Claude/OpenAI computer use + 社内ゲートウェイ</td></tr>
+      <tr><td>数値計算</td><td><b>実装済み</b>の決定的計算エンジン</td><td>同一エンジンを実データへ適用</td></tr>
+      <tr><td>DB</td><td><b>実装済み</b> PostgreSQL（migration/seed）</td><td>運用DB・バックアップ</td></tr>
+      <tr><td>認証</td><td><b>実装済み</b> ローカルユーザー/セッション</td><td>Entra ID SSO</td></tr>
+      <tr><td>監査</td><td><b>実装済み</b> ハッシュ連鎖・追記専用</td><td>外部SIEM連携・保存期間</td></tr>
+      <tr><td>外部連携</td><td>なし</td><td>Teams / 帳票 / DirectCloud / 原価</td></tr>
+    </tbody>
+  </table>
+  <div class="warnbox"><b>明示：</b>画面上の「AI: DEMO」バッジと、AIパネルの注記で、AIがデモであることを常時表示します。サンプルデータは架空です。</div>
+</section>
+
+<section id="accept">
+  <h2>9. 受入条件</h2>
+  <ol class="small">
+    <li>ログイン（manager / staff）ができ、未認証は保護画面からリダイレクトされる。</li>
+    <li>ホームに3現場・KPI・承認待ち・監査ログが表示される。空のときはEmptyState。</li>
+    <li>3D現場でCanvas2Dの現場ビューが表示され、視点・レイヤ・ヒートマップ・匿名化が操作できる。</li>
+    <li>出来形AIタスクを実行すると6ステップが表示され、承認待ちの下書きが生成される。</li>
+    <li>managerが承認するとレポートが登録され、再読込後もDBから復元される。</li>
+    <li>staffは承認できず、403 + 監査ログDENYとなる（UIはボタン無効 + 注記）。</li>
+    <li>監査ログがハッシュ連鎖検証OKになり、DBのUPDATE/DELETEは拒否される。</li>
+    <li>主要なLoading / Empty / Error / Success状態が実装されている。</li>
+    <li>型検査・Lint・Unit・API Integration・E2E・Buildが成功する。</li>
+    <li>Cloudflare Preview上で主要フローを操作できる。</li>
+  </ol>
+</section>
+
+<section id="out">
+  <h2>10. 対象外・バックログ</h2>
+  <div class="grid2">
+    <div class="card">
+      <h4>今回の対象外</h4>
+      <ul class="small">
+        <li>実3DGS生成・WebGPU・点群取込</li>
+        <li>実LLM API・AIゲートウェイ・コスト管理</li>
+        <li>SSO / 多テナント / 本番DB / 本番配備</li>
+        <li>Teams・帳票・保存・原価連携</li>
+        <li>スマートフォン詳細最適化</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>本番向けBacklog（優先順）</h4>
+      <ol class="small">
+        <li>実3DGS/点群パイプラインと設計データ（LandXML/IFC）連携</li>
+        <li>実LLM computer use + 社内AIゲートウェイ + 操作許可リスト</li>
+        <li>Entra ID SSO / ロール・現場スコープの拡張</li>
+        <li>帳票出力（PDF/Excel）とTeams通知</li>
+        <li>監査ログの外部保存・保存期間・SIEM連携</li>
+        <li>複数現場の横断KPI・4D再生・モバイル最適化</li>
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section id="approval" class="approval">
+  <h2>11. 承認のお願い</h2>
+  <p class="small">本仕様（v1.0）は、既存の承認済みプロトタイプ V2.1 のデザイン言語をMVP範囲に適用したものです。以下のいずれかでご判断ください。</p>
+  <ol>
+    <li>この内容を承認し、追加改修・運用検証を進める <span>— 現状の実装を正として、Cloudflare Previewでの確認とBacklog整理を継続。</span></li>
+    <li>修正してから再提示する <span>— 画面・文言・優先順位の修正点をご指定ください。</span></li>
+    <li>今回は保留する <span>— 実装は現状のまま停止し、設計のみ保管します。</span></li>
+  </ol>
+  <p class="small muted">承認範囲：画面構成、UI/UX、状態、API/DB契約、デモ/実接続の境界。本番配備・費用・破壊的DB操作は含みません。</p>
+</section>
+
+<p class="footer">
+  Spatial Agent Studio — MVP WebUI 設計仕様 v1.0 ／ 2026-11-20 ／ OpenDesign project: spatial-agent-studio-design<br>
+  本仕様は実装済みMVPの画面・状態・API/DB契約を記述したものです。AIはデモ、数値は決定的計算エンジンが算出します。
+</p>
+
+</main>
+</div>
+</body>
+</html>
