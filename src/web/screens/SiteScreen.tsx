@@ -17,6 +17,7 @@ import type {
 } from '@shared/types';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
+import { useTheme } from '../theme';
 import { useToast } from '../toast';
 import { Badge } from '../components/Badge';
 import { Icon } from '../components/Icon';
@@ -76,6 +77,7 @@ const delay = (ms: number): Promise<void> => new Promise((resolve) => setTimeout
 export function SiteScreen(): ReactNode {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const { theme } = useTheme();
   const toast = useToast();
 
   const [site, setSite] = useState<SiteDetail | null>(null);
@@ -99,6 +101,7 @@ export function SiteScreen(): ReactNode {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const viewerRef = useRef<ViewerApi | null>(null);
   const cancelRef = useRef(false);
+  const themeRef = useRef(theme);
 
   const loadSite = useCallback(async () => {
     if (!id) return;
@@ -158,6 +161,7 @@ export function SiteScreen(): ReactNode {
     viewer.setLayers(DEFAULT_LAYERS);
     viewer.setHeatmap(false);
     viewer.setPrivacy(true);
+    viewer.setTheme(themeRef.current);
     viewer.setView('all', 1);
     const ro = new ResizeObserver(() => {
       if (!containerRef.current) return;
@@ -173,6 +177,11 @@ export function SiteScreen(): ReactNode {
       viewerRef.current = null;
     };
   }, [site]);
+
+  useEffect(() => {
+    themeRef.current = theme;
+    viewerRef.current?.setTheme(theme);
+  }, [theme]);
 
   useEffect(() => {
     viewerRef.current?.setLayers(layers);

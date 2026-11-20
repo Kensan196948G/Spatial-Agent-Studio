@@ -131,6 +131,26 @@ async function seed(): Promise<void> {
           splatCount: 7310,
           model: { ...DEFAULT_MODEL, progress: 0.3, terrainScale: 1.3 },
         },
+        {
+          id: 'site-d',
+          code: 'D-04',
+          name: '国道△△号 法面補修工事',
+          description: '法面の補修と排水工。AIが出来形と安全離隔の下書きを作成します（サンプル）。',
+          status: 'active',
+          cover: 'embankment',
+          splatCount: 10880,
+          model: { ...DEFAULT_MODEL, progress: 0.78, terrainScale: 1.12 },
+        },
+        {
+          id: 'site-e',
+          code: 'E-05',
+          name: '海岸堤防 嵩上げ工事',
+          description: '堤防の嵩上げと護岸補強。潮位・重機離隔を含む下書きをAIが作成します（サンプル）。',
+          status: 'attention',
+          cover: 'embankment',
+          splatCount: 8650,
+          model: { ...DEFAULT_MODEL, progress: 0.42, terrainScale: 1.26 },
+        },
       ];
 
       for (const s of sites) {
@@ -167,6 +187,16 @@ async function seed(): Promise<void> {
           { date: '2026-10-30', progress: 0.2 },
           { date: '2026-11-06', progress: 0.25 },
           { date: '2026-11-16', progress: 0.3 },
+        ],
+        'site-d': [
+          { date: '2026-10-30', progress: 0.6 },
+          { date: '2026-11-06', progress: 0.7 },
+          { date: '2026-11-17', progress: 0.78 },
+        ],
+        'site-e': [
+          { date: '2026-10-30', progress: 0.3 },
+          { date: '2026-11-06', progress: 0.36 },
+          { date: '2026-11-15', progress: 0.42 },
         ],
       };
 

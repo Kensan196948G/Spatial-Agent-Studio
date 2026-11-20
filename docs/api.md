@@ -53,6 +53,7 @@ POST /api/auth/login
 | :-- | :-- | :-- | :-- |
 | GET | `/api/health` | 不要 | `{ ok, db, version, aiMode }` |
 | GET | `/api/dashboard` | 必須 | 現場一覧・KPI・承認待ち・最近の監査 |
+| GET | `/api/sites` | 必須 | 現場セレクタ用の現場一覧 |
 | GET | `/api/sites/:id` | 必須 | 現場詳細（model / versions） |
 | GET | `/api/sites/:id/reports` | 必須 | 現場の確定レポート |
 
