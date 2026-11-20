@@ -7,10 +7,10 @@
 | WebUI | Cloudflare Pages（静的SPA、Previewプロジェクト） | <https://spatial-agent-studio-preview.pages.dev> |
 | API | ローカルFastify（port 7450） + Cloudflare Tunnel | <https://sas-api.mirai-dx-platform.com> |
 | DB | ローカルPostgreSQL `spatial_agent_studio_preview` | localhost only |
-| 対象コミット | `0134a1c`（PR #1 merge） | — |
+| 対象コミット | `930415d`（main、PR #6 merge） | — |
 
 - Pagesプロジェクト：`spatial-agent-studio-preview`（production branch: `preview`）
-- 直近のデプロイURL：<https://45b9e8ff.spatial-agent-studio-preview.pages.dev>（対象コミット `0134a1c`）
+- 直近のデプロイURL：<https://8b5bf4d3.spatial-agent-studio-preview.pages.dev>（対象コミット `930415d`）
 - 初回デプロイURL：<https://046f4340.spatial-agent-studio-preview.pages.dev>
 - Tunnel：`spatial-agent-studio` / `5290da16-d855-4b5b-9eac-0d2d566bfc39`
 - DNS：`sas-api.mirai-dx-platform.com` → `5290da16-....cfargotunnel.com`（proxied）
@@ -60,7 +60,7 @@ nohup env \
   NODE_ENV=production \
   PORT=7450 HOST=127.0.0.1 \
   APP_ORIGIN=https://spatial-agent-studio-preview.pages.dev \
-  CORS_ORIGINS=https://spatial-agent-studio-preview.pages.dev,https://45b9e8ff.spatial-agent-studio-preview.pages.dev \
+  CORS_ORIGINS=https://spatial-agent-studio-preview.pages.dev,https://8b5bf4d3.spatial-agent-studio-preview.pages.dev \
   COOKIE_SECURE=true \
   DATABASE_URL='postgresql:///spatial_agent_studio_preview?host=/var/run/postgresql' \
   node_modules/.bin/tsx src/api/server.ts \

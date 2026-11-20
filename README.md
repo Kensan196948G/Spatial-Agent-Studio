@@ -32,7 +32,8 @@
 | ローカルWeb（Vite） | <http://127.0.0.1:5174> |
 
 PreviewのAPIは、このホストのローカルPostgreSQL（`spatial_agent_studio_preview`）に接続しています。
-対象コミット：`0134a1c`（PR #1 merge）／GitHub：<https://github.com/Kensan196948G/Spatial-Agent-Studio>
+対象コミット：`930415d`（main、PR #6 merge）／WebUIデプロイ `8b5bf4d3`
+GitHub：<https://github.com/Kensan196948G/Spatial-Agent-Studio>
 
 ![Cloudflare Preview dashboard](docs/progress/evidence/preview-dashboard.png)
 
