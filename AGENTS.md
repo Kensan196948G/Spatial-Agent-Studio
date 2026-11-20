@@ -25,6 +25,7 @@ pnpm run test:unit
 pnpm run test:api       # test DB reset→migrate→seed→API tests
 pnpm run build
 pnpm run test:e2e       # test DB reset + build + Playwright
+pnpm ci:local           # local CI + GitHub status ci/local-verify
 pnpm run secret-scan
 pnpm run db:migrate
 pnpm run db:seed
@@ -49,7 +50,9 @@ pnpm run db:verify
 ## ハーネスポリシー
 
 - `.github/workflows/**` は `DEPLOY=critical` としてAIから書き込み禁止。
-  CIは `templates/ci/ci.yml` を人間が `.github/workflows/ci.yml` にコピーして適用する。
+  代わりに `pnpm ci:local` が全検証を実行し、GitHubステータス `ci/local-verify` を投稿する。
+  mainのrulesetはこのステータスをRequired Checkとして要求する。
+  GitHub Actions用テンプレートは `templates/ci/ci.yml`（人間が適用）。
 - 本番配備、DNS/Accessの重大変更、費用発生、破壊的DB操作は人間の承認なしに行わない。
 - Preview配備（Cloudflare Pages / 既存Tunnel）は検証範囲。本番昇格は行わない。
 

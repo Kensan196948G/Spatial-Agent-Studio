@@ -136,10 +136,11 @@ pnpm run test:unit
 pnpm run test:api     # test DBをreset→migrate→seedしてから実行
 pnpm run build
 pnpm run test:e2e     # test DB reset + build + Playwright
+pnpm ci:local        # local CI runner + GitHub status ci/local-verify
 pnpm run secret-scan
 ```
 
-`test:e2e` はローカルAPIを起動し、ログイン→AI出来形→承認→再読込→監査検証→staff権限拒否→APIエラー状態を検証します。
+`test:e2e` はローカルAPIを起動し、AI出来形の承認→再読込→監査検証、staff権限拒否、安全離隔の承認→再読込、APIエラー状態を検証します。
 
 ---
 
@@ -212,7 +213,7 @@ Previewは次の2部品で構成しています。
 - 実LLM/computer-use、AIゲートウェイ、SSO、Teams/帳票/原価連携は対象外。
 - スマートフォン詳細最適化は未実施（PCブラウザ中心）。
 - Cloudflare PreviewのAPIはこのホストが起動している間のみ利用可能。
-- **GitHub ActionsのCIワークフローは未適用**：ハーネスの `DEPLOY=critical` ポリシーが `.github/workflows/**` へのAI書き込みを拒否するため、[templates/ci/ci.yml](templates/ci/ci.yml) を人間がコピーして適用する必要があります。ローカルでは同一内容の検証を実行済みです。
+- **GitHub ActionsのCIワークフローは未適用**：ハーネスの `DEPLOY=critical` ポリシーが `.github/workflows/**` へのAI書き込みを拒否します。代わりに**ローカルCIランナー**（`pnpm ci:local`）が実際の全検証を実行し、GitHubのコミットステータス `ci/local-verify` を投稿します。mainのrulesetはこのステータスを**Required Check**として要求するため、CI未実施のPRはマージできません。GitHub Actions用テンプレートは人間の適用用に [templates/ci/ci.yml](templates/ci/ci.yml) へ残しています。
 - **WebUI設計仕様 v1.0 は承認待ち**：既存V2.1デザインのMVP適用として実装済み。
 
 ---
