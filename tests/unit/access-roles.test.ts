@@ -32,6 +32,9 @@ function baseConfig(over: Partial<Config> = {}): AppConfig {
       maxCallsPerMinute: 20,
       timeoutMs: 15000,
     },
+    demoLogin: true,
+    requireOriginAuth: false,
+    accessEmailLogin: true,
     ...over,
   };
 }

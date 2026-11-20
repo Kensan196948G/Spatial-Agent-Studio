@@ -244,6 +244,10 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
   const guard = (req: FastifyRequest, reply: FastifyReply): Promise<void> =>
     authGuard(pool, req, reply);
 
+  // 本番では /api/auth/* に Origin を必須化（Originなしの機械的アクセスを拒否）
+  const authOriginBlocked = (req: FastifyRequest): boolean =>
+    config.requireOriginAuth && !req.headers.origin;
+
   // 実AI（LLM）はゲートウェイ経由。キー未設定なら demo プロバイダで動作する。
   const aiGateway = new AiGateway(createAiProvider(config.ai), config.ai);
 
@@ -265,6 +269,9 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
 
   // ---------- auth ----------
   app.post('/api/auth/login', async (req, reply) => {
+    if (authOriginBlocked(req)) {
+      return sendError(reply, 403, 'ORIGIN_REQUIRED', 'Originヘッダが必要です。');
+    }
     if (!isAllowedOrigin(req, config)) {
       return sendError(reply, 403, 'ORIGIN_FORBIDDEN', '許可されていないOriginです。');
     }
@@ -273,6 +280,16 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
       return sendError(reply, 400, 'INVALID_BODY', 'メールアドレスとパスワードを入力してください。');
     }
     const { email, password } = parsed.data;
+    // 本番ではデモアカウント（@example.com）のパスワードログインを無効化する
+    if (!config.demoLogin && email.toLowerCase().endsWith('@example.com')) {
+      await audit(pool, 'SYSTEM', 'DEMO_LOGIN_DISABLED', 'デモアカウントのログインは無効です');
+      return sendError(
+        reply,
+        401,
+        'DEMO_LOGIN_DISABLED',
+        'デモアカウントのログインは本番では無効です。',
+      );
+    }
     const key = attemptKey(req, email);
     if (tooManyAttempts(key)) {
       await audit(pool, 'SYSTEM', 'LOGIN_THROTTLED', `試行回数超過: ${email}`);
@@ -327,8 +344,22 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
    * 未登録のメールは拒否する。実在のメールアドレスはリポジトリに置かない。
    */
   app.post('/api/auth/access', async (req, reply) => {
+    if (authOriginBlocked(req)) {
+      return sendError(reply, 403, 'ORIGIN_REQUIRED', 'Originヘッダが必要です。');
+    }
     if (!isAllowedOrigin(req, config)) {
       return sendError(reply, 403, 'ORIGIN_FORBIDDEN', '許可されていないOriginです。');
+    }
+    // Accessのメールを本文から受け取る方式は、Access未検証のクライアントでも
+    // 任意のメールとしてセッションを発行できてしまう。本番では無効化する。
+    if (!config.accessEmailLogin) {
+      await audit(pool, 'SYSTEM', 'ACCESS_EMAIL_LOGIN_DISABLED', 'Accessメールログインは無効です');
+      return sendError(
+        reply,
+        503,
+        'ACCESS_EMAIL_LOGIN_DISABLED',
+        'この環境ではAccessメールによるログインは無効です。',
+      );
     }
     const parsed = accessSchema.safeParse(req.body);
     if (!parsed.success) {

@@ -17,6 +17,13 @@ Environment=COOKIE_SECURE=true
 Environment=APP_ORIGIN=https://spatial-agent-studio.mirai-dx-platform.com
 Environment=CORS_ORIGINS=https://spatial-agent-studio.mirai-dx-platform.com
 Environment=DATABASE_URL=postgresql:///spatial_agent_studio_prod?host=/var/run/postgresql
+# 本番の認証ハードニング（2026-11-20 の本番QA指摘に対応）
+# - デモアカウントのパスワードログインを禁止
+# - /api/auth/* は Origin ヘッダ必須（Originなしの機械的アクセスを拒否）
+# - Accessメールを本文から受け取る方式は無効（Access未検証で任意メールになりすませるため）
+Environment=SAS_DEMO_LOGIN=false
+Environment=SAS_REQUIRE_ORIGIN_AUTH=true
+Environment=SAS_ACCESS_EMAIL_LOGIN=false
 
 ExecStart=/home/kensan/Projects/Business-Project/Spatial-Agent-Studio/node_modules/.bin/tsx src/api/server.ts
 Restart=on-failure
