@@ -1,6 +1,6 @@
 # 進捗・判断・証跡 — Spatial Agent Studio MVP
 
-最終更新：2026-11-20 11:12 JST
+最終更新：2026-11-20 11:14 JST
 
 ## 1. 現在の状態
 
@@ -14,7 +14,10 @@
 | Cloudflare Tunnel API | **稼働・疎通確認済み** |
 | GitHubリポジトリ | **PUBLIC** https://github.com/Kensan196948G/Spatial-Agent-Studio |
 | GitHub PR | **#1 MERGED** https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/1 |
-| マージコミット | `0134a1c63276cbd0f511377b87f874bbc4e76977`（2026-11-20 11:09 JST） |
+| マージコミット（PR #1） | `0134a1c63276cbd0f511377b87f874bbc4e76977`（2026-11-20 11:09 JST） |
+| ドキュメントPR | **#2 MERGED** https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/2 |
+| main HEAD | `87aa915bbf1f2a9fc08b9370d7ee9fb0d5594101` |
+| main保護 | PR必須 / 削除禁止 / 強制Push禁止（ruleset `main-protection`） |
 | GitHub Actions CI | **未適用（ハーネスポリシーでブロック）**。テンプレートを用意 |
 | 設計仕様の承認 | 承認待ち（v1.0） |
 
@@ -91,9 +94,12 @@
 ## 5.1 GitHub
 
 - リポジトリ：[Kensan196948G/Spatial-Agent-Studio](https://github.com/Kensan196948G/Spatial-Agent-Studio)（PUBLIC）
-- PR #1：[feat: Spatial Agent Studio MVP](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/1)
-- auto-merge：有効化して予約。必須チェック未設定のため即時マージ（2026-11-20 11:09 JST）
-- マージコミット：`0134a1c63276cbd0f511377b87f874bbc4e76977`
+- PR #1：[feat: Spatial Agent Studio MVP](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/1)（MERGED / 11:09 JST）
+- PR #2：[docs: マージ結果と Cloudflare Preview 再検証を記録](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/2)（MERGED / 11:12 JST）
+- auto-merge：有効化して予約。必須チェック未設定のため即時マージ
+- マージコミット：PR #1=`0134a1c` / PR #2=`87aa915`
+- main HEAD：`87aa915`（docsのみ。アプリコードは`0134a1c`）
+- main保護：ruleset `main-protection`（PR必須 / deletion / non_fast_forward）
 - CI：`.github/workflows/**` はハーネスポリシーで追加不可。`templates/ci/ci.yml` を人間が適用する。
 - ローカル検証：typecheck / lint / unit 7 / API 8 / E2E 3 / build / secret-scan すべてPASS。
 - Preview再配備：`0134a1c` から再ビルドし `45b9e8ff` に配備、安定URLで再スモークPASS。
