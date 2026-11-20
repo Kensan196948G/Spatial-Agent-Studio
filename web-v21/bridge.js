@@ -5,9 +5,10 @@
  * This bridge replaces the demo data with the real API/DB state and routes
  * approvals through the Fastify API.
  *
- * Local dev: email/password login + same-origin cookie.
- * Pages preview: Bearer token (sessionStorage) because the API is on a tunnel.
- * Cloudflare Access (later): /api/auth/me is served same-origin by Pages Functions.
+ * Cloudflare Access（Previewカスタムドメイン）が本人確認を行う。アプリ独自の
+ * ログイン画面は持たず、Access通過後にデモアカウントでAPIセッションを自動確立する。
+ * ローカル/pages.dev直URLでは Access 未経由としてバッジ表示し、同じ自動サインインを使う。
+ * APIは同一OriginではCookie、Tunnel越し（Pages）ではBearerトークン（sessionStorage）。
  */
 (() => {
   'use strict';
@@ -80,66 +81,109 @@
     return data;
   }
 
-  /* ---------------- login ---------------- */
+  /* ---------------- session (Cloudflare Access + silent demo account) ---------------- */
 
-  function showLogin(message) {
-    const box = $('#sasLogin');
-    if (!box) return;
-    box.hidden = false;
-    const err = $('#sasLoginError');
-    if (err) {
-      err.hidden = !message;
-      err.textContent = message || '';
-    }
-    const email = $('#sasEmail');
-    if (email) setTimeout(() => email.focus(), 50);
+  // Cloudflare Access が本人確認を行うため、アプリ独自のログイン画面は持たない。
+  // Access 通過後にデモアカウントで API セッションを自動確立する（プレビュー用）。
+  const DEMO_ACCOUNT = { email: 'manager@example.com', password: 'SasManager!2026' };
+
+  const auth = { behindAccess: false, email: '', signedOut: false };
+
+  function setText(sel, text) {
+    const el = $(sel);
+    if (el) el.textContent = text;
   }
 
-  function hideLogin() {
-    const box = $('#sasLogin');
+  function renderAuthState() {
+    const badge = $('#bdgAccess');
+    if (badge) {
+      const label = badge.querySelector('span');
+      badge.classList.toggle('warn', !auth.behindAccess);
+      badge.title = auth.behindAccess
+        ? `Cloudflare Access で認証済み${auth.email ? `（${auth.email}）` : ''}`
+        : 'Cloudflare Access を経由していません（pages.dev 直URLなどのデモ公開経路）';
+      if (label) label.textContent = auth.behindAccess ? 'Access 認証済み' : 'Access 未経由';
+    }
+    if (auth.email) {
+      const small = $('#roleBtn small');
+      if (small) small.textContent = auth.email;
+    }
+  }
+
+  /**
+   * Access 配下では /cdn-cgi/access/get-identity が 200 で本人情報を返す。
+   * pages.dev 直URLやローカルでは 4xx になるため、その場合は Access 未経由として扱う。
+   */
+  async function readAccessIdentity() {
+    try {
+      const res = await fetch(`${location.origin}/cdn-cgi/access/get-identity`, {
+        credentials: 'same-origin',
+      });
+      if (!res.ok) return null;
+      const data = await res.json();
+      const email = (data && (data.email || (data.identity && data.identity.email))) || '';
+      return email ? { email } : null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function signInSilently() {
+    try {
+      const me = await api('/auth/me');
+      return me.user;
+    } catch (err) {
+      if (err.status !== 401) throw err;
+    }
+    const res = await api('/auth/login', { method: 'POST', body: JSON.stringify(DEMO_ACCOUNT) });
+    if (res && res.token) writeToken(res.token);
+    return res.user;
+  }
+
+  function showSignedOut(title, message) {
+    auth.signedOut = true;
+    const box = $('#sasSignedOut');
+    if (!box) return;
+    setText('#sasSignedOutTitle', title);
+    setText('#sasSignedOutMsg', message);
+    box.hidden = false;
+  }
+
+  function hideSignedOut() {
+    auth.signedOut = false;
+    const box = $('#sasSignedOut');
     if (box) box.hidden = true;
   }
 
-  async function submitLogin(email, password) {
-    const button = $('#sasLoginForm button[type=submit]');
+  // Cloudflare Access のチームドメイン（アカウント固定）。ログアウトはこのURLが正規。
+  const ACCESS_TEAM_DOMAIN = 'winter-lake-f4c9.cloudflareaccess.com';
+
+  async function signOut() {
+    const button = $('#btnLogout');
     if (button) button.disabled = true;
     try {
-      const res = await api('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email: email.trim(), password }),
-      });
-      if (res.token) writeToken(res.token);
-      hideLogin();
-      await start(res.user);
-    } catch (err) {
-      showLogin(err.message || 'ログインに失敗しました');
-    } finally {
-      if (button) button.disabled = false;
+      await api('/auth/logout', { method: 'POST' });
+    } catch {
+      /* セッションが既に無い場合もログアウトは続行する */
     }
+    writeToken(null);
+    if (auth.behindAccess) {
+      // Access のセッションも終了させる（次のアクセスでワンタイムコードを要求）
+      window.location.assign(`https://${ACCESS_TEAM_DOMAIN}/cdn-cgi/access/logout`);
+      return;
+    }
+    showSignedOut(
+      'ログアウトしました',
+      'デモ環境（Cloudflare Access 未経由）です。「再サインイン」でデモアカウントに戻ります。',
+    );
+    if (button) button.disabled = false;
   }
 
-  function bindLogin() {
-    const form = $('#sasLoginForm');
-    if (!form) return;
-    form.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const email = $('#sasEmail');
-      const password = $('#sasPassword');
-      submitLogin(email ? email.value : '', password ? password.value : '');
-    });
-    const demo = {
-      manager: ['manager@example.com', 'SasManager!2026'],
-      staff: ['staff@example.com', 'SasStaff!2026'],
-    };
-    $$('#sasLogin [data-demo]').forEach((b) => {
-      b.addEventListener('click', () => {
-        const pair = demo[b.dataset.demo];
-        if (!pair) return;
-        if ($('#sasEmail')) $('#sasEmail').value = pair[0];
-        if ($('#sasPassword')) $('#sasPassword').value = pair[1];
-        if ($('#sasLoginError')) $('#sasLoginError').hidden = true;
-      });
-    });
+  function bindSessionControls() {
+    const logout = $('#btnLogout');
+    if (logout) logout.addEventListener('click', signOut);
+    const again = $('#sasSignedOutAgain');
+    if (again) again.addEventListener('click', () => window.location.reload());
   }
 
   /* ---------------- data mapping ---------------- */
@@ -555,7 +599,7 @@
     try {
       await loadData();
     } catch (err) {
-      showLogin(err.message || 'データの読み込みに失敗しました');
+      showSignedOut('データを読み込めません', err.message || 'データの読み込みに失敗しました。');
       return;
     }
     window.__SAS_REAL__ = {
@@ -565,31 +609,35 @@
     };
     window.SAS.on('ready', () => setTimeout(afterBoot, 120));
     if (typeof window.__SAS_BOOT__ !== 'function') {
-      showLogin('アプリの起動関数が見つかりません');
+      showSignedOut('起動できません', 'アプリの起動関数が見つかりません。');
       return;
     }
     if (!bootRan) {
       bootRan = true;
-      hideLogin();
+      hideSignedOut();
       window.__SAS_BOOT__();
     }
   }
 
   async function bootstrapAuth() {
+    bindSessionControls();
+    const identity = await readAccessIdentity();
+    if (identity) {
+      auth.behindAccess = true;
+      auth.email = identity.email;
+    }
+    renderAuthState();
     try {
-      const me = await api('/auth/me');
-      hideLogin();
-      await start(me.user);
+      const user = await signInSilently();
+      hideSignedOut();
+      const logout = $('#btnLogout');
+      if (logout) logout.hidden = false;
+      await start(user);
     } catch (err) {
-      if (err.status === 401) {
-        showLogin('');
-      } else {
-        showLogin(err.message || '認証サーバに接続できません');
-      }
+      showSignedOut('接続できません', err.message || '認証サーバに接続できません。');
     }
   }
 
-  window.__SAS_BRIDGE__ = { state, selectSite, nearestVersion };
-  bindLogin();
+  window.__SAS_BRIDGE__ = { state, selectSite, nearestVersion, auth };
   bootstrapAuth();
 })();

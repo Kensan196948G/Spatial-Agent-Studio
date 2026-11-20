@@ -1,0 +1,48 @@
+{
+ "url": "https://spatial-agent-studio-preview.pages.dev/",
+ "startedAt": "2026-11-20T03:58:31.581Z",
+ "checks": [
+  {
+   "name": "no login form",
+   "ok": true,
+   "detail": "sasLogin count=0"
+  },
+  {
+   "name": "dashboard booted",
+   "ok": true,
+   "detail": "data-page=dash, sites=5"
+  },
+  {
+   "name": "access badge",
+   "ok": true,
+   "detail": "badge=Access 未経由"
+  },
+  {
+   "name": "role chip",
+   "ok": true,
+   "detail": "role=現場代理人・所長（デモ）"
+  },
+  {
+   "name": "logout visible",
+   "ok": true,
+   "detail": "btnLogout"
+  },
+  {
+   "name": "signed out overlay",
+   "ok": true,
+   "detail": "title=ログアウトしました"
+  },
+  {
+   "name": "re-sign-in",
+   "ok": true,
+   "detail": "dashboard restored after logout"
+  }
+ ],
+ "consoleErrors": [
+  "Failed to load resource: the server responded with a status of 404 ()",
+  "Failed to load resource: the server responded with a status of 401 ()",
+  "Failed to load resource: the server responded with a status of 404 ()",
+  "Failed to load resource: the server responded with a status of 401 ()"
+ ],
+ "finishedAt": "2026-11-20T03:58:41.973Z"
+}

@@ -14,7 +14,10 @@
 - 初回デプロイURL：<https://046f4340.spatial-agent-studio-preview.pages.dev>
 - Tunnel：`spatial-agent-studio` / `5290da16-d855-4b5b-9eac-0d2d566bfc39`
 - DNS：`sas-api.mirai-dx-platform.com` → `5290da16-....cfargotunnel.com`（proxied）
-- 本番環境ではありません。Cloudflare Access等のエッジ認証は付けていません（アプリのログインで保護）。
+- 本番環境ではありません。Previewカスタムドメイン（`spatial-agent-studio-preview.mirai-dx-platform.com`）は
+  Cloudflare Access（メールOTP）で保護し、**アプリ独自のログイン画面は持ちません**。
+  Access通過後にデモアカウントのAPIセッションを自動確立します。ヘッダーの「ログアウト」で
+  Accessセッションも終了します（`https://winter-lake-f4c9.cloudflareaccess.com/cdn-cgi/access/logout`）。
 
 ## 2. Pagesの配備
 
