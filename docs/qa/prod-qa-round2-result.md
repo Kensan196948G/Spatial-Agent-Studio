@@ -46,3 +46,15 @@ active_entries: 4 grants: 9
 
 - QA: ラウンド2 要件3・ケース4（executed 3 / reviewed 1）・新規欠陥1・レポート v2 `doc_mwp1m9rk_6fbe26a3`・ゲート `gate_mwp1myhx_73bb6ded`（pending）
 - 修正: 本記録・PR（tunnel重複の解消、pages.devのリダイレクト化、配信ビルド整合、復元訓練）
+
+## 6. 追加: 冗長な公開API経路の削除（2026-11-20 23:20）
+
+QAの追加観測（`sas-api-prod` が公開のまま）を受け、**削除**した。
+
+| 項目 | 対応 |
+| :-- | :-- |
+| DNS `sas-api-prod.mirai-dx-platform.com` | **レコード削除**（以降 530＝到達不可） |
+| トンネル ingress | 設定から削除（次回再起動で反映） |
+| 本番APIの入口 | 本番ホスト（`spatial-agent-studio…`）に一本化（Access配下・同一オリジン） |
+
+実測：`sas-api-prod` → **530**（名前解決不可）／本番ドメイン → **302**（Access）。
