@@ -93,6 +93,30 @@ test('staff: AIタスクは実行できるが、承認は権限不足ででき�
   await expect(dialog).not.toBeVisible();
 });
 
+test('manager: 重機の安全離隔下書きを承認し、再読込後もレポートが残る', async ({ page }) => {
+  await login(page, MANAGER);
+  await page.goto('/sites/site-a');
+  await expect(page.locator('canvas.viewer-canvas')).toBeVisible();
+
+  await page.locator('.task-card').nth(1).click();
+  const approvalCta = page.locator('.approval-cta button');
+  await expect(approvalCta).toBeVisible({ timeout: 20_000 });
+  await approvalCta.click();
+
+  const dialog = page.getByRole('dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole('rowheader', { name: '危険エリア半径' })).toBeVisible();
+  await expect(dialog.getByText('侵入あり（要確認）').first()).toBeVisible();
+  await dialog.getByRole('button', { name: /承認して確定/ }).click();
+  await expect(dialog).not.toBeVisible();
+
+  await expect(page.locator('.report-item b').first()).toHaveText('重機の安全離隔アラート');
+  await page.reload();
+  await expect(page.locator('.report-item b').first()).toHaveText('重機の安全離隔アラート', {
+    timeout: 15_000,
+  });
+});
+
 test('dashboard: APIエラー時にエラー状態と再試行を表示する', async ({ page }) => {
   await login(page, MANAGER);
   await page.route('**/api/bootstrap', (route) =>
