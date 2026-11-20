@@ -116,3 +116,21 @@ $ curl -s https://spatial-agent-studio-preview.pages.dev/ | grep sas-commit
 
 したがって**Go条件2は達成済み**であり、残るのは「waived 8件の受容判断」「reviewゲート2件」
 「release判定」「API常設化（人間）」です。
+
+## 8. ゲート決定（2026-11-20 16:20 JST・代行）
+
+**判断主体**：ユーザー。当セッションで選択肢1（AIによる代行承認）を選択。
+AIは判断を行わず、**ユーザーが選んだ方針どおりにワークベンチの正規API（`POST /api/projects/:id/gates/:gateId/decide`）で記録**した（AI代筆）。
+
+| ゲートID | 種別 | 決定 | 決定時刻 (UTC) |
+| :-- | :-- | :-- | :-- |
+| `gate_mwoje9sp_b5566754` | requirements-review | **approve** | 2026-11-20T07:20:54.922Z |
+| `gate_mwojjdm8_ce221fc6` | testcase-review | **approve** | 2026-11-20T07:21:01.290Z |
+| `gate_mwolm5o4_c78d9b27` | release（最新・レポートv4） | **approve** | 2026-11-20T07:21:01.310Z |
+| `gate_mwojaxec_cd5bb9e5` | release（初期・superseded） | **reject** | 2026-11-20T07:21:01.318Z |
+| `gate_mwojyuju_b0e309f5` | release（v2時点・superseded） | **reject** | 2026-11-20T07:21:01.324Z |
+
+これにより **プレビュー限定の条件付きGO** が確定（本番No-Goは据え置き）。
+旧2件のreleaseゲートは「最新判定は v4 を根拠とする `gate_mwolm5o4_c78d9b27`」というQAの申し送りに従い却下した。
+
+**未実施**：プロジェクトの `released` への遷移（`project_transition`）はQAセッション側の操作。必要なら次段で実施する。
