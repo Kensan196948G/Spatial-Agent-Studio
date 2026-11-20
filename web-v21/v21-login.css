@@ -186,3 +186,36 @@
 [data-theme='light'] .sas-site-picker select {
   background: rgba(255, 255, 255, 0.85);
 }
+
+/* Keep the V2.1 header usable on 1440px-wide laptop screens. */
+@media (max-width: 1600px) {
+  header {
+    gap: 10px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .ttl b {
+    max-width: 360px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 14px;
+  }
+  .ttl small,
+  .rbtn small,
+  .clock {
+    display: none;
+  }
+  .badge {
+    padding: 2px 7px;
+    font-size: 10px;
+  }
+  .hbtn {
+    padding: 6px 9px;
+    font-size: 11px;
+    white-space: nowrap;
+  }
+  .rbtn {
+    padding: 5px 8px;
+  }
+}

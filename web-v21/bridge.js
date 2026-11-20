@@ -22,7 +22,6 @@
   const meta = document.querySelector('meta[name="sas-api-base"]');
   const API_BASE = (meta && meta.content ? meta.content : '').replace(/\/$/, '');
   const TOKEN_KEY = 'sas_session_token';
-  const AUTH_LABEL = API_BASE ? 'Cloudflare / クラウド認証' : 'ローカル認証';
 
   const state = {
     user: null,
@@ -517,7 +516,7 @@
     const roleName = $('#roleName');
     if (roleName) roleName.textContent = state.user.name || state.user.email;
     const small = $('#roleBtn small');
-    if (small) small.textContent = `${state.user.role === 'manager' ? '承認者・管理者' : '利用者'} ／ ${AUTH_LABEL}`;
+    if (small) small.textContent = state.user.role === 'manager' ? '承認者・管理者' : '利用者';
     const btn = $('#roleBtn');
     if (btn) {
       btn.style.pointerEvents = 'none';
@@ -525,19 +524,6 @@
     }
     const menu = $('#roleMenu');
     if (menu) menu.classList.remove('show');
-    const userLabel = $('#sasUserLabel');
-    if (!userLabel) {
-      const hdr = $('header');
-      if (hdr) {
-        const div = document.createElement('div');
-        div.id = 'sasUserLabel';
-        div.className = 'badge';
-        div.innerHTML = `<span class="led"></span>${esc(state.user.email)}`;
-        hdr.insertBefore(div, $('#clock'));
-      }
-    } else {
-      userLabel.innerHTML = `<span class="led"></span>${esc(state.user.email)}`;
-    }
   }
 
   function afterBoot() {

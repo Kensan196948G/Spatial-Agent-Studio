@@ -1,6 +1,6 @@
 # 進捗・判断・証跡 — Spatial Agent Studio MVP
 
-最終更新：2026-11-20 12:30 JST
+最終更新：2026-11-20 12:34 JST
 
 ## 1. 現在の状態
 
@@ -20,8 +20,9 @@
 | UI改善 | **ライト/ダーク切替・現場セレクタ（5現場）**（PR #10） |
 | UI正本 | **V2.1システム版（9画面）原本を静的UIシェルとして採用**（`web-v21/`＋`bridge.js`、PR #11） |
 | CIゲート | **`ci/local-verify`（ローカルCI）をRequired Checkとして運用**。PR #8でBLOCKED→success→auto-mergeを実証 |
-| main HEAD（PR #10時点） | `8002486772ba30933d6a8df421915ee84c5bde99` |
+| main HEAD（PR #11時点） | `7fb67799aef81967d908275b9393b979277ecde9` |
 | V2.1 UI | ダッシュボード/3D/承認/監査は実データ、他5画面はV2.1サンプル表示 |
+| V2.1 Preview | **配備済み・V2.1 UIで実操作確認済み**（デプロイ `69ed0a62`） |
 | WebUI配備対象 | `930415d`（Pages `8b5bf4d3` で検証） |
 | APIコード | `ae2dfb5`（CORSのPagesサブドメイン対応を含む） |
 | main保護 | PR必須 / 削除禁止 / 強制Push禁止（ruleset `main-protection`） |
@@ -110,9 +111,10 @@
 - PR #8：[feat: ローカルCIランナーと必須ステータスチェック](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/8)（MERGED / CIゲート実証）
 - PR #9：[docs: CI必須チェックとauto-mergeの実証記録](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/9)（MERGED）
 - PR #10：[feat: ライト/ダーク切替と現場セレクタ](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/10)（MERGED）
-- PR #11：[feat: V2.1原本のUIシェル＋APIブリッジ](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/11)（V2.1 UI）
+- PR #11：[feat: V2.1原本のUIシェル＋APIブリッジ](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/11)（MERGED）
+- PR #12：[fix: V2.1ヘッダー調整＋Preview検証証跡](https://github.com/Kensan196948G/Spatial-Agent-Studio/pull/12)（V2.1 Preview検証）
 - マージコミット：PR #1=`0134a1c` / PR #2=`87aa915` / PR #3=`a44ad44` / PR #4=`ae2dfb5` / PR #5=`be60590` / PR #6=`930415d` / PR #7=`8850b67` / PR #8=`7702958`
-- main HEAD（PR #10時点）：`8002486`（ライト/ダーク＋現場セレクタを含む）
+- main HEAD（PR #11時点）：`7fb6779`（V2.1 UIシェル＋APIブリッジ）
 - main保護：ruleset `main-protection`（PR必須 / `ci/local-verify`必須 / deletion / non_fast_forward）
 - CI：`.github/workflows/**` はハーネスポリシーで追加不可。代わりにローカルCIが `ci/local-verify` を投稿し、PR #8で **BLOCKED → success → auto-merge** を実証。
 - ローカル検証：typecheck / lint / unit 7 / API 8 / E2E（V2.1）4 / build / secret-scan すべてPASS。

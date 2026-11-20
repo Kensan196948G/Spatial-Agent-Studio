@@ -1,11 +1,9 @@
 #!/usr/bin/env node
 /**
- * Cloudflare Preview smoke verification (human/AI run, not part of CI).
+ * Cloudflare Preview smoke verification for the V2.1 UI shell.
  *
- * - Opens the Pages URL
- * - Logs in with the demo manager account
- * - Verifies the dashboard, 3D site, and audit-chain banner
- * - Saves screenshots + a JSON record under docs/progress/evidence/
+ * Verifies: API health, CORS, login, 5-site dashboard, site switch, light/dark,
+ * approvals page, audit pane. Saves screenshots + JSON under docs/progress/evidence/.
  *
  * Usage:
  *   PREVIEW_URL=https://... node scripts/preview-smoke.mjs
@@ -20,6 +18,7 @@ const OUT = join(process.cwd(), 'docs', 'progress', 'evidence');
 mkdirSync(OUT, { recursive: true });
 
 const result = {
+  ui: 'V2.1 static shell',
   base: BASE,
   api: API,
   startedAt: new Date().toISOString(),
@@ -36,7 +35,11 @@ function check(name, ok, detail) {
 
 const healthRes = await fetch(`${API}/api/health`);
 result.health = { status: healthRes.status, body: await healthRes.json() };
-check('api health', healthRes.status === 200 && result.health.body.ok === true, JSON.stringify(result.health.body));
+check(
+  'api health',
+  healthRes.status === 200 && result.health.body.ok === true,
+  JSON.stringify(result.health.body),
+);
 
 const preflight = await fetch(`${API}/api/bootstrap`, {
   method: 'OPTIONS',
@@ -60,30 +63,56 @@ check(
 const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 try {
-  await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
-  await page.getByLabel('メールアドレス').fill('manager@example.com');
-  await page.getByLabel('パスワード').fill('SasManager!2026');
-  await page.getByRole('button', { name: 'ログイン', exact: true }).click();
-  await page.waitForURL(`${BASE}/`, { timeout: 30_000 });
-  await page.getByRole('heading', { name: /ホーム/ }).waitFor({ timeout: 20_000 });
-  check('login → dashboard', true, page.url());
-  await page.screenshot({ path: join(OUT, 'preview-dashboard.png'), fullPage: true });
-  result.screenshots.push('preview-dashboard.png');
+  await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+  await page.locator('#sasLogin').waitFor({ state: 'visible', timeout: 30_000 });
+  await page.locator('#sasEmail').fill('manager@example.com');
+  await page.locator('#sasPassword').fill('SasManager!2026');
+  await page.locator('.sas-login-submit').click();
+  await page.locator('#boot').waitFor({ state: 'hidden', timeout: 30_000 });
+  await page.locator('body[data-page="dash"]').waitFor({ timeout: 30_000 });
+  const siteCount = await page.locator('#sites .site').count();
+  const navCount = await page.locator('#nav .nb').count();
+  check(
+    'login → V2.1 dashboard',
+    siteCount === 5 && navCount === 9,
+    `sites=${siteCount} nav=${navCount}`,
+  );
+  await page.screenshot({ path: join(OUT, 'preview-v21-dashboard.png'), fullPage: true });
+  result.screenshots.push('preview-v21-dashboard.png');
 
-  await page.locator('a.site-card[href="/sites/site-a"]').click();
-  await page.locator('canvas.viewer-canvas').waitFor({ timeout: 20_000 });
-  await page.getByRole('heading', { name: '○○川 築堤・護岸工事' }).waitFor();
-  check('3D site workspace', true, page.url());
-  await page.screenshot({ path: join(OUT, 'preview-site.png'), fullPage: false });
-  result.screenshots.push('preview-site.png');
+  await page.locator('#sites .site').nth(1).click();
+  await page.locator('body[data-page="viewer"]').waitFor({ timeout: 20_000 });
+  const picker = await page.locator('#sasSiteSelect').inputValue();
+  const title = await page.title();
+  check(
+    'site selection → 3D viewer',
+    picker === 'site-b' && /△△橋/.test(title),
+    `${picker} / ${title}`,
+  );
+  await page.screenshot({ path: join(OUT, 'preview-v21-site.png'), fullPage: false });
+  result.screenshots.push('preview-v21-site.png');
 
-  await page.goto(`${BASE}/audit`, { waitUntil: 'domcontentloaded' });
-  await page.getByText('ハッシュ連鎖は整合しています').waitFor({ timeout: 20_000 });
-  const verified = await page.getByText('VERIFIED').isVisible();
-  const rows = await page.locator('.audit-table tbody tr').count();
-  check('audit hash chain', verified, `rows=${rows}`);
-  await page.screenshot({ path: join(OUT, 'preview-audit.png'), fullPage: true });
-  result.screenshots.push('preview-audit.png');
+  const before = await page.locator('html').getAttribute('data-theme');
+  await page.locator('#themeBtn').click();
+  const after = await page.locator('html').getAttribute('data-theme');
+  check('light/dark toggle', before !== after, `${before} → ${after}`);
+
+  await page.locator('#nav .nb[data-pg="approvals"]').click();
+  await page.locator('body[data-page="approvals"]').waitFor({ timeout: 20_000 });
+  await page.locator('#apHist').waitFor({ state: 'visible', timeout: 20_000 });
+  const hist = await page.locator('#apHist tbody tr').count();
+  check('approvals page', hist >= 1, `history=${hist}`);
+  await page.screenshot({ path: join(OUT, 'preview-v21-approvals.png'), fullPage: true });
+  result.screenshots.push('preview-v21-approvals.png');
+
+  await page.locator('#nav .nb[data-pg="viewer"]').click();
+  await page.locator('body[data-page="viewer"]').waitFor({ timeout: 20_000 });
+  await page.locator('#tabs button[data-p="audit"]').click();
+  await page.locator('#audList .au').first().waitFor({ state: 'visible', timeout: 20_000 });
+  const auditRows = await page.locator('#audList .au').count();
+  check('audit pane', auditRows > 0, `rows=${auditRows}`);
+  await page.screenshot({ path: join(OUT, 'preview-v21-audit.png'), fullPage: true });
+  result.screenshots.push('preview-v21-audit.png');
 } finally {
   await browser.close();
 }
