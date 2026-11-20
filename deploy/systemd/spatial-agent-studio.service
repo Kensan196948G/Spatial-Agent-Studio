@@ -6,12 +6,13 @@ After=network.target
 Type=simple
 WorkingDirectory=/home/kensan/Projects/Business-Project/Spatial-Agent-Studio
 
-# 0600 の env ファイル（git管理外）。CORS_ORIGINS・DATABASE_URL・
-# Cloudflare Access のロール割当（SAS_ACCESS_ROLES_FILE）を含む。
+# 0600 の env ファイル（git管理外）。Cloudflare Access のロール割当を含む。
 # 例: ~/.config/spatial-agent-studio/preview-api.env
+# 注意: systemd では **EnvironmentFile が下の Environment= より優先**される。
+#       PORT/CORS/DATABASE_URL を env 側に書くと unit の値を上書きしてしまう。
 EnvironmentFile=-%h/.config/spatial-agent-studio/preview-api.env
 
-# 明示値は env ファイルより優先される
+# 接続系の明示値（env ファイルに同名キーを置かないこと）
 Environment=NODE_ENV=production
 Environment=PORT=7450
 Environment=HOST=127.0.0.1
