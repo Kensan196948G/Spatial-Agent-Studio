@@ -38,10 +38,20 @@ npx wrangler pages deploy dist/web \
 - `SAS_API_BASE` が空のビルドは同一オリジンAPI向け（ローカル用）。V2.1 UIの `bridge.js` が meta タグ経由でAPIベースを読みます。
 - Pagesのビルド成果物は `dist/web`（V2.1 UI シェル）。
 
-## 2.5 常設化（systemd・人間が実施）
+## 2.5 常設化（systemd・稼働中）
 
-現在のプレビューAPIは `nohup` 起動（単一障害点）。常設化する場合の手順：
-**AIはサービス操作を行わないため、以下の実行は人間が行う。**
+**状態（2026-11-20 16:03 JST 〜 稼働中）**：`spatial-agent-studio.service` と
+`spatial-agent-studio-cloudflared.service` を user systemd で有効化済み。`Linger=yes` のためログアウト後も継続。
+`nohup` 運用は廃止（APIのPPIDはunitのMainPID）。
+
+```bash
+systemctl --user is-active spatial-agent-studio.service spatial-agent-studio-cloudflared.service
+systemctl --user show spatial-agent-studio.service -p MainPID -p NRestarts -p ActiveState
+loginctl show-user kensan -p Linger
+journalctl --user -u spatial-agent-studio.service -n 20 --no-pager
+```
+
+再有効化・別環境での手順（**AIはサービス操作を行わないため、実行は人間**）：
 
 ```bash
 # 1) 0600 の env ファイル（CORS / DB / Accessロール割当）を用意済みであること

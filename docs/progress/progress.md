@@ -153,9 +153,10 @@
    ただしCIゲートは**ローカルCI＋`ci/local-verify`必須チェック**で確立済み（PR #8で実証）。
    GitHub Actionsも併用したい場合のみ、人間が `templates/ci/ci.yml` を適用してください。
 2. **V2.1 UIの実データ範囲**：ダッシュボード/3D/承認/監査は実データ。データ取得/3D基盤/連携/統制/構成/導入計画はV2.1原本のサンプル表示。必要に応じて順次実データへ接続。
-3. **Previewの常設化**：現在は `nohup` でAPI/Tunnelを起動。systemd unitは
-   `deploy/systemd/` に用意済みだが、ハーネスポリシーによりAIからのサービス操作は制限。
-   人間が `~/.config/systemd/user/` へコピーして有効化可能。
+3. **Previewの常設化**：**完了（2026-11-20 16:03 JST・人による有効化）**。
+   `spatial-agent-studio.service` / `-cloudflared.service` を user systemd で稼働（`Linger=yes`）。
+   APIはsystemd管理（PPID=unit MainPID）で `nohup` は廃止。有効化直後の502は起動競合で、
+   直後に local/public health 200・CORS 204・ロール割当・smoke PASS を実測。
 4. **Previewの公開範囲**：カスタムドメインはAccess（メールOTP）で保護済み。ただし
    **`*.pages.dev` の直URL（安定URL・デプロイ別ハッシュURL）はAccess対象外**で、
    `sas-api.mirai-dx-platform.com` も公開のまま（アプリ認証のみ）。デモアカウントで誰でもログイン可能。
@@ -168,7 +169,7 @@
    残り：人間によるOTP実ログイン確認、prodドメイン（`spatial-agent-studio.mirai-dx-platform.com`）と
    Pages本番プロジェクト・Accessポリシーは未作成（本番昇格は承認事項）。
 2. V2.1の残り5画面を実データへ接続するか判断。
-3. Previewを常設化する場合、systemd unitを人間が有効化。
+3. ~~Previewの常設化~~ **完了（2026-11-20）**：user systemd でAPI/Tunnelを常駐（`Linger=yes`）。
 3. 本番化する場合、実データ・認証・外部連携のBacklogを起票。
 4. マージ後の追加改修は新しいブランチ + PRで行い、`pnpm ci:local` で `ci/local-verify` を投稿する。
 5. GitHub Actionsを併用する場合のみ、CIテンプレートを人間が適用する。
