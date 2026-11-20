@@ -1,16 +1,11 @@
 import { expect, test, type Page } from '@playwright/test';
 
-async function login(page: Page, email = 'manager@example.com', password = 'SasManager!2026') {
+async function login(page: Page) {
   await page.goto('/');
-  const loginBox = page.locator('#sasLogin');
-  await expect(loginBox).toBeVisible({ timeout: 20_000 });
-  await page.locator('#sasEmail').fill(email);
-  await page.locator('#sasPassword').fill(password);
-  await page.locator('.sas-login-submit').click();
-  await expect(loginBox).toBeHidden({ timeout: 15_000 });
   await expect(page.locator('#boot')).toHaveClass(/hide/, { timeout: 25_000 });
   await expect(page.locator('body')).toHaveAttribute('data-page', 'dash', { timeout: 25_000 });
   await expect(page.locator('#sites .site')).toHaveCount(5);
+  await expect(page.locator('#btnLogout')).toBeVisible({ timeout: 15_000 });
 }
 
 test.describe.configure({ mode: 'serial' });
@@ -22,6 +17,13 @@ test('V2.1 UI: ログイン→ホーム（実データ・5現場・9画面）', 
   await expect(page.locator('#nav .nb[data-pg="dash"]')).toHaveClass(/on/);
   await expect(page.locator('#themeBtn')).toBeVisible();
   await expect(page.locator('#roleName')).toContainText('現場代理人');
+});
+
+test('V2.1 UI: ログイン画面なしで起動（Access認証前提）', async ({ page }) => {
+  await login(page);
+  await expect(page.locator('#sasLogin')).toHaveCount(0);
+  await expect(page.locator('#sasSignedOut')).toBeHidden();
+  await expect(page.locator('#bdgAccess')).toContainText('Access 未経由');
 });
 
 test('V2.1 UI: 現場カードから現場Bを選択して3Dビューへ', async ({ page }) => {
@@ -41,9 +43,18 @@ test('V2.1 UI: ライト/ダーク切替が再読込後も保持される', asyn
   const after = await html.getAttribute('data-theme');
   expect(after).not.toBe(before);
   await page.reload();
-  await expect(page.locator('#sasLogin')).toBeHidden({ timeout: 20_000 });
+  await expect(page.locator('#sasSignedOut')).toBeHidden({ timeout: 20_000 });
   await expect(page.locator('body')).toHaveAttribute('data-page', 'dash', { timeout: 30_000 });
   await expect(html).toHaveAttribute('data-theme', after!);
+});
+
+test('V2.1 UI: ログアウト→再サインイン', async ({ page }) => {
+  await login(page);
+  await page.locator('#btnLogout').click();
+  await expect(page.locator('#sasSignedOut')).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('#sasSignedOutTitle')).toHaveText('ログアウトしました');
+  await page.locator('#sasSignedOutAgain').click();
+  await login(page);
 });
 
 test('V2.1 UI: AI出来形→人の承認→レポート→承認履歴→監査', async ({ page }) => {

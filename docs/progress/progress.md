@@ -1,6 +1,6 @@
 # 進捗・判断・証跡 — Spatial Agent Studio MVP
 
-最終更新：2026-11-20 12:47 JST
+最終更新：2026-11-20 13:00 JST
 
 ## 1. 現在の状態
 
@@ -25,6 +25,8 @@
 | V2.1 Preview | **配備済み・V2.1 UIで実操作確認済み**（デプロイ `69ed0a62`） |
 | Previewカスタムドメイン | **ACTIVE**：`spatial-agent-studio-preview.mirai-dx-platform.com`（Pages検証・証明書ともにactive、CNAMEプロキシ済み） |
 | Cloudflare Access（Preview） | **適用済み**：同ドメインにメールOTP（許可メール2件・8時間セッション）。Edgeは302でチームドメインへ |
+| アプリ認証UI | **ログイン画面なし**：Access通過後にデモセッションを自動確立。ヘッダーに認証状態バッジ（Access 認証済み／未経由） |
+| ログアウト | **実装済み**：アプリセッション失効 → Accessログアウト（チームドメイン）へ遷移。pages.dev等では再サインイン画面を表示 |
 | WebUI配備対象 | `930415d`（Pages `8b5bf4d3` で検証） |
 | APIコード | `ae2dfb5`（CORSのPagesサブドメイン対応を含む） |
 | main保護 | PR必須 / 削除禁止 / 強制Push禁止（ruleset `main-protection`） |

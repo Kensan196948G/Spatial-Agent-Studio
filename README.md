@@ -218,7 +218,7 @@ Previewは次の2部品で構成しています。
 - **GitHub ActionsのCIワークフローは未適用**：ハーネスの `DEPLOY=critical` ポリシーが `.github/workflows/**` へのAI書き込みを拒否します。代わりに**ローカルCIランナー**（`pnpm ci:local`）が実際の全検証を実行し、GitHubのコミットステータス `ci/local-verify` を投稿します。mainのrulesetはこのステータスを**Required Check**として要求するため、CI未実施のPRはマージできません。PR #8では **BLOCKED → `ci/local-verify` success → auto-merge** を実際に確認済みです（[証跡](docs/progress/evidence/ci-gate-proof.md)）。GitHub Actions用テンプレートは人間の適用用に [templates/ci/ci.yml](templates/ci/ci.yml) へ残しています。
 - **V2.1原本がUI正本**：2026-11-20のユーザー指示により、添付のV2.1システム版（9画面）を静的UIシェルとして採用。React版 `src/web/` は開発初期のレガシーで、現在のビルド対象外です。
 - **V2.1の5画面はサンプル表示**：ダッシュボード/3Dビュー/承認/監査は実データ、データ取得/3D基盤/連携/統制/構成/導入計画はV2.1のサンプルコンテンツ（一部の監査値は実データ）です。
-- **Cloudflare Access OTP（Preview）**：`spatial-agent-studio-preview.mirai-dx-platform.com` はAccessのメールOTPで保護（許可メール2件・セッション8時間）。V2.1のログインオーバーレイ（デモアカウント）はそのまま残ります。**`*.pages.dev` の直URLはAccess対象外**で、`sas-api` も公開のまま（アプリ認証のみ）です。
+- **Cloudflare Access OTP（Preview）**：`spatial-agent-studio-preview.mirai-dx-platform.com` はAccessのメールOTPで保護（許可メール2件・セッション8時間）。**アプリ独自のログイン画面は廃止**し、Access通過後は自動でデモセッションを確立します（ヘッダーのバッジが「Access 認証済み／未経由」を表示）。ヘッダーの**ログアウト**はアプリセッションとAccessセッションの両方を終了します。**`*.pages.dev` の直URLはAccess対象外**（バッジは「Access 未経由」）で、`sas-api` も公開のまま（アプリ認証のみ）です。
 
 ---
 

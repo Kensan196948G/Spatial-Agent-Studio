@@ -125,9 +125,11 @@
     <span class="badge"><i class="led"></i>OFFLINE</span>
     <span class="badge gpu" id="bdgGpu"><i class="led"></i><span>Renderer: 検出中</span></span>
     <span class="badge warn"><i class="led"></i>Human-in-the-Loop</span>
+    <span class="badge" id="bdgAccess" title="Cloudflare Access の認証状態"><i class="led"></i><span>Access 確認中</span></span>
   </div>
   <div class="hdr-sp"></div>
   <button class="rbtn" id="roleBtn"><span class="av" id="roleAv" style="--c:#3ee07f"><svg class="i sm"><use href="#i-shield"/></svg></span><span><b id="roleName">現場代理人・所長</b><small><svg class="i sm"><use href="#i-lock"/></svg>Entra ID SSO（模擬）</small></span><svg class="i sm"><use href="#i-chev"/></svg></button>
+  <button class="hbtn" id="btnLogout" hidden title="サインアウト（Cloudflare Access のセッションも終了）"><svg class="i sm"><use href="#i-lock"/></svg>ログアウト</button>
   <button class="hbtn" id="btnApi"><svg class="i sm"><use href="#i-api"/></svg>API連携イメージ</button>
   <button class="hbtn" id="btnReport"><svg class="i sm"><use href="#i-report"/></svg>レポート</button>
   <button class="hbtn" id="themeBtn" title="ライト／ダーク切替"><svg class="i moon"><use href="#i-moon"/></svg><svg class="i sun"><use href="#i-sun"/></svg></button>
@@ -332,23 +334,16 @@
     </div>
   </div>
 </div></div>
-<div id="sasLogin" class="sas-login" hidden>
-    <form id="sasLoginForm" class="sas-login-card" autocomplete="on">
+<div id="sasSignedOut" class="sas-login" hidden>
+    <div class="sas-login-card" role="alertdialog" aria-labelledby="sasSignedOutTitle">
       <div class="sas-login-brand">
         <div class="sas-login-logo"><svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="sasLoginGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#38e1ff"/><stop offset=".55" stop-color="#8b7bff"/><stop offset="1" stop-color="#ffb547"/></linearGradient></defs><rect width="64" height="64" rx="14" fill="#0b132e"/><circle cx="32" cy="32" r="17" fill="none" stroke="url(#sasLoginGrad)" stroke-width="3"/><path d="M32 15l12 9v16l-12 9-12-9V24z" fill="none" stroke="url(#sasLoginGrad)" stroke-width="2.4"/><circle cx="32" cy="32" r="4" fill="#38e1ff"/></svg></div>
-        <div><small>SPATIAL AGENT STUDIO</small><b>現場アカウントでログイン</b></div>
+        <div><small>SPATIAL AGENT STUDIO</small><b id="sasSignedOutTitle">ログアウトしました</b></div>
       </div>
-      <p class="sas-login-sub">個人利用MVPのデモアカウント、または組織アカウントでログインします。</p>
-      <label class="sas-field"><span>メールアドレス</span><input id="sasEmail" type="email" value="manager@example.com" autocomplete="username" required /></label>
-      <label class="sas-field"><span>パスワード</span><input id="sasPassword" type="password" value="SasManager!2026" autocomplete="current-password" required /></label>
-      <p id="sasLoginError" class="sas-login-error" hidden></p>
-      <button type="submit" class="sas-login-submit">ログイン</button>
-      <div class="sas-login-demo">
-        <button type="button" data-demo="manager">現場代理人・所長</button>
-        <button type="button" data-demo="staff">現場担当者</button>
-      </div>
-      <p class="sas-login-note">パスワードはデモ用です。Cloudflare Access OTP導入後は、この画面を使わずAccessで認証します。</p>
-    </form>
+      <p class="sas-login-sub" id="sasSignedOutMsg">Cloudflare Access のセッションを終了しました。再度閲覧するには再サインインしてください。</p>
+      <button type="button" class="sas-login-submit" id="sasSignedOutAgain">再サインイン</button>
+      <p class="sas-login-note">認証は Cloudflare Access が行います。このアプリ独自のパスワード入力はありません。</p>
+    </div>
   </div>
 
 <script src="/v21-app.js"></script>
