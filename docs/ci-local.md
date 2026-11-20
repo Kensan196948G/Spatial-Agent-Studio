@@ -46,6 +46,16 @@ pnpm ci:local <sha>
 結果サマリは `docs/progress/evidence/ci-local-<sha7>.json` に保存されます。
 実行ログは標準出力（必要なら `/tmp` へリダイレクト）に残ります。
 
+## 実証（PR #8）
+
+2026-11-20、PR #8 で以下を実証しました。
+
+1. CI未実行では `mergeStateStatus: BLOCKED`（`ci/local-verify` が無い）
+2. `pnpm ci:local` 実行 → 全6ステップ成功 → `ci/local-verify: success`
+3. `gh pr checks` が `pass` → auto-merge が `MERGED`（merge commit `7702958`）
+
+詳細：[docs/progress/evidence/ci-gate-proof.md](progress/evidence/ci-gate-proof.md)
+
 ## 前提・制約
 
 - このホストで実行するため、**PRのheadをチェックアウトしてから**実行してください
