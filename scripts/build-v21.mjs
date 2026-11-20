@@ -31,9 +31,12 @@ if (!html.includes('__SAS_COMMIT__')) {
 const commit = (() => {
   try {
     const sha = execFileSync('git', ['rev-parse', '--short', 'HEAD'], { encoding: 'utf8' }).trim();
-    const dirty = execFileSync('git', ['status', '--porcelain', '--untracked-files=no'], {
-      encoding: 'utf8',
-    }).trim();
+    // 配備物の中身に影響するパスだけを dirty 判定に使う（docs/証跡の差分は無視）
+    const dirty = execFileSync(
+      'git',
+      ['status', '--porcelain', '--untracked-files=no', '--', 'src', 'web-v21', 'scripts', 'db', 'package.json', 'pnpm-lock.yaml'],
+      { encoding: 'utf8' },
+    ).trim();
     return dirty ? `${sha}-dirty` : sha;
   } catch {
     return 'unknown';
