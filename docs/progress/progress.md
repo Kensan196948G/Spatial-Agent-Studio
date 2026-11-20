@@ -1,6 +1,6 @@
 # 進捗・判断・証跡 — Spatial Agent Studio MVP
 
-最終更新：2026-11-20 12:34 JST
+最終更新：2026-11-20 12:47 JST
 
 ## 1. 現在の状態
 
@@ -23,6 +23,8 @@
 | main HEAD（PR #11時点） | `7fb67799aef81967d908275b9393b979277ecde9` |
 | V2.1 UI | ダッシュボード/3D/承認/監査は実データ、他5画面はV2.1サンプル表示 |
 | V2.1 Preview | **配備済み・V2.1 UIで実操作確認済み**（デプロイ `69ed0a62`） |
+| Previewカスタムドメイン | **ACTIVE**：`spatial-agent-studio-preview.mirai-dx-platform.com`（Pages検証・証明書ともにactive、CNAMEプロキシ済み） |
+| Cloudflare Access（Preview） | **適用済み**：同ドメインにメールOTP（許可メール2件・8時間セッション）。Edgeは302でチームドメインへ |
 | WebUI配備対象 | `930415d`（Pages `8b5bf4d3` で検証） |
 | APIコード | `ae2dfb5`（CORSのPagesサブドメイン対応を含む） |
 | main保護 | PR必須 / 削除禁止 / 強制Push禁止（ruleset `main-protection`） |
@@ -147,13 +149,17 @@
 3. **Previewの常設化**：現在は `nohup` でAPI/Tunnelを起動。systemd unitは
    `deploy/systemd/` に用意済みだが、ハーネスポリシーによりAIからのサービス操作は制限。
    人間が `~/.config/systemd/user/` へコピーして有効化可能。
-4. **Previewの公開範囲**：Pages URLはインターネット公開。デモアカウントで誰でもログイン可能。
-   実データを入れない。必要ならCloudflare Access等を人間が追加。
+4. **Previewの公開範囲**：カスタムドメインはAccess（メールOTP）で保護済み。ただし
+   **`*.pages.dev` の直URL（安定URL・デプロイ別ハッシュURL）はAccess対象外**で、
+   `sas-api.mirai-dx-platform.com` も公開のまま（アプリ認証のみ）。デモアカウントで誰でもログイン可能。
+   実データを入れない。pages.dev側の制限はCloudflareのプラン/構成判断が必要。
 5. **本番向け**：実3DGS/LLM/SSO/外部連携はBacklog。本番配備は未実施。
 
 ## 8. 次の一手
 
-1. Cloudflare Access OTPとpreview/prodカスタムドメインの設定（メールアドレスが必要）。
+1. ~~Cloudflare Access OTPとpreviewカスタムドメイン~~ **完了（2026-11-20）**。
+   残り：人間によるOTP実ログイン確認、prodドメイン（`spatial-agent-studio.mirai-dx-platform.com`）と
+   Pages本番プロジェクト・Accessポリシーは未作成（本番昇格は承認事項）。
 2. V2.1の残り5画面を実データへ接続するか判断。
 3. Previewを常設化する場合、systemd unitを人間が有効化。
 3. 本番化する場合、実データ・認証・外部連携のBacklogを起票。

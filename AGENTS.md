@@ -63,6 +63,7 @@ pnpm run db:verify
 | 用途 | URL |
 | :-- | :-- |
 | WebUI | https://spatial-agent-studio-preview.pages.dev |
+| WebUI（Access保護） | https://spatial-agent-studio-preview.mirai-dx-platform.com |
 | API | https://sas-api.mirai-dx-platform.com |
 | DB | ローカル `spatial_agent_studio_preview` |
 

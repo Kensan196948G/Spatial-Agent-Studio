@@ -1,0 +1,39 @@
+{
+  "checkedAt": "2026-11-20T03:45:52.393Z",
+  "ui": "V2.1 static shell behind Cloudflare Access (OTP)",
+  "customDomain": "https://spatial-agent-studio-preview.mirai-dx-platform.com",
+  "dns": {
+    "queriedAtNs": "kareem.ns.cloudflare.com",
+    "aRecord": "104.21.57.65",
+    "cname": "spatial-agent-studio-preview -> spatial-agent-studio-preview.pages.dev"
+  },
+  "pagesCustomDomain": {
+    "status": "active",
+    "verification": "active",
+    "certificate": "active"
+  },
+  "access": {
+    "app": "Spatial Agent Studio Preview",
+    "appId": "082c00ee-21e7-4a1a-9fa5-93fb3f9c3e58",
+    "sessionDuration": "8h",
+    "policy": "allow by email (2 addresses, domain mix company + gmail)",
+    "edgeStatus": "HTTP/2 302 ",
+    "redirectHost": "winter-lake-f4c9.cloudflareaccess.com",
+    "kidPrefix": "f9ee1e8c40ca",
+    "otpSignalsOnLoginPage": [
+      "otp",
+      "email"
+    ]
+  },
+  "api": {
+    "url": "https://sas-api.mirai-dx-platform.com",
+    "corsPreflightForCustomOrigin": {
+      "allowOrigin": "https://spatial-agent-studio-preview.mirai-dx-platform.com"
+    }
+  },
+  "gaps": [
+    "spatial-agent-studio-preview.pages.dev still serves the UI directly without Access (deployment hash URLs too)",
+    "sas-api.mirai-dx-platform.com remains public with no Access in front (app-level demo auth only)",
+    "Full OTP sign-in requires a human inbox; agent cannot complete the email step"
+  ]
+}

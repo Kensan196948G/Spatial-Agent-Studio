@@ -126,8 +126,15 @@ curl -s -i -X OPTIONS https://sas-api.mirai-dx-platform.com/api/bootstrap \
 
 ## 6. 公開範囲・注意
 
-- PagesのPreview URLはインターネット公開です。アプリのログイン（デモアカウント）で保護していますが、
+- **Access保護ドメイン（Preview）**：`https://spatial-agent-studio-preview.mirai-dx-platform.com`
+  （Pagesカスタムドメイン）。Cloudflare AccessのメールOTPが前段に立ち、未認証はチームドメイン
+  `winter-lake-f4c9.cloudflareaccess.com` へ302。許可メールはAccessポリシー
+  「Spatial Agent Studio users」（2件）、セッション8時間。
+  APIのCORSは同Originを許可済み（`CORS_ORIGINS`）。
+  AccessアプリID：`082c00ee-21e7-4a1a-9fa5-93fb3f9c3e58`。
+- PagesのPreview URL（`*.pages.dev`）は**Access対象外**でインターネット公開です。
   デモアカウントはREADMEに記載されています。**実データ・個人情報を入れないでください。**
 - API Tunnelも公開されています。認証必須APIはセッション/Bearerが必要です。
-- 本番正式環境への配備、DNS/Accessポリシーの変更は行っていません。
+- 本番正式環境への配備は行っていません。prod用ドメイン（`spatial-agent-studio.mirai-dx-platform.com`）と
+  Accessポリシーは未作成です。
 - Preview APIはこのホスト上のプロセスです。ホスト停止・再起動で停止します。
