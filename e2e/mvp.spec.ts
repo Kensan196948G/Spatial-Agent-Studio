@@ -130,3 +130,26 @@ test('dashboard: APIエラー時にエラー状態と再試行を表示する', 
   await expect(page.getByText('読み込みに失敗しました')).toBeVisible();
   await expect(page.getByRole('button', { name: '再試行' })).toBeVisible();
 });
+
+test('theme: ライト/ダーク切替が再読込後も保持される', async ({ page }) => {
+  await login(page, MANAGER);
+  const html = page.locator('html');
+  const before = await html.getAttribute('data-theme');
+  await page
+    .getByRole('button', { name: /ライトモードに切り替え|ダークモードに切り替え/ })
+    .click();
+  const after = await html.getAttribute('data-theme');
+  expect(after).not.toBe(before);
+  await page.reload();
+  await expect(html).toHaveAttribute('data-theme', after!);
+});
+
+test('site selector: 現場を切り替えて3Dビューを開ける', async ({ page }) => {
+  await login(page, MANAGER);
+  const select = page.getByLabel('現場を選択');
+  await expect(select.locator('option')).toHaveCount(6);
+  await select.selectOption('site-b');
+  await expect(page).toHaveURL(/\/sites\/site-b$/);
+  await expect(page.getByRole('heading', { name: '△△橋 下部工' })).toBeVisible();
+  await expect(select).toHaveValue('site-b');
+});

@@ -139,7 +139,7 @@ describe('Spatial Agent Studio API', () => {
     expect(boot.statusCode).toBe(200);
     const bootstrap = boot.json();
     expect(bootstrap.user.role).toBe('manager');
-    expect(bootstrap.dashboard.sites).toHaveLength(3);
+    expect(bootstrap.dashboard.sites).toHaveLength(5);
 
     const site = await app.inject({
       method: 'GET',

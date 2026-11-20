@@ -6,6 +6,7 @@ import type {
   Report,
   Run,
   SiteDetail,
+  SiteSummary,
   TaskKind,
   User,
 } from '@shared/types';
@@ -77,6 +78,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 export const api = {
   me: () => request<{ user: User }>('/auth/me'),
   bootstrap: () => request<Bootstrap>('/bootstrap'),
+  sites: () => request<{ sites: SiteSummary[] }>('/sites'),
   login: async (email: string, password: string) => {
     const res = await request<{ user: User; token?: string }>('/auth/login', {
       method: 'POST',

@@ -41,6 +41,7 @@ export type ViewerApi = {
   clearOverlays: () => void;
   setView: (view: CameraViewName, durationMs?: number) => void;
   setSimTime: (seconds: number | null) => void;
+  setTheme: (theme: 'light' | 'dark') => void;
   getSimTime: () => number;
   getStats: () => ViewerStats;
   destroy: () => void;
@@ -590,7 +591,7 @@ const ST = {
   scan: null as null | { axis: 'x' | 'z'; pos: number },
 };
 
-const FOG: [number, number, number] = [0.08, 0.14, 0.3];
+let FOG: [number, number, number] = [0.08, 0.14, 0.3];
 const HEAT: Array<[number, [number, number, number]]> = [
   [-1, [0.16, 0.39, 1]],
   [-0.5, [0.19, 0.75, 1]],
@@ -1100,6 +1101,9 @@ export function createViewer(
     setView,
     setSimTime(seconds) {
       frozen = seconds;
+    },
+    setTheme(theme) {
+      FOG = theme === 'light' ? [0.9, 0.94, 0.98] : [0.08, 0.14, 0.3];
     },
     getSimTime() {
       return frozen ?? (performance.now() - start) / 1000;

@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
+import { useTheme } from '../theme';
 import { useToast } from '../toast';
 import { Icon } from './Icon';
+import { SiteSwitcher } from './SiteSwitcher';
 
 function BrandMark(): ReactNode {
   return (
@@ -24,6 +26,7 @@ function BrandMark(): ReactNode {
 
 export function Layout(): ReactNode {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const toast = useToast();
   const navigate = useNavigate();
 
@@ -58,6 +61,15 @@ export function Layout(): ReactNode {
           </span>
         </div>
         <div className="header-spacer" />
+        <button
+          type="button"
+          className="theme-toggle"
+          onClick={toggleTheme}
+          aria-label={theme === 'dark' ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}
+          title={theme === 'dark' ? 'ライトモードに切り替え' : 'ダークモードに切り替え'}
+        >
+          <Icon name={theme === 'dark' ? 'sun' : 'moon'} size={17} />
+        </button>
         {user && (
           <div className="user-chip">
             <span className={`user-avatar role-${user.role}`} aria-hidden="true">
@@ -77,6 +89,9 @@ export function Layout(): ReactNode {
 
       <div className="app-body">
         <nav className="side-nav" aria-label="メインナビゲーション">
+          <div className="nav-site-switch">
+            <SiteSwitcher />
+          </div>
           <p className="nav-heading">メニュー</p>
           <NavLink to="/" end className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
             <Icon name="home" size={18} />

@@ -62,7 +62,7 @@ pnpm run db:seed
 ```
 
 - ユーザー2名（manager / staff）。パスワードは `SEED_*_PASSWORD` から取得（既定はデモ用）。
-- 現場3件（site-a / site-b / site-c）と各3版。
+- 現場5件（site-a〜site-e）と各3版。
 - 監査ログが空のときだけ `SEED` イベントを1件作成。
 - 既存ユーザー・現場は `ON CONFLICT DO NOTHING` で上書きしません。
 - 再実行しても重複しません。
@@ -74,6 +74,8 @@ pnpm run db:seed
 | site-a ○○川 築堤・護岸工事 | 100% | active | メインフロー |
 | site-b △△橋 下部工 | 55% | attention | 出来形不足の例 |
 | site-c □□トンネル 坑口部 | 30% | idle | 休止中 |
+| site-d 国道△△号 法面補修工事 | 78% | active | 法面補修 |
+| site-e 海岸堤防 嵩上げ工事 | 42% | attention | 嵩上げ・護岸 |
 
 すべて架空です。個人情報・実データは含みません。
 

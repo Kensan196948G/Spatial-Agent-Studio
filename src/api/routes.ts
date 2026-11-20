@@ -310,6 +310,11 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
   // ---------- dashboard / sites ----------
   app.get('/api/dashboard', { preHandler: guard }, async () => buildDashboard(pool));
 
+  app.get('/api/sites', { preHandler: guard }, async () => {
+    const result = await pool.query<SiteRow>(`${SITE_SELECT} ORDER BY s.id ASC`);
+    return { sites: result.rows.map(mapSiteSummary) };
+  });
+
   app.get('/api/sites/:id', { preHandler: guard }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const siteResult = await pool.query<SiteRow>(`${SITE_SELECT} WHERE s.id = $1`, [id]);

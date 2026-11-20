@@ -31,7 +31,9 @@ export type IconName =
   | 'hazard'
   | 'calendar'
   | 'external'
-  | 'spark';
+  | 'spark'
+  | 'sun'
+  | 'moon';
 
 const PATHS: Record<IconName, ReactNode> = {
   home: (
@@ -214,6 +216,14 @@ const PATHS: Record<IconName, ReactNode> = {
       <path d="m5.6 5.6 2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8" />
     </>
   ),
+  sun: (
+    <>
+      <circle cx="12" cy="12" r="4" />
+      <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2" />
+      <path d="m4.6 4.6 1.4 1.4M18 18l1.4 1.4M19.4 4.6 18 6M6 18l-1.4 1.4" />
+    </>
+  ),
+  moon: <path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2z" />,
 };
 
 export function Icon({

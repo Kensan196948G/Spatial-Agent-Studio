@@ -17,6 +17,7 @@
 | マージコミット（PR #1） | `0134a1c63276cbd0f511377b87f874bbc4e76977`（2026-11-20 11:09 JST） |
 | ドキュメントPR | **#2〜#5 MERGED** https://github.com/Kensan196948G/Spatial-Agent-Studio/pulls?q=is%3Apr |
 | テスト/証跡PR | **#6/#7 MERGED**（安全離隔E2E／最新main再配備） |
+| UI改善 | **ライト/ダーク切替・現場セレクタ（5現場）**（PR #10） |
 | CIゲート | **`ci/local-verify`（ローカルCI）をRequired Checkとして運用**。PR #8でBLOCKED→success→auto-mergeを実証 |
 | main HEAD（PR #8時点） | `7702958f50c1a2871a1de862ed9d0e180ea593df` |
 | WebUI配備対象 | `930415d`（Pages `8b5bf4d3` で検証） |
@@ -71,7 +72,7 @@
 | Lint | `pnpm run lint` | **PASS**（exit 0） |
 | Unit | `pnpm run test:unit` | **PASS 7/7** |
 | API Integration | `pnpm run test:api` | **PASS 8/8** |
-| E2E | `pnpm run test:e2e` | **PASS 4/4**（manager出来形 / staff / manager安全離隔 / error） |
+| E2E | `pnpm run test:e2e` | **PASS 6/6**（manager出来形 / staff / manager安全離隔 / error / **theme / site selector**） |
 | Build | `pnpm run build` | **PASS**（Vite 60 modules） |
 | Secret scan | `pnpm run secret-scan` | **PASS**（44 files） |
 | DB migrate/seed/verify | `db:migrate` / `db:seed` / `db:verify` | **PASS**（dev/test/preview） |
@@ -109,7 +110,7 @@
 - main HEAD（PR #8時点）：`7702958`（ローカルCIランナー＋Required Checkを含む。WebUI配備は`930415d`/`8b5bf4d3`）
 - main保護：ruleset `main-protection`（PR必須 / `ci/local-verify`必須 / deletion / non_fast_forward）
 - CI：`.github/workflows/**` はハーネスポリシーで追加不可。代わりにローカルCIが `ci/local-verify` を投稿し、PR #8で **BLOCKED → success → auto-merge** を実証。
-- ローカル検証：typecheck / lint / unit 7 / API 8 / E2E 4 / build / secret-scan すべてPASS。
+- ローカル検証：typecheck / lint / unit 7 / API 8 / E2E 6 / build / secret-scan すべてPASS。
 - Preview再配備：`930415d` から再ビルドし `8b5bf4d3` に配備、安定URLで再スモークPASS（監査11件）。
 - CORS修正後：API再起動＋`45b9e8ff` Originのプリフライト確認、再スモークPASS（監査10件）。
 - 最新main再配備：`930415d` → `8b5bf4d3`、再スモークPASS（監査11件）。
