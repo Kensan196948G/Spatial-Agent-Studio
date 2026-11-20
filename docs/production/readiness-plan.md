@@ -159,6 +159,8 @@
 | 2026-11-20 16:55 | **D5** インシデント対応手順 | [incident-runbook.md](incident-runbook.md)（検知→初動→再起動→ロールバック→証跡→訓練） |
 | 2026-11-20 20:52 | **D4** 監査CSVの日次保全 | `scripts/export-audit.sh`（84行・sha256付き・365世代） |
 | 2026-11-20 20:52 | **E3** a11y簡易監査（主要3画面） | `scripts/a11y-audit.mjs`。**修正後 0件**（H1追加・アイコンボタンにaria-label） |
+| 2026-11-20 21:32 | **A6 完了（既知3名）** Accessポリシー | 入口＝管理者gmail＋yahoo＋2ドメイン／権限＝ロール割当。EMAIL_4は未登録 |
+| 2026-11-20 21:32 | **B1 完了（既知3名）** ロール解決 | 4アドレスで実測一致（agent,field,hq,it／field／agent,hq,it／field）、未登録403＋監査 |
 | 2026-11-20 21:25 | **A8 完了** 本番API分離 | `sas-api-prod` 200・本番DBでログイン/取得・本番UIを本番APIへ切替 |
 | 2026-11-20 21:25 | **B1 修正** ロール割当 | envの `SAS_ACCESS_ROLES_FILE` 破損（式の文字列）を絶対パスに修正。ファイルを指定どおりに整理（EMAIL_4は未登録） |
 | 2026-11-20 21:25 | **E4** ブラウザ範囲の実測 | 利用可能なPlaywrightブラウザは**Chromiumのみ**（firefox/webkit未導入）。対応表はChromium実測＋他は未検証として明記 |

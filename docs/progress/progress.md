@@ -31,6 +31,7 @@
 | QA指摘の修正（2026-11-20） | **DEF-01**（不正ID→500＋DBエラー露出）を404へ、**DEF-02**（スモークの旧ログイン前提）を自動サインインへ、**DEF-03**（`AI: DEMO`欠落）をヘッダーに追加。配備物にビルドcommitを埋め込み（`<meta name="sas-commit">` / システム設定「配信ビルド」） |
 | アプリ認証UI | **ログイン画面なし**：Access通過後にデモセッションを自動確立。ヘッダーに認証状態バッジ（Access 認証済み／未経由） |
 | ログアウト | **実装済み**：アプリセッション失効 → Accessログアウト（チームドメイン）へ遷移。pages.dev等では再サインイン画面を表示 |
+| 本番環境（2026-11-20） | **Pages本番** `spatial-agent-studio.mirai-dx-platform.com`（Access 302）／**本番API** `sas-api-prod`（7460・本番DB）／本番UIは本番APIへ接続。ロール割当は指定どおり（EMAIL_4は未登録） |
 | 品質ゲート（2026-11-20） | **決着**：requirements-review / testcase-review **承認**、release（最新 `gate_mwolm5o4_c78d9b27`）**承認**、旧release 2件は**却下**（superseded）。判断はユーザー、記録はAI代筆。プレビュー限定の条件付きGOが確定（本番はNo-Go据え置き） |
 | メール→ロール | **実装済み**：`/cdn-cgi/access/get-identity` のメールを `POST /api/auth/access` で照合しロール決定（付与ロール内のみ切替可）。割当は**ファイル** `~/.config/spatial-agent-studio/access-roles.txt`（1行1件・0600・git管理外）へ移行。解決順はファイル個別→ファイルドメイン→env。**保存のみで反映（再起動不要）** |
 | WebUI配備対象 | `930415d`（Pages `8b5bf4d3` で検証） |
