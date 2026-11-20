@@ -26,6 +26,7 @@
 | V2.1 Preview | **配備済み・V2.1 UIで実操作確認済み**（デプロイ `69ed0a62`） |
 | Previewカスタムドメイン | **ACTIVE**：`spatial-agent-studio-preview.mirai-dx-platform.com`（Pages検証・証明書ともにactive、CNAMEプロキシ済み） |
 | Cloudflare Access（Preview） | **適用済み**：同ドメインにメールOTP（許可メール2件・8時間セッション）。Edgeは302でチームドメインへ |
+| QA指摘の修正（2026-11-20） | **DEF-01**（不正ID→500＋DBエラー露出）を404へ、**DEF-02**（スモークの旧ログイン前提）を自動サインインへ、**DEF-03**（`AI: DEMO`欠落）をヘッダーに追加。配備物にビルドcommitを埋め込み（`<meta name="sas-commit">` / システム設定「配信ビルド」） |
 | アプリ認証UI | **ログイン画面なし**：Access通過後にデモセッションを自動確立。ヘッダーに認証状態バッジ（Access 認証済み／未経由） |
 | ログアウト | **実装済み**：アプリセッション失効 → Accessログアウト（チームドメイン）へ遷移。pages.dev等では再サインイン画面を表示 |
 | メール→ロール | **実装済み**：`/cdn-cgi/access/get-identity` のメールを `POST /api/auth/access` で照合しロール決定（付与ロール内のみ切替可）。割当は**ファイル** `~/.config/spatial-agent-studio/access-roles.txt`（1行1件・0600・git管理外）へ移行。解決順はファイル個別→ファイルドメイン→env。**保存のみで反映（再起動不要）** |
