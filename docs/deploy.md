@@ -120,6 +120,48 @@ scripts/healthcheck.sh    # 失敗時は非0。結果は ~/.local/state/spatial-
 
 ---
 
+## 2.8 本番環境の切替手順（準備済み・有効化は人間）
+
+### 構成（準備済み）
+
+| 部品 | 実体 | 状態 |
+| :-- | :-- | :-- |
+| 本番WebUI | Pages `spatial-agent-studio` → `spatial-agent-studio.mirai-dx-platform.com` | 稼働中（Accessあり） |
+| 本番API | `spatial-agent-studio-prod.service`（port 7460） | unit prepared（未起動） |
+| 本番APIホスト | `sas-api-prod.mirai-dx-platform.com` → `127.0.0.1:7460` | トンネル設定＋DNS追加済み（**再起動で反映**） |
+| 本番DB | `spatial_agent_studio_prod` | 作成・migrate・seed・verify 済み |
+
+### 有効化（人）
+
+```bash
+cd /home/kensan/Projects/Business-Project/Spatial-Agent-Studio
+
+# 1) 本番APIユニットを配置して起動
+cp deploy/systemd/spatial-agent-studio-prod.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now spatial-agent-studio-prod.service
+curl -s http://127.0.0.1:7460/api/health        # {"ok":true,"db":"up"}
+
+# 2) トンネルを再起動して sas-api-prod を反映
+systemctl --user restart spatial-agent-studio-cloudflared.service
+sleep 5
+curl -s https://sas-api-prod.mirai-dx-platform.com/api/health
+```
+
+### 本番WebUIを本番APIへ向ける（人 or AI）
+
+```bash
+# 本番APIベースで再ビルドして Pages(production) へ配備
+SAS_API_BASE=https://sas-api-prod.mirai-dx-platform.com pnpm run build
+npx wrangler pages deploy dist/web --project-name spatial-agent-studio --branch main \
+  --commit-dirty=true --commit-message "feat: point production UI at the production API"
+```
+
+配備後、`https://spatial-agent-studio.mirai-dx-platform.com` で Access ログイン → ダッシュボード →
+システム設定「配信ビルド」と API の接続先を確認。CORSは本番APIが本番Originのみ許可します。
+
+---
+
 ## 3. APIの起動
 
 ### ローカル確認（開発）
