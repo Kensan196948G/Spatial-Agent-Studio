@@ -24,6 +24,10 @@ Environment=DATABASE_URL=postgresql:///spatial_agent_studio_prod?host=/var/run/p
 Environment=SAS_DEMO_LOGIN=false
 Environment=SAS_REQUIRE_ORIGIN_AUTH=true
 Environment=SAS_ACCESS_EMAIL_LOGIN=false
+# Access JWT 検証（本番の正規ログイン経路）。Tunnel 経由で Access 配下に置くこと。
+Environment=SAS_REQUIRE_ACCESS_JWT=true
+Environment=SAS_ACCESS_TEAM_DOMAIN=https://winter-lake-f4c9.cloudflareaccess.com
+Environment=SAS_ACCESS_AUD=d62ec50f26efc45295acff076d5b533483c6b3912aa2159a7f2129b406ef78b1
 
 ExecStart=/home/kensan/Projects/Business-Project/Spatial-Agent-Studio/node_modules/.bin/tsx src/api/server.ts
 Restart=on-failure

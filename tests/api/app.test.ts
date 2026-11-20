@@ -410,6 +410,59 @@ describe('Spatial Agent Studio API', () => {
       expect(res.json().error.code).toBe('DEMO_LOGIN_DISABLED');
     });
 
+    it('accepts a verified Access JWT and rejects a missing one', async () => {
+      const { generateKeyPairSync, sign } = await import('node:crypto');
+      const { privateKey, publicKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
+      const jwk = publicKey.export({ format: 'jwk' }) as Record<string, unknown>;
+      const jwtConfig = loadConfig({
+        databaseUrl: TEST_DB,
+        nodeEnv: 'test',
+        appOrigin: 'http://127.0.0.1:7440',
+        cookieSecure: false,
+        sessionTtlHours: 8,
+        staticDir: '/nonexistent-for-api-tests',
+        corsOrigins: ['https://spatial-agent-studio-preview.pages.dev'],
+        accessRoles: { 'jwt-user@example.org': ['agent'] },
+        accessRoleDomains: {},
+        requireOriginAuth: true,
+        accessEmailLogin: false,
+        requireAccessJwt: true,
+        accessJwt: { teamDomain: 'https://team.example.com', aud: 'aud-1', keys: [jwk as never] },
+      });
+      const jwtApp = await buildApp(jwtConfig);
+      await jwtApp.ready();
+      const b64 = (v: unknown) => Buffer.from(JSON.stringify(v)).toString('base64url');
+      const header = b64({ alg: 'RS256', kid: 'k1' });
+      const payload = b64({
+        iss: 'https://team.example.com',
+        aud: ['aud-1'],
+        email: 'jwt-user@example.org',
+        exp: Math.floor(Date.now() / 1000) + 300,
+      });
+      const signature = sign('RSA-SHA256', Buffer.from(`${header}.${payload}`), privateKey).toString(
+        'base64url',
+      );
+      const origin = { origin: 'https://spatial-agent-studio-preview.pages.dev' };
+
+      const ok = await jwtApp.inject({
+        method: 'POST',
+        url: '/api/auth/access',
+        headers: { ...origin, 'cf-access-jwt-assertion': `${header}.${payload}.${signature}` },
+        payload: {},
+      });
+      expect(ok.statusCode).toBe(200);
+
+      const missing = await jwtApp.inject({
+        method: 'POST',
+        url: '/api/auth/access',
+        headers: origin,
+        payload: {},
+      });
+      expect(missing.statusCode).toBe(401);
+      expect(missing.json().error.code).toBe('ACCESS_JWT_REQUIRED');
+      await jwtApp.close();
+    });
+
     it('refuses to mint a session from an unverified Access email', async () => {
       const res = await strict.inject({
         method: 'POST',
