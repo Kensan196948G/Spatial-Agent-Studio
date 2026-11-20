@@ -33,7 +33,7 @@ Spatial-Agent-Studio の**本番リリース環境**の品質検証をお願い�
 - 本番API health 200 / 本番DBでデモログイン 200 / bootstrap・system/info 200
 - AI要約 `POST /api/ai/narrate` 200（demoプロバイダ・数値は計算エンジン由来）
 - 監査: ACCESS_ROLE_UNMAPPED・AI_CALL が記録される
-- 未認証APIは全て 401、認証試行は10回で 429（レート制限）
+- 未認証APIは全て 401、ログイン試行は **5回/10分** で 429（実装値）
 - a11y簡易監査（主要3画面）0件 / preview smoke PASS 8/8
 - 依存脆弱性 `pnpm audit --prod` 0件
 
