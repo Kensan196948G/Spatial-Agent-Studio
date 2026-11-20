@@ -6,8 +6,9 @@ After=network.target
 Type=simple
 WorkingDirectory=/home/kensan/Projects/Business-Project/Spatial-Agent-Studio
 
-# 0600 の env ファイル（Accessロール割当など）。PORT/DB/CORS は下の明示値で上書きする。
-EnvironmentFile=-%h/.config/spatial-agent-studio/preview-api.env
+# 0600 の本番専用 env。**EnvironmentFile は下の Environment= より優先される**ため、
+# PORT/DB/CORS は env 側に置かず、ここ（unit）だけで指定する。
+EnvironmentFile=-%h/.config/spatial-agent-studio/prod-api.env
 
 Environment=NODE_ENV=production
 Environment=PORT=7460
