@@ -12,6 +12,8 @@ export default tseslint.config(
       'test-results/**',
       'reference/**',
       '.playwright-mcp/**',
+      'web-v21/v21-app.js',
+      'web-v21/v21-theme.js',
     ],
   },
   js.configs.recommended,

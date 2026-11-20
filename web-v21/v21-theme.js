@@ -1,0 +1,1 @@
+(function(){var t=null;try{t=localStorage.getItem('sas-theme')}catch(e){}if(!t){try{t=matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'}catch(e){t='dark'}}document.documentElement.dataset.theme=t})()

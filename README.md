@@ -18,8 +18,8 @@
 | 🎯 **目的** | 夕方に集中する写真整理・集計・帳票作成をAIの下書きに置き換え、人は確認・判断・現場に時間を使う |
 | 👥 **利用者** | 現場代理人・所長（承認可）、現場担当者（承認不可）。個人利用MVP |
 | 🧭 **主要フロー** | ① 出来形管理：AI計測→下書き→人の承認→DB保存→再読込 ② 重機の安全離隔 ③ 承認・監査 |
-| 🖥️ **構成** | React + Vite（WebUI）／ Fastify + TypeScript（API）／ PostgreSQL（ローカル）／ Cloudflare Pages + Tunnel（Preview） |
-| 🎨 **UI** | **ライト／ダーク切替**（OS設定＋手動、再読込後も保持）、**現場セレクタ**（5現場） |
+| 🖥️ **構成** | **V2.1システム版（9画面）の静的UI＋APIブリッジ**／ Fastify + TypeScript（API）／ PostgreSQL（ローカル）／ Cloudflare Pages + Tunnel（Preview） |
+| 🎨 **UI** | **V2.1原本に100%準拠**（9画面・ライト/ダーク・現場選択）。ダッシュボード/3D/承認/監査は実データ、他画面はV2.1のサンプル表示 |
 | 🔒 **統制** | 承認は `manager` のみ、監査ログは追記専用、ハッシュ連鎖を再計算して検証 |
 | ⚠️ **対象外** | 実3DGS生成、実LLM/computer-use、SSO、外部連携、本番配備 |
 
@@ -30,10 +30,10 @@
 | **Cloudflare Pages Preview（WebUI）** | <https://spatial-agent-studio-preview.pages.dev> |
 | **API（Cloudflare Tunnel）** | <https://sas-api.mirai-dx-platform.com/api/health> |
 | ローカルAPI | <http://127.0.0.1:7440/api/health> |
-| ローカルWeb（Vite） | <http://127.0.0.1:5174> |
+| ローカルWeb（V2.1 UI） | <http://127.0.0.1:7440> |
 
 PreviewのAPIは、このホストのローカルPostgreSQL（`spatial_agent_studio_preview`）に接続しています。
-対象コミット：`930415d`（main、PR #6 merge）／WebUIデプロイ `8b5bf4d3`
+対象コミット：V2.1 UIマージ後main（デプロイは`fa05e244`から更新予定）
 GitHub：<https://github.com/Kensan196948G/Spatial-Agent-Studio>
 
 ![Cloudflare Preview dashboard](docs/progress/evidence/preview-dashboard.png)
@@ -117,11 +117,10 @@ pnpm run db:migrate && pnpm run db:seed
 
 ```bash
 pnpm run dev
-# Web: http://127.0.0.1:5174
-# API: http://127.0.0.1:7440
+# V2.1 UI + API: http://127.0.0.1:7440
 ```
 
-Viteが `/api` をAPIへプロキシします。本番ビルドをAPIから配信する場合：
+V2.1 UIは `web-v21/` の静的シェルを `dist/web` にコピーし、APIが同一オリジンで配信します。本番ビルドを配信する場合：
 
 ```bash
 pnpm run build
@@ -141,17 +140,17 @@ pnpm ci:local        # local CI runner + GitHub status ci/local-verify
 pnpm run secret-scan
 ```
 
-`test:e2e` はローカルAPIを起動し、AI出来形の承認→再読込→監査検証、staff権限拒否、安全離隔の承認→再読込、APIエラー状態を検証します。
+`test:e2e` はV2.1 UIを起動し、ログイン→ホーム（5現場・9画面）、現場切替、ライト/ダーク保持、AI出来形→人の承認→レポート→承認履歴→監査、を検証します。
 
 ---
 
 ## アーキテクチャ
 
 ```text
-Browser (React + Vite)
-  ├─ 3D viewer (Canvas2D) ── src/web/viewer/scene.ts
-  ├─ screens ─────────────── login / dashboard / site / approvals / audit
-  └─ API client ──────────── cookie or Bearer token
+Browser (V2.1 static shell + bridge.js)
+  ├─ V2.1 CSS/9 screens ──── web-v21/v21.css / index.html
+  ├─ 3D viewer/agent ─────── V2.1 v21-app.js
+  └─ API bridge ──────────── web-v21/bridge.js (cookie or Bearer)
         │
         ▼
 Fastify API (src/api)
@@ -215,7 +214,9 @@ Previewは次の2部品で構成しています。
 - スマートフォン詳細最適化は未実施（PCブラウザ中心）。
 - Cloudflare PreviewのAPIはこのホストが起動している間のみ利用可能。
 - **GitHub ActionsのCIワークフローは未適用**：ハーネスの `DEPLOY=critical` ポリシーが `.github/workflows/**` へのAI書き込みを拒否します。代わりに**ローカルCIランナー**（`pnpm ci:local`）が実際の全検証を実行し、GitHubのコミットステータス `ci/local-verify` を投稿します。mainのrulesetはこのステータスを**Required Check**として要求するため、CI未実施のPRはマージできません。PR #8では **BLOCKED → `ci/local-verify` success → auto-merge** を実際に確認済みです（[証跡](docs/progress/evidence/ci-gate-proof.md)）。GitHub Actions用テンプレートは人間の適用用に [templates/ci/ci.yml](templates/ci/ci.yml) へ残しています。
-- **WebUI設計仕様 v1.0 は承認待ち**：既存V2.1デザインのMVP適用として実装済み。
+- **V2.1原本がUI正本**：2026-11-20のユーザー指示により、添付のV2.1システム版（9画面）を静的UIシェルとして採用。React版 `src/web/` は開発初期のレガシーで、現在のビルド対象外です。
+- **V2.1の5画面はサンプル表示**：ダッシュボード/3Dビュー/承認/監査は実データ、データ取得/3D基盤/連携/統制/構成/導入計画はV2.1のサンプルコンテンツ（一部の監査値は実データ）です。
+- **Cloudflare Access OTPは未導入**：現在はV2.1 UI上のログインオーバーレイ（デモアカウント）で認証。Access OTPと本番カスタムドメインは次の段階です。
 
 ---
 
@@ -225,7 +226,8 @@ Previewは次の2部品で構成しています。
 src/
   api/       Fastify API（auth / routes / agent / audit / db）
   shared/    決定的計算エンジン + 型定義
-  web/       React WebUI（screens / components / viewer / styles）
+  web/       React版（開発初期のレガシー。現在のビルド対象外）
+web-v21/     V2.1原本のUIシェル + bridge.js（現在のWebUI）
 db/
   migrations/001_init.sql
 scripts/     db migrate/seed/verify/reset, secret scan

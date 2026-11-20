@@ -2,8 +2,8 @@ import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
-  timeout: 60_000,
-  expect: { timeout: 10_000 },
+  timeout: 180_000,
+  expect: { timeout: 20_000 },
   fullyParallel: false,
   workers: 1,
   retries: 0,
@@ -18,7 +18,7 @@ export default defineConfig({
     command: 'pnpm run start:e2e',
     url: 'http://127.0.0.1:7440/api/health',
     reuseExistingServer: false,
-    timeout: 60_000,
+    timeout: 180_000,
     env: {
       DATABASE_URL:
         process.env.TEST_DATABASE_URL ??

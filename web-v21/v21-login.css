@@ -1,0 +1,188 @@
+/* V2.1 static shell — login overlay + site picker (UI is the V2.1 original) */
+.sas-login {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(56, 120, 220, 0.28), transparent 65%),
+    rgba(4, 8, 20, 0.88);
+  backdrop-filter: blur(10px);
+}
+.sas-login[hidden] {
+  display: none;
+}
+.sas-login-card {
+  width: min(430px, 100%);
+  padding: 26px;
+  border: 1px solid var(--line2);
+  border-radius: 16px;
+  background: linear-gradient(170deg, rgba(16, 26, 56, 0.98), rgba(8, 14, 32, 0.98));
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+  color: var(--tx);
+}
+.sas-login-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.sas-login-logo {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  filter: drop-shadow(0 0 12px rgba(56, 225, 255, 0.3));
+}
+.sas-login-logo svg {
+  display: block;
+  width: 44px;
+  height: 44px;
+}
+.sas-login-brand small {
+  display: block;
+  color: var(--cy);
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+.sas-login-brand b {
+  display: block;
+  margin-top: 2px;
+  font-size: 19px;
+}
+.sas-login-sub {
+  margin: 0 0 14px;
+  color: var(--tx2);
+  font-size: 11.5px;
+  line-height: 1.7;
+}
+.sas-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  margin: 10px 0;
+}
+.sas-field span {
+  color: var(--tx2);
+  font-size: 11px;
+  font-weight: 600;
+}
+.sas-field input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line2);
+  border-radius: 9px;
+  background: rgba(5, 10, 24, 0.75);
+  color: var(--tx);
+  font-size: 13px;
+  font-family: var(--font);
+  outline: none;
+}
+.sas-field input:focus {
+  border-color: var(--cy);
+  box-shadow: 0 0 0 3px rgba(56, 225, 255, 0.12);
+}
+.sas-login-submit {
+  width: 100%;
+  margin-top: 6px;
+  padding: 11px 14px;
+  border: 1px solid var(--cy);
+  border-radius: 10px;
+  background: linear-gradient(135deg, rgba(56, 225, 255, 0.22), rgba(139, 123, 255, 0.22));
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+}
+.sas-login-submit:hover {
+  background: linear-gradient(135deg, rgba(56, 225, 255, 0.32), rgba(139, 123, 255, 0.3));
+}
+.sas-login-submit:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+.sas-login-error {
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 93, 108, 0.4);
+  border-radius: 8px;
+  background: rgba(255, 93, 108, 0.12);
+  color: #ffb9c0;
+  font-size: 11px;
+}
+.sas-login-demo {
+  display: flex;
+  gap: 7px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.sas-login-demo button {
+  flex: 1;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--tx2);
+  font-size: 10.5px;
+}
+.sas-login-demo button:hover {
+  color: var(--cy);
+  border-color: var(--cy);
+  background: rgba(56, 225, 255, 0.08);
+}
+.sas-login-note {
+  margin: 12px 0 0;
+  color: var(--tx3);
+  font-size: 9.5px;
+  line-height: 1.6;
+}
+
+/* Site picker in the V2.1 left panel */
+.sas-site-picker {
+  margin-bottom: 4px;
+}
+.sas-site-picker .sec-h {
+  margin-bottom: 5px;
+}
+.sas-site-picker select {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  background: rgba(8, 14, 34, 0.72);
+  color: var(--tx);
+  font-size: 11.5px;
+  font-family: var(--font);
+  outline: none;
+}
+.sas-site-picker select:focus {
+  border-color: var(--cy);
+}
+.sas-site-picker select option {
+  background: var(--panel);
+  color: var(--tx);
+}
+
+[data-theme='light'] .sas-login {
+  background:
+    radial-gradient(ellipse 70% 60% at 50% 0%, rgba(120, 170, 240, 0.35), transparent 65%),
+    rgba(235, 242, 250, 0.9);
+}
+[data-theme='light'] .sas-login-card {
+  background: linear-gradient(170deg, #ffffff, #f4f8fd);
+  border-color: rgba(30, 60, 110, 0.2);
+  box-shadow: 0 30px 80px rgba(20, 40, 100, 0.22);
+}
+[data-theme='light'] .sas-field input {
+  background: #ffffff;
+}
+[data-theme='light'] .sas-login-submit {
+  color: #fff;
+  background: linear-gradient(135deg, #0e7490, #6d28d9);
+  border-color: #0e7490;
+}
+[data-theme='light'] .sas-site-picker select {
+  background: rgba(255, 255, 255, 0.85);
+}

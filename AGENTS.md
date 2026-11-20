@@ -9,7 +9,7 @@
 ## スタック
 
 - Node.js 22 / pnpm 12 / TypeScript strict
-- Web: React 19 + Vite 6（`src/web`）
+- Web: **V2.1システム版の静的UIシェル**（`web-v21/`）＋ `bridge.js`。`src/web/` のReact版は開発初期のレガシーでビルド対象外
 - API: Fastify 5（`src/api`）
 - DB: PostgreSQL（`db/migrations`, `scripts/db.ts`）
 - Test: Vitest（unit/API）+ Playwright（E2E）
@@ -18,14 +18,14 @@
 
 ```bash
 pnpm install
-pnpm run dev            # API 7440 + Vite 5174
+pnpm run dev            # V2.1 UI + API 7440（web-v21 を dist/web にコピー）
 pnpm run typecheck
 pnpm run lint
 pnpm run test:unit
 pnpm run test:api       # test DB reset→migrate→seed→API tests
-pnpm run build
+pnpm run build          # V2.1 UI を dist/web へ
 pnpm run test:e2e       # test DB reset + build + Playwright
-pnpm ci:local           # local CI + GitHub status ci/local-verify
+pnpm ci:local           # local CI + GitHub status ci/local-verify（V2.1 E2E 4本）
 pnpm run secret-scan
 pnpm run db:migrate
 pnpm run db:seed
@@ -33,6 +33,8 @@ pnpm run db:verify
 ```
 
 ## 不変条件
+
+0. **UIの正本は `web-v21/` のV2.1原本**。`v21-app.js` は原本からの最小パッチ（認証待ち・APIフック・データ公開）のみ。`bridge.js` に実データ接続を集約する。
 
 1. **AIは数値を作らない。** 数値は `src/shared/measurements.ts` の決定的計算エンジンの結果のみ。
 2. **確定は人。** 承認・却下は `manager` のみ。`staff` は403 + 監査 `DENY`。
