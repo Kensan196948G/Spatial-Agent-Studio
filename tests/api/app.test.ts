@@ -365,6 +365,63 @@ describe('Spatial Agent Studio API', () => {
     expect(JSON.stringify(body)).not.toContain('@');
   });
 
+  describe('production auth hardening', () => {
+    let strict: FastifyInstance;
+    beforeAll(async () => {
+      const strictConfig = loadConfig({
+        databaseUrl: TEST_DB,
+        nodeEnv: 'test',
+        appOrigin: 'http://127.0.0.1:7440',
+        cookieSecure: false,
+        sessionTtlHours: 8,
+        staticDir: '/nonexistent-for-api-tests',
+        corsOrigins: ['https://spatial-agent-studio-preview.pages.dev'],
+        accessRoles: { 'manager@example.com': ['agent'] },
+        accessRoleDomains: {},
+        demoLogin: false,
+        requireOriginAuth: true,
+        accessEmailLogin: false,
+      });
+      strict = await buildApp(strictConfig);
+      await strict.ready();
+    });
+    afterAll(async () => {
+      await strict.close();
+    });
+
+    it('rejects auth calls without an Origin header', async () => {
+      const res = await strict.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        payload: { email: 'manager@example.com', password: 'x' },
+      });
+      expect(res.statusCode).toBe(403);
+      expect(res.json().error.code).toBe('ORIGIN_REQUIRED');
+    });
+
+    it('rejects demo-account password login', async () => {
+      const res = await strict.inject({
+        method: 'POST',
+        url: '/api/auth/login',
+        headers: { origin: 'https://spatial-agent-studio-preview.pages.dev' },
+        payload: { email: 'manager@example.com', password: 'SasManager!2026' },
+      });
+      expect(res.statusCode).toBe(401);
+      expect(res.json().error.code).toBe('DEMO_LOGIN_DISABLED');
+    });
+
+    it('refuses to mint a session from an unverified Access email', async () => {
+      const res = await strict.inject({
+        method: 'POST',
+        url: '/api/auth/access',
+        headers: { origin: 'https://spatial-agent-studio-preview.pages.dev' },
+        payload: { email: 'manager@example.com' },
+      });
+      expect(res.statusCode).toBe(503);
+      expect(res.json().error.code).toBe('ACCESS_EMAIL_LOGIN_DISABLED');
+    });
+  });
+
   it('narrates through the AI gateway (demo) and audits the call', async () => {
     const cookie = await login('manager@example.com', 'SasManager!2026');
     const res = await app.inject({

@@ -1,0 +1,9 @@
+[Unit]
+Description=5-minute health check for Spatial Agent Studio production
+
+[Timer]
+OnBootSec=3min
+OnUnitActiveSec=5min
+
+[Install]
+WantedBy=timers.target

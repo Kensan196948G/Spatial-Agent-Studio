@@ -25,6 +25,12 @@ export type AppConfig = {
   accessRolesFile?: string;
   /** 実AI（LLM）プロバイダの設定。キー未設定なら demo。 */
   ai: AiConfig;
+  /** デモアカウント（@example.com）のパスワードログインを許可するか。本番は false。 */
+  demoLogin: boolean;
+  /** /api/auth/* で Origin ヘッダを必須にするか。本番は true。 */
+  requireOriginAuth: boolean;
+  /** /api/auth/access（Accessメールでのセッション発行）を許可するか。本番は false。 */
+  accessEmailLogin: boolean;
 };
 
 /**
@@ -183,5 +189,10 @@ export function loadConfig(overrides: Partial<AppConfig> = {}): AppConfig {
       overrides.accessRoleDomains ?? parseAccessRoleDomains(process.env.SAS_ACCESS_ROLE_DOMAINS),
     accessRolesFile: overrides.accessRolesFile ?? (process.env.SAS_ACCESS_ROLES_FILE || undefined),
     ai: overrides.ai ?? loadAiConfig(),
+    demoLogin: overrides.demoLogin ?? (process.env.SAS_DEMO_LOGIN ?? 'true') !== 'false',
+    requireOriginAuth:
+      overrides.requireOriginAuth ?? (process.env.SAS_REQUIRE_ORIGIN_AUTH ?? 'false') === 'true',
+    accessEmailLogin:
+      overrides.accessEmailLogin ?? (process.env.SAS_ACCESS_EMAIL_LOGIN ?? 'true') !== 'false',
   };
 }
