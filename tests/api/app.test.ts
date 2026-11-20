@@ -311,6 +311,22 @@ describe('Spatial Agent Studio API', () => {
     expect(byDomain.json().roles).toEqual(['field']);
   });
 
+  it('exposes system info for the settings screen without leaking addresses', async () => {
+    const unauth = await app.inject({ method: 'GET', url: '/api/system/info' });
+    expect(unauth.statusCode).toBe(401);
+
+    const cookie = await login('manager@example.com', 'SasManager!2026');
+    const res = await app.inject({ method: 'GET', url: '/api/system/info', headers: auth(cookie) });
+    expect(res.statusCode).toBe(200);
+    const body = res.json();
+    expect(body.version).toBe('0.1.0');
+    expect(body.counts.sites).toBeGreaterThan(0);
+    expect(body.counts.auditEvents).toBeGreaterThan(0);
+    expect(body.audit.ok).toBe(true);
+    expect(body.session.ttlHours).toBe(8);
+    expect(JSON.stringify(body)).not.toContain('@');
+  });
+
   it('keeps the audit log append-only at the database level', async () => {
     const client = new Client({ connectionString: TEST_DB });
     await client.connect();

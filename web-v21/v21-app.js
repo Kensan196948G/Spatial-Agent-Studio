@@ -692,9 +692,9 @@ async function clickView(k,label){await clickEl(`.vbtn[data-view="${k}"]`,label|
 /* ---------- approval (Human-in-the-Loop) ---------- */
 const ROLE={cur:'agent',defs:{
   field:{n:'現場担当者',sub:'現場A 施工管理',grp:'SG-現場A-施工管理',c:'#38e1ff',ic:'worker',approve:false,pages:['dash','viewer','pipeline','data','approvals','arch','roadmap'],can:['AIに計測・集計・帳票下書きを依頼する','3Dで現場状況を確認・計測する','撮影データをアップロードする（3DGS化）']},
-  agent:{n:'現場代理人・所長',sub:'現場A 責任者',grp:'SG-現場A-代理人',c:'#3ee07f',ic:'shield',approve:true,pages:['dash','viewer','data','approvals','integration','arch','roadmap'],can:['AI下書きを確認して承認・却下する','是正指示・重機の停止指示を判断する','複数現場の状況を3Dで横断確認する']},
-  hq:{n:'本社（工務・安全・品質）',sub:'本社 工務部',grp:'SG-本社-工務安全品質',c:'#8b7bff',ic:'office',approve:false,pages:['dash','viewer','data','approvals','integration','arch','roadmap'],can:['現場に行かずに3Dで状況を確認する','点検・安全パトロールを一部リモートで行う','全社のKPI・傾向を分析する']},
-  it:{n:'IT・DX部門',sub:'情報システム',grp:'SG-IT-DX-Admin',c:'#ffb547',ic:'gpu',approve:false,pages:['dash','viewer','pipeline','data','approvals','integration','governance','arch','roadmap'],can:['AIゲートウェイ・権限・監査ログを管理する','APIコスト・GPU資源を管理する','操作許可・承認要否のポリシーを設定する']}}};
+  agent:{n:'現場代理人・所長',sub:'現場A 責任者',grp:'SG-現場A-代理人',c:'#3ee07f',ic:'shield',approve:true,pages:['dash','viewer','data','approvals','integration','audit','settings','arch','roadmap'],can:['AI下書きを確認して承認・却下する','是正指示・重機の停止指示を判断する','複数現場の状況を3Dで横断確認する']},
+  hq:{n:'本社（工務・安全・品質）',sub:'本社 工務部',grp:'SG-本社-工務安全品質',c:'#8b7bff',ic:'office',approve:false,pages:['dash','viewer','data','approvals','integration','audit','settings','arch','roadmap'],can:['現場に行かずに3Dで状況を確認する','点検・安全パトロールを一部リモートで行う','全社のKPI・傾向を分析する']},
+  it:{n:'IT・DX部門',sub:'情報システム',grp:'SG-IT-DX-Admin',c:'#ffb547',ic:'gpu',approve:false,pages:['dash','viewer','pipeline','data','approvals','integration','governance','audit','settings','arch','roadmap'],can:['AIゲートウェイ・権限・監査ログを管理する','APIコスト・GPU資源を管理する','操作許可・承認要否のポリシーを設定する']}}};
 function setRole(k,silent){if(!ROLE.defs[k])return;ROLE.cur=k;const d=ROLE.defs[k];$('#roleName').textContent=d.n;const av=$('#roleAv');av.innerHTML=icon(d.ic);av.style.setProperty('--c',d.c);
   if(!silent){audit('HUMAN','SIGN_IN',`Cloudflare Access：${d.n}／${d.grp}`);toast(`${d.n} としてサインイン（${d.grp}）`,d.ic,d.c,3000)}
   if($('#mApprove').classList.contains('show'))updateApproveRole();SAS.emit('role',k)}
@@ -1119,9 +1119,9 @@ SAS.on('notify',n=>notify({...n}));
 /* =========================================================
    Navigation, role menu
    ========================================================= */
-const PAGES=[['dash','ホーム','home'],['viewer','3Dビュー','cube'],['pipeline','データ取得','drone'],['data','3D基盤','db'],['approvals','承認','shield'],['integration','連携','link'],['governance','統制','lock'],['arch','構成','flow'],['roadmap','導入計画','flag']];
+const PAGES=[['dash','ホーム','home'],['viewer','3Dビュー','cube'],['pipeline','データ取得','drone'],['data','3D基盤','db'],['approvals','承認','shield'],['integration','連携','link'],['governance','統制','lock'],['audit','監査ログ','key'],['settings','システム設定','cog'],['arch','構成','flow'],['roadmap','導入計画','flag']];
 let page='viewer';
-$('#nav').innerHTML=PAGES.map(([k,n,ic],i)=>(i===2||i===4||i===7?'<div class="sep"></div>':'')+`<button class="nb" data-pg="${k}" title="${n}">${icon(ic,'i')}<span>${n}</span>${k==='approvals'?'<i class="bd" id="apBadge" style="display:none">0</i>':''}</button>`).join('');
+$('#nav').innerHTML=PAGES.map(([k,n,ic],i)=>([2,4,9].includes(i)?'<div class="sep"></div>':'')+`<button class="nb" data-pg="${k}" title="${n}">${icon(ic,'i')}<span>${n}</span>${k==='approvals'?'<i class="bd" id="apBadge" style="display:none">0</i>':''}</button>`).join('');
 $$('#nav .nb').forEach(b=>b.addEventListener('click',()=>goto(b.dataset.pg)));
 const allowed=k=>A.ROLE.defs[A.ROLE.cur].pages.includes(k);
 function refreshNav(){$$('#nav .nb').forEach(b=>b.classList.toggle('locked',!allowed(b.dataset.pg)))}
