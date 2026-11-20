@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" width="96" height="96" role="img" aria-label="IT・DX推進部 管理担当者">
+  <defs>
+    <linearGradient id="g3" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="#ff7ad9"/></linearGradient>
+    <style><![CDATA[
+      .ring{transform-origin:48px 48px;animation:pulse 3.4s ease-in-out infinite}
+      @keyframes pulse{0%,100%{opacity:.3;transform:scale(.92)}50%{opacity:.85;transform:scale(1.04)}}
+      .l1{animation:blink 1.4s steps(1) infinite}
+      .l2{animation:blink 1.9s steps(1) infinite .5s}
+      .l3{animation:blink 2.3s steps(1) infinite 1s}
+      @keyframes blink{0%,55%{opacity:1}56%,100%{opacity:.2}}
+      .gear{transform-origin:48px 48px;animation:spin 14s linear infinite}
+      @keyframes spin{to{transform:rotate(360deg)}}
+    ]]></style>
+  </defs>
+  <rect width="96" height="96" rx="22" fill="#0b1430" stroke="#1f2b52"/>
+  <circle class="ring" cx="48" cy="48" r="34" fill="none" stroke="#ffb547" stroke-opacity=".25" stroke-width="2" stroke-dasharray="6 6"/>
+  <g fill="none" stroke="url(#g3)" stroke-width="2.6" stroke-linejoin="round">
+    <rect x="30" y="24" width="36" height="14" rx="3"/>
+    <rect x="30" y="42" width="36" height="14" rx="3"/>
+    <rect x="30" y="60" width="36" height="14" rx="3"/>
+  </g>
+  <g fill="#ffb547">
+    <circle class="l1" cx="37" cy="31" r="2.4"/>
+    <circle class="l2" cx="37" cy="49" r="2.4"/>
+    <circle class="l3" cx="37" cy="67" r="2.4"/>
+  </g>
+  <g class="gear" fill="none" stroke="#ff7ad9" stroke-width="1.8">
+    <circle cx="48" cy="48" r="7" opacity=".0"/>
+  </g>
+</svg>

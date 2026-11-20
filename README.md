@@ -1,277 +1,324 @@
-# Spatial Agent Studio
+<p align="center">
+  <img src="docs/media/banner.svg" alt="Spatial Agent Studio — 土木業務オートパイロット" width="100%">
+</p>
 
-**空間AIエージェント・スタジオ（土木業務オートパイロット）— 個人利用MVP**
+<p align="center">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-3ee07f?style=flat-square"></a>
+  <img alt="CI" src="https://img.shields.io/badge/CI-ci%2Flocal--verify-38e1ff?style=flat-square">
+  <img alt="Node" src="https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=node.js&logoColor=white">
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-Fastify-3178c6?style=flat-square&logo=typescript&logoColor=white">
+  <img alt="Preview" src="https://img.shields.io/badge/Cloudflare-Pages%20%2B%20Tunnel-f38020?style=flat-square&logo=cloudflare&logoColor=white">
+  <img alt="Auth" src="https://img.shields.io/badge/Access-email%20OTP-8b7bff?style=flat-square">
+  <img alt="AI" src="https://img.shields.io/badge/AI-DEMO-ffb547?style=flat-square">
+</p>
 
-現場を3Dで見て、AIが計測・集計・帳票の下書きまで進め、**確定は人が行う**。
-すべての判断と操作は、改ざん検知可能な監査ログ（ハッシュ連鎖）に残ります。
+<p align="center">
+  <b>現場を3Dで見て、AIが計測・集計・帳票の下書きまで進める。確定は人が行う。</b><br>
+  すべての操作と判断は、改ざん検知できる監査ログ（ハッシュ連鎖）に残ります。
+</p>
 
-> **重要：AIはデモです。** 本MVPの「AIエージェント」はスクリプト化されたデモで、外部LLM/APIには接続しません。
-> 数値は `src/shared/measurements.ts` の**決定的な計算エンジン**が算出します。AIが数値を作ることはありません。
+<p align="center">
+  <a href="#role-field"><img src="docs/media/role-field.svg" width="76" alt=""></a>&nbsp;&nbsp;
+  <a href="#role-field"><b>現場代理人・管理者</b></a>　｜　
+  <a href="#role-hq"><img src="docs/media/role-hq.svg" width="76" alt=""></a>&nbsp;&nbsp;
+  <a href="#role-hq"><b>本社・支店内現場管理者</b></a>　｜　
+  <a href="#role-it"><img src="docs/media/role-it.svg" width="76" alt=""></a>&nbsp;&nbsp;
+  <a href="#role-it"><b>IT・DX推進部 管理担当者</b></a>
+</p>
+
+---
+
+## 🎬 30秒でわかる（実際の画面）
+
+<p align="center">
+  <a href="docs/media/demo.mp4"><img src="docs/media/demo.gif" alt="Spatial Agent Studio の操作デモ（約24秒）" width="86%"></a>
+  <br><sub>▶ クリックで MP4（24秒・音声なし）｜ホーム → 3Dビュー → 承認 → 監査ログ → システム設定</sub>
+</p>
+
+<p align="center">
+  <img src="docs/media/flow.svg" alt="撮影 → 3DGS → AI → 人の承認 → 連携" width="100%">
+</p>
+
+> **AIはデモです。** 本MVPの「AIエージェント」はスクリプト化されたデモで、外部LLM/APIへは接続しません。
+> 数値は `src/shared/measurements.ts` の**決定的な計算エンジン**が算出し、**AIが数値を作ることはありません**。
 > 現場・人物・数値はすべて架空のサンプルです。
 
 ---
 
-## 30秒でわかる
+## 👥 あなたの役割から読む
 
-| 項目 | 内容 |
-| :-- | :-- |
-| 🎯 **目的** | 夕方に集中する写真整理・集計・帳票作成をAIの下書きに置き換え、人は確認・判断・現場に時間を使う |
-| 👥 **利用者** | 現場代理人・所長（承認可）、現場担当者（承認不可）。個人利用MVP |
-| 🧭 **主要フロー** | ① 出来形管理：AI計測→下書き→人の承認→DB保存→再読込 ② 重機の安全離隔 ③ 承認・監査 |
-| 🖥️ **構成** | **V2.1システム版（11画面）の静的UI＋APIブリッジ**／ Fastify + TypeScript（API）／ PostgreSQL（ローカル）／ Cloudflare Pages + Tunnel（Preview） |
-| 🎨 **UI** | **V2.1原本準拠＋2画面を追加**（11画面・ライト/ダーク・現場選択）。ダッシュボード/3D/承認/監査/監査ログ/システム設定は実データ、他画面はV2.1のサンプル表示 |
-| 🔒 **統制** | 承認は `manager` のみ、監査ログは追記専用、ハッシュ連鎖を再計算して検証 |
-| ⚠️ **対象外** | 実3DGS生成、実LLM/computer-use、SSO、外部連携、本番配備 |
+<table>
+<tr>
+<td width="33%" valign="top" align="center">
+  <img src="docs/media/role-field.svg" width="72" alt=""><br>
+  <b>現場代理人・管理者</b><br>
+  <sub>現場を回す人／承認する人</sub>
+</td>
+<td width="33%" valign="top" align="center">
+  <img src="docs/media/role-hq.svg" width="72" alt=""><br>
+  <b>本社・支店内現場管理者</b><br>
+  <sub>複数現場を俯瞰する人</sub>
+</td>
+<td width="33%" valign="top" align="center">
+  <img src="docs/media/role-it.svg" width="72" alt=""><br>
+  <b>IT・DX推進部 管理担当者</b><br>
+  <sub>権限・監査・環境を守る人</sub>
+</td>
+</tr>
+<tr>
+<td valign="top">
+ 夕方に集中する写真整理・集計・帳票作成を、AIの下書きに置き換えます。<b>あなたが決めるのは「承認」だけ</b>。3Dで現場を確認し、数値の根拠をその場で確かめられます。
+</td>
+<td valign="top">
+  現場に行かずに、全現場の進捗・承認待ち・安全アラートを俯瞰できます。3Dで横断確認し、KPIと監査記録を根拠に現場へ指示できます。
+</td>
+<td valign="top">
+  ロール権限・Cloudflare Access・監査チェーン・データ件数を1画面で確認。監査ログの検証とCSV出力、ロール割当の変更、CIゲートの運用まで担います。
+</td>
+</tr>
+</table>
 
-### いま試せるURL
+---
 
-| 用途 | URL |
-| :-- | :-- |
-| **Cloudflare Pages Preview（WebUI）** | <https://spatial-agent-studio-preview.pages.dev> |
-| **API（Cloudflare Tunnel）** | <https://sas-api.mirai-dx-platform.com/api/health> |
-| ローカルAPI | <http://127.0.0.1:7440/api/health> |
-| ローカルWeb（V2.1 UI） | <http://127.0.0.1:7440> |
+<a name="role-field"></a>
 
-PreviewのAPIは、このホストのローカルPostgreSQL（`spatial_agent_studio_preview`）に接続しています。
-対象コミット：V2.1 UIマージ後main（デプロイは`fa05e244`から更新予定）
-GitHub：<https://github.com/Kensan196948G/Spatial-Agent-Studio>
+### 🦺 現場代理人・管理者のかたへ
 
-![Cloudflare Preview dashboard](docs/progress/evidence/preview-dashboard.png)
+**こんな毎日を置き換えます**：写真の整理 → 電卓 → 帳票 → 確認依頼。AIが下書きまで進め、あなたは内容を確かめて承認するだけ。
 
-### デモアカウント
+| できること | 画面 | ポイント |
+| :-- | :-- | :-- |
+| 3Dで現場を確認・計測（距離・面積・土量・断面） | **3Dビュー** | 設計との差分をヒートマップで表示。数値は計算エンジンが算出 |
+| AIに出来形・安全・点検の下書きを作らせる | **3Dビュー / AIパネル** | 知覚 → 推論 → 操作 → 検証の6ステップを可視化 |
+| **承認・却下**（確定・提出・停止） | **承認** | 承認してはじめてレポートが確定し、DBに残る |
+| 安全離隔の判断（重機と作業員） | **3Dビュー** | 危険域・最小離隔・侵入時刻を提示。停止指示は人が決める |
+| 監査ログの確認 | **監査ログ** | 誰が何をしたかをハッシュ連鎖で検証。CSVで持ち出せる |
+
+**はじめの3分**
+
+1. <https://spatial-agent-studio-preview.mirai-dx-platform.com> を開く（Cloudflare Access のメール認証）
+2. ホームの現場カードから現場を選ぶ → **3Dビュー**で現場を見る
+3. **承認**で下書きを確認 → **承認して確定** → 監査ログで記録を確認
+
+> 🔐 **承認できるのは「現場代理人・所長」ロールだけ**です。ロールは Cloudflare Access のメールアドレスで自動的に決まり、右上のメニューには**付与されたロールだけ**が並びます。
+
+---
+
+<a name="role-hq"></a>
+
+### 🏢 本社・支店内現場管理者のかたへ
+
+**現場に行かずに、全現場の「いま」を判断できます。**
+
+| できること | 画面 | ポイント |
+| :-- | :-- | :-- |
+| 全現場の進捗・承認待ち・安全アラートを俯瞰 | **ホーム** | KPIはDBの実データ。現場カードから即3Dへ |
+| 複数現場を3Dで横断確認 | **3Dビュー** | 現場切替・版切替・計測。リモートパトロールに |
+| 点検・安全パトロールの記録確認 | **承認 / 3Dビュー** | 下書きと判断の履歴を追える |
+| KPI・傾向の分析 | **ホーム / レポート** | 承認待ち件数・AI下書き件数・削減時間（試算） |
+| 監査の検証と持ち出し | **監査ログ** | 絞り込み・レコード詳細・ハッシュ再計算・CSV |
+
+> ⚠️ 本社ロールは**承認はできません**（閲覧・分析・監査が中心）。承認は現場代理人・所長が行います。
+
+---
+
+<a name="role-it"></a>
+
+### 🛠️ IT・DX推進部 管理担当者のかたへ
+
+**権限・監査・環境を、画面と設定ファイルの両方から管理できます。**
+
+| できること | 場所 | ポイント |
+| :-- | :-- | :-- |
+| ロール権限の確認（誰が何をできるか） | **システム設定 / 統制** | 4ロール×画面のマトリクスを実データで表示 |
+| Cloudflare Access の状態と付与ロール | **システム設定** | 認証状態・メール（マスク）・付与ロール・セッション |
+| 監査チェーンの検証とCSV出力 | **監査ログ** | 追記専用・SHA-256連鎖・ブラウザ側でも再計算 |
+| 環境情報（版・DB・uptime・CORS） | **システム設定** | ヘルスチェックも画面から実行 |
+| ロール割当の変更 | **ホスト上の割当ファイル** | 保存だけで反映（API再起動不要） |
+| 配備・復旧・CI | **docs / CI** | `pnpm ci:local` が必須チェックを投稿 |
+
+**運用の要点**
+
+```bash
+# ロール割当（メール → ロール）。保存するだけで反映されます。
+~/.config/spatial-agent-studio/access-roles.txt   # 0600 / git管理外
+# 形式（1行1件・先頭のロールが既定）:
+#    someone@example.com,field,agent,hq,it
+#    @example.co.jp,field
+
+# 検証つきローカルCI（GitHubの ci/local-verify を投稿）
+pnpm ci:local
+```
+
+- ロールキー：`field`（現場担当者） / `agent`（現場代理人・所長） / `hq`（本社） / `it`（IT・DX部門）
+- 未割当のメールは **403（ROLE_NOT_MAPPED）**。SPAは最小権限で警告表示します。
+- 実在のメールアドレスは**リポジトリに入れません**（ホスト上の0600ファイルのみ）。
+
+---
+
+## 🖥️ 11画面
+
+| # | 画面 | 何ができる | 現場担当 | 代理人 | 本社 | IT・DX |
+| :-: | :-- | :-- | :-: | :-: | :-: | :-: |
+| 1 | **ホーム** | KPI・現場カード・承認待ち・おすすめ操作 | ✅ | ✅ | ✅ | ✅ |
+| 2 | **3Dビュー** | 3D確認・計測・AIタスク・安全離隔 | ✅ | ✅ | ✅ | ✅ |
+| 3 | **データ取得** | 撮影→3DGS化の6段階処理（サンプル） | ✅ | — | — | ✅ |
+| 4 | **3D基盤** | 版管理・座標・アクセス権（サンプル） | ✅ | ✅ | ✅ | ✅ |
+| 5 | **承認** | 下書き確認・**承認/却下**・履歴 | 閲覧 | **✅承認** | 閲覧 | 閲覧 |
+| 6 | **連携** | 通知・帳票・保存先・原価（サンプル） | — | ✅ | ✅ | ✅ |
+| 7 | **統制** | ポリシー・ゲートウェイ・RBAC | — | — | — | ✅ |
+| 8 | **監査ログ** | 全件一覧・絞り込み・詳細・ハッシュ再計算・CSV | — | ✅ | ✅ | ✅ |
+| 9 | **システム設定** | 環境・認証・ロール・データ件数・監査状態 | — | ✅ | ✅ | ✅ |
+| 10 | **構成** | 7層のアーキテクチャ解説 | ✅ | ✅ | ✅ | ✅ |
+| 11 | **導入計画** | 段階導入ロードマップ | ✅ | ✅ | ✅ | ✅ |
+
+> ダッシュボード / 3D / 承認 / 監査 / 監査ログ / システム設定は**実データ**。データ取得・3D基盤・連携・統制・構成・導入計画はV2.1原本のサンプル表示です。
+
+---
+
+## 🔁 主要フロー（受入済み）
+
+**① 出来形管理（メイン）** — 現場A「○○川 築堤・護岸工事」
+`3Dで確認` → `AIが6ステップで計測・下書き` → `承認待ちに登録` → `内容を確認` → `承認して確定` → `レポート保存` → `再読込してもDBから復元` → `監査ログで VERIFIED`
+
+**② 重機 安全離隔** — 旋回中心・バケット先端・作業員3名を60秒分（0.2秒刻み）走査 → 危険域 `7.5m`・最小離隔 `5.0m`・侵入 `4.2秒` を算出 → アラートと停止は**人の承認**
+
+**③ 承認・監査** — 承認時のみレポート作成 / `audit_events` はDBトリガで `UPDATE`・`DELETE` を拒否 / ハッシュ連鎖を全件再計算
+
+---
+
+## 🚀 クイックスタート（ローカル）
+
+```bash
+# 前提: Node.js 22+ / pnpm 12+ / PostgreSQL 16+
+pnpm install
+
+createdb spatial_agent_studio
+createdb spatial_agent_studio_test
+createdb spatial_agent_studio_preview
+pnpm run db:migrate && pnpm run db:seed && pnpm run db:verify
+
+pnpm run dev      # V2.1 UI + API → http://127.0.0.1:7440
+```
+
+本番ビルドを配信する場合：
+
+```bash
+pnpm run build && pnpm run start   # http://127.0.0.1:7440
+```
+
+<details>
+<summary><b>デモアカウント（ローカル）</b></summary>
 
 | ロール | メール | パスワード | できること |
 | :-- | :-- | :-- | :-- |
 | 現場代理人・所長 | `manager@example.com` | `SasManager!2026` | AIタスク、**承認・却下**、監査閲覧 |
 | 現場担当者 | `staff@example.com` | `SasStaff!2026` | AIタスク、閲覧（**承認は403**） |
 
-> パスワードはデモ用です。共有・公開環境では必ず変更してください（`SEED_*_PASSWORD`）。
+パスワードはデモ用です。共有・公開環境では必ず変更してください（`SEED_*_PASSWORD`）。
+</details>
 
----
-
-## 主要フロー（受入済み）
-
-### 1. 出来形管理（メインフロー）
-
-1. ログイン → ホーム → 現場A「○○川 築堤・護岸工事」を開く
-2. 「盛土 出来形管理」をクリック
-3. AI（デモ）が6ステップで3Dビューを操作：知覚 → 推論 → 操作 → 検証
-4. 帳票ドラフトが生成され、**承認待ち**に登録
-5. 「内容を確認」→「承認して確定」
-6. レポートが登録され、**ページ再読込後もDBから復元**
-7. 監査ログでハッシュ連鎖が `VERIFIED`
-
-### 2. 重機 安全離隔チェック
-
-- 旋回中心・バケット先端・作業員3名の位置を60秒分（0.2秒刻み）走査
-- 危険エリア半径 `7.5m`、最小離隔 `5.0m`（W-02）、侵入時刻 `4.2秒` を算出
-- アラート送信・旋回停止は人の承認が必要
-
-### 3. 承認・監査
-
-- 承認一覧で下書きを確認し、承認／却下
-- 承認時のみレポートを作成
-- 監査ログは `APPROVED` / `REJECTED` / `DENY` 等を追記
-- `audit_events` はDBトリガで `UPDATE` / `DELETE` を拒否
-
----
-
-## クイックスタート（ローカル）
-
-### 前提
-
-- Node.js 22+
-- pnpm 12+
-- PostgreSQL 16+（ローカル）
-
-### 1. 依存関係
-
-```bash
-pnpm install
-```
-
-### 2. データベース
-
-ローカルでは **Unixソケットのpeer認証**（OSユーザー）を既定にしています。専用DBを作成します。
-
-```bash
-createdb spatial_agent_studio
-createdb spatial_agent_studio_test
-createdb spatial_agent_studio_preview
-pnpm run db:migrate
-pnpm run db:seed
-pnpm run db:verify
-```
-
-別ホスト・別ロールのPostgreSQLを使う場合：
-
-```bash
-export DATABASE_URL='postgresql://USER:PASSWORD@HOST:5432/spatial_agent_studio'
-export TEST_DATABASE_URL='postgresql://USER:PASSWORD@HOST:5432/spatial_agent_studio_test'
-pnpm run db:migrate && pnpm run db:seed
-```
-
-`.env.example` に全環境変数の名前と用途を記載しています（値はコミットしない）。
-
-### 3. 起動
-
-```bash
-pnpm run dev
-# V2.1 UI + API: http://127.0.0.1:7440
-```
-
-V2.1 UIは `web-v21/` の静的シェルを `dist/web` にコピーし、APIが同一オリジンで配信します。本番ビルドを配信する場合：
-
-```bash
-pnpm run build
-pnpm run start   # http://127.0.0.1:7440
-```
-
-### 4. テスト
+<details>
+<summary><b>テストとローカルCI</b></summary>
 
 ```bash
 pnpm run typecheck
 pnpm run lint
 pnpm run test:unit
-pnpm run test:api     # test DBをreset→migrate→seedしてから実行
-pnpm run build
-pnpm run test:e2e     # test DB reset + build + Playwright
-pnpm ci:local        # local CI runner + GitHub status ci/local-verify
+pnpm run test:api      # test DB reset → migrate → seed
+pnpm run test:e2e      # test DB reset + build + Playwright（11画面）
+pnpm ci:local          # 全検証 + GitHub status ci/local-verify
 pnpm run secret-scan
 ```
-
-`test:e2e` はV2.1 UIを起動し、ログイン→ホーム（5現場・11画面）、現場切替、ライト/ダーク保持、AI出来形→人の承認→レポート→承認履歴→監査、監査ログ画面（絞り込み・レコード詳細・ハッシュ再計算）、システム設定画面（環境・権限・データ・ヘルスチェック）を検証します。
+</details>
 
 ---
 
-## アーキテクチャ
+## 🏗️ アーキテクチャ
+
+<p align="center"><img src="docs/media/flow.svg" alt="撮影 → 3DGS → AI → 人の承認 → 連携" width="100%"></p>
 
 ```text
 Browser (V2.1 static shell + bridge.js)
-  ├─ V2.1 CSS/9 screens ──── web-v21/v21.css / index.html
-  ├─ 3D viewer/agent ─────── V2.1 v21-app.js
-  └─ API bridge ──────────── web-v21/bridge.js (cookie or Bearer)
+  ├─ V2.1 CSS / 11 screens ── web-v21/v21.css, index.html
+  ├─ 3D viewer / agent ────── V2.1 v21-app.js
+  └─ API bridge ───────────── web-v21/bridge.js（Cookie または Bearer）
         │
         ▼
 Fastify API (src/api)
-  ├─ auth / sessions ─────── scrypt + HttpOnly cookie + Bearer
-  ├─ AI orchestrator ─────── demo steps (src/api/agent.ts)
-  ├─ calculation engine ──── src/shared/measurements.ts
-  ├─ approvals / reports ─── 人の承認でのみ確定
-  └─ audit hash chain ────── SHA-256(prev|ts|actor|type|detail)
+  ├─ auth / sessions ──────── scrypt + HttpOnly Cookie + Bearer
+  ├─ AI orchestrator ──────── demo steps (src/api/agent.ts)
+  ├─ calculation engine ───── src/shared/measurements.ts（フロントと共有）
+  ├─ approvals / reports ──── 人の承認でのみ確定
+  └─ audit hash chain ─────── SHA-256(prev|ts|actor|type|detail)
         │
         ▼
 PostgreSQL (local)
   users / sessions / sites / site_versions / runs / approvals / reports / audit_events
 ```
 
-- **フロントとサーバで同じ計算エンジン**を使用。同じ入力なら同じ数値になります。
+- **同じ計算エンジンをフロントとサーバで共有**。同じ入力なら同じ数値になります。
 - **AIは数値を作らない**：`deviationStats` / `embankmentBalance` / `safetyScan` の結果を下書きに使用。
-- **確定は人**：`POST /api/approvals/:id/decision` は `manager` のみ。`staff` は403 + 監査DENY。
-- **監査は追記専用**：DBトリガ + ハッシュ連鎖検証。
+- **確定は人**：`POST /api/approvals/:id/decision` は `manager` のみ。`staff` は403 + 監査 `DENY`。
+- **監査は追記専用**：DBトリガ + ハッシュ連鎖検証 + 画面での再計算。
 
-詳細：[docs/architecture.md](docs/architecture.md) / [docs/api.md](docs/api.md) / [docs/db.md](docs/db.md)
+詳細：[architecture](docs/architecture.md) ／ [API](docs/api.md) ／ [DB](docs/db.md)
 
 ---
 
-## Cloudflare Preview
-
-Previewは次の2部品で構成しています。
+## ☁️ Preview 構成（公開中）
 
 | 部品 | 実体 | URL |
 | :-- | :-- | :-- |
-| WebUI | Cloudflare Pages（静的SPA） | <https://spatial-agent-studio-preview.pages.dev> |
-| WebUI（Access保護） | Pagesカスタムドメイン + Cloudflare Access（メールOTP） | <https://spatial-agent-studio-preview.mirai-dx-platform.com> |
-| API | ローカルFastify + Cloudflare Tunnel | <https://sas-api.mirai-dx-platform.com> |
-| DB | ローカルPostgreSQL `spatial_agent_studio_preview` | localhost only |
+| WebUI（Access保護） | Cloudflare Pages カスタムドメイン + Access（メールOTP） | <https://spatial-agent-studio-preview.mirai-dx-platform.com> |
+| WebUI（直URL・Access外） | Cloudflare Pages | <https://spatial-agent-studio-preview.pages.dev> |
+| API | ローカル Fastify + Cloudflare Tunnel | <https://sas-api.mirai-dx-platform.com/api/health> |
+| DB | ローカル PostgreSQL `spatial_agent_studio_preview` | localhost only |
 
-- Pagesのビルドは `VITE_API_BASE_URL=https://sas-api.mirai-dx-platform.com` を設定。
-- クロスオリジンでは **Bearerトークン**（sessionStorage）を使用し、Cookieの第三者制限を回避。
-- APIは `CORS_ORIGINS` でPagesのOriginのみ許可。
-- トンネル設定：[deploy/cloudflared/config.yml](deploy/cloudflared/config.yml)
-- systemd unit（参考）：[deploy/systemd/](deploy/systemd/)
+- クロスオリジンでは **Bearerトークン**（sessionStorage）を使用。APIは `CORS_ORIGINS` で許可Originのみ。
+- **ログイン画面はありません**。Access通過後に自動でデモセッションを確立（バッジが「Access 認証済み／未経由」を表示）。
+- ヘッダーの**ログアウト**で、アプリとAccessの両方のセッションを終了します。
+- `*.pages.dev` の直URLはAccess対象外です（`sas-api` も公開・アプリ認証のみ）。
 
-再配備手順・検証手順：[docs/deploy.md](docs/deploy.md)
+<details>
+<summary><b>セキュリティ / 既知の制約（クリックで展開）</b></summary>
 
-> **本番ではありません。** Cloudflare PagesのPreviewプロジェクトと、ローカルAPIのTunnelです。
-> 2026-11-20にPreviewカスタムドメインとCloudflare Access（メールOTP）を追加しました。
-> 本番正式環境への昇格は行っていません。
-
----
-
-## セキュリティ / デモ境界
-
-- 秘密情報はリポジトリに含めません。`.env` はgitignore済みです。
-- ローカルDBはUnixソケットpeer認証（または環境変数の専用ロール）。
-- パスワードはscrypt（N=16384, r=8, p=1）でハッシュ化。
-- セッションはHttpOnly + SameSite=Lax Cookie、またはBearerトークン（Pages用）。
-- 監査ログは追記専用。ハッシュ連鎖を全件再計算して検証。
+- 秘密情報はリポジトリに含めません（`.env` はgitignore）。パスワードはscrypt、セッションはHttpOnly CookieまたはBearer。
+- 監査ログは追記専用（DBトリガ）。ハッシュ連鎖を全件再計算して検証。
 - **AI（デモ）**：外部LLM/APIへは接続しません。画面に `AI: DEMO` を常時表示。
-- **サンプルデータ**：現場・人物・数値は架空です。
-
-### 既知の制約
-
-- 実3DGS/点群/LiDARの取込、WebGPUレンダラは未実装（Canvas2Dのみ）。
-- 実LLM/computer-use、AIゲートウェイ、SSO、Teams/帳票/原価連携は対象外。
+- 実3DGS/点群/LiDARの取込、WebGPUレンダラは未実装（Canvas2Dのみ）。実LLM/computer-use・SSO・外部連携は対象外。
 - スマートフォン詳細最適化は未実施（PCブラウザ中心）。
-- Cloudflare PreviewのAPIはこのホストが起動している間のみ利用可能。
-- **GitHub ActionsのCIワークフローは未適用**：ハーネスの `DEPLOY=critical` ポリシーが `.github/workflows/**` へのAI書き込みを拒否します。代わりに**ローカルCIランナー**（`pnpm ci:local`）が実際の全検証を実行し、GitHubのコミットステータス `ci/local-verify` を投稿します。mainのrulesetはこのステータスを**Required Check**として要求するため、CI未実施のPRはマージできません。PR #8では **BLOCKED → `ci/local-verify` success → auto-merge** を実際に確認済みです（[証跡](docs/progress/evidence/ci-gate-proof.md)）。GitHub Actions用テンプレートは人間の適用用に [templates/ci/ci.yml](templates/ci/ci.yml) へ残しています。
-- **V2.1原本がUI正本**：2026-11-20のユーザー指示により、添付のV2.1システム版（9画面）を静的UIシェルとして採用。React版 `src/web/` は開発初期のレガシーで、現在のビルド対象外です。
-- **追加した2画面**：左メニューに「**監査ログ**」（追記専用・ハッシュ連鎖の全件一覧、種別/主体/検索での絞り込み、レコード詳細、ブラウザでのハッシュ再計算、CSV書出）と「**システム設定**」（環境情報、Access認証状態・付与ロール、データ件数、監査チェーン、ロール別権限、テーマ切替、ヘルスチェック）を追加。どちらも実データで、`GET /api/audit` と `GET /api/system/info` に接続しています。
-- **V2.1の5画面はサンプル表示**：ダッシュボード/3Dビュー/承認/監査/監査ログ/システム設定は実データ、データ取得/3D基盤/連携/統制/構成/導入計画はV2.1のサンプルコンテンツ（一部の監査値は実データ）です。
-- **Cloudflare Access OTP（Preview）**：`spatial-agent-studio-preview.mirai-dx-platform.com` はAccessのメールOTPで保護（許可メール2件・セッション8時間）。**アプリ独自のログイン画面は廃止**し、Access通過後は自動でデモセッションを確立します（ヘッダーのバッジが「Access 認証済み／未経由」を表示）。ヘッダーの**ログアウト**はアプリセッションとAccessセッションの両方を終了します。**`*.pages.dev` の直URLはAccess対象外**（バッジは「Access 未経由」）で、`sas-api` も公開のまま（アプリ認証のみ）です。
-- **ロールはAccessのメールアドレスで決まる**：1人に複数ロールを付与でき、ロールメニューには**付与されたロールだけ**が並び、その範囲でのみ切替できます（現場担当者は承認不可・自ロールのみ）。割当はAPIホスト上の**割当ファイル**（`~/.config/spatial-agent-studio/access-roles.txt`、0600・git管理外）で管理し、1行1件 `email,role1,role2,...`（または `@domain,roles`）で記述します。**保存するだけで反映され、API再起動は不要**です。解決順は ファイルのメール → ファイルのドメイン → 環境変数（`SAS_ACCESS_ROLES`／`SAS_ACCESS_ROLE_DOMAINS`）。未割当は403。**実在のメールアドレスはリポジトリに入れません**。
+- Preview APIはこのホストが起動している間のみ利用可能。
+- **GitHub Actionsのワークフローは未適用**：ハーネスポリシーにより `.github/workflows/**` へ書き込みできません。代わりに**ローカルCIランナー**（`pnpm ci:local`）が実際の全検証を実行し、`ci/local-verify` を投稿します。mainのrulesetはこれをRequired Checkとして要求します。[証跡](docs/progress/evidence/ci-gate-proof.md)
+</details>
 
 ---
 
-## ディレクトリ
+## 📚 ドキュメント
+
+| ドキュメント | 内容 |
+| :-- | :-- |
+| [アーキテクチャ](docs/architecture.md) | 7層構成・データフロー |
+| [API](docs/api.md) | エンドポイント・認可 |
+| [DB](docs/db.md) | スキーマ・Migration・Seed |
+| [配備・検証](docs/deploy.md) | Cloudflare Pages / Tunnel / Access |
+| [進捗・判断・証跡](docs/progress/progress.md) | 作業記録・未完了・次の一手 |
+| [WebUI 設計仕様](docs/design/webui-design-v1.html) | 画面設計（V1.0） |
+| [復旧・再開](docs/progress/progress.md) | DB再作成・API/Tunnel再起動・監査検証 |
+
+---
+
+## 📄 ライセンス
+
+**MIT License** — 詳細は [LICENSE](LICENSE) を参照してください。
 
 ```text
-src/
-  api/       Fastify API（auth / routes / agent / audit / db）
-  shared/    決定的計算エンジン + 型定義
-  web/       React版（開発初期のレガシー。現在のビルド対象外）
-web-v21/     V2.1原本のUIシェル + bridge.js（現在のWebUI）
-db/
-  migrations/001_init.sql
-scripts/     db migrate/seed/verify/reset, secret scan
-tests/       unit / API integration
-e2e/         Playwright
-deploy/      systemd / cloudflared 設定
-docs/        設計仕様・API・DB・配備・進捗
-reference/   既存プロトタイプ（V1.0 / V1.1 / V2.1）
-templates/   人間適用用のCIテンプレート
+Copyright (c) 2026 Kensan196948G
 ```
 
----
+本リポジトリはデモ・検証用です。現場データや個人情報を扱う場合は、利用目的・匿名化・保存期間について組織内で合意したうえで運用してください。
 
-## 復旧・再開
-
-| 状況 | 対応 |
-| :-- | :-- |
-| DBを作り直す（検証DBのみ） | `ALLOW_DB_RESET=1 DATABASE_URL='...spatial_agent_studio_test' pnpm run db:reset && pnpm run db:migrate && pnpm run db:seed` |
-| Preview APIが落ちた | `nohup env ... tsx src/api/server.ts` を再起動（[docs/deploy.md](docs/deploy.md)） |
-| Tunnelが落ちた | `nohup cloudflared --config deploy/cloudflared/config.yml tunnel run` |
-| 監査ログを検証 | 画面の「ハッシュ連鎖を検証」または `GET /api/audit/verify` |
-| 承認をやり直す | 監査ログは不変。新しいAI実行を追加して再判断する（既存レコードは削除しない） |
-
-作業記録・未完了・次の一手：[docs/progress/progress.md](docs/progress/progress.md)
-
----
-
-## ドキュメント
-
-- [WebUI 設計仕様 v1.0（OpenDesign成果物）](docs/design/webui-design-v1.html)
-- [アーキテクチャ](docs/architecture.md)
-- [API](docs/api.md)
-- [DB・Migration・Seed](docs/db.md)
-- [Cloudflare Preview / 配備・検証](docs/deploy.md)
-- [進捗・判断・証跡](docs/progress/progress.md)
-
----
-
-## ライセンス
-
-UNLICENSED — 個人利用MVPのため。外部公開・再配布前に権利確認を行ってください。
-
-[![](https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white)](https://github.com/deepseek-ai/deepseek-harness)
+<p align="center">
+  <a href="https://github.com/Kensan196948G/Spatial-Agent-Studio"><img alt="GitHub" src="https://img.shields.io/badge/GitHub-Spatial--Agent--Studio-181717?style=flat-square&logo=github"></a>
+  <a href="https://github.com/deepseek-ai/deepseek-harness"><img alt="powered by dsh" src="https://img.shields.io/badge/powered_by-dsh-4D6BFE?style=flat-square&logo=deepseek&logoColor=white"></a>
+</p>

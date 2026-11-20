@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 320" width="1200" height="320" role="img" aria-label="Spatial Agent Studio — 土木業務オートパイロット">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#050817"/>
+      <stop offset=".55" stop-color="#0a1230"/>
+      <stop offset="1" stop-color="#120f2e"/>
+    </linearGradient>
+    <linearGradient id="cyan" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#38e1ff"/><stop offset="1" stop-color="#8b7bff"/>
+    </linearGradient>
+    <linearGradient id="amber" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#ffb547"/><stop offset="1" stop-color="#ff7ad9"/>
+    </linearGradient>
+    <radialGradient id="glowC"><stop offset="0" stop-color="#38e1ff" stop-opacity=".55"/><stop offset="1" stop-color="#38e1ff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glowP"><stop offset="0" stop-color="#8b7bff" stop-opacity=".5"/><stop offset="1" stop-color="#8b7bff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="glowA"><stop offset="0" stop-color="#ffb547" stop-opacity=".45"/><stop offset="1" stop-color="#ffb547" stop-opacity="0"/></radialGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#7f8db5" stroke-opacity=".10" stroke-width="1"/>
+    </pattern>
+    <filter id="soft"><feGaussianBlur stdDeviation="14"/></filter>
+    <style><![CDATA[
+      .grid{animation:drift 26s linear infinite}
+      @keyframes drift{from{transform:translate3d(0,0,0)}to{transform:translate3d(40px,40px,0)}}
+      .orb{transform-origin:center;animation:float 9s ease-in-out infinite}
+      .orb.p{animation-duration:11s;animation-delay:-2s}
+      .orb.a{animation-duration:13s;animation-delay:-4s}
+      @keyframes float{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(18px,-16px) scale(1.08)}}
+      .sweep{animation:sweep 7s ease-in-out infinite}
+      @keyframes sweep{0%{transform:translateX(-420px);opacity:0}12%{opacity:.55}50%{opacity:.35}100%{transform:translateX(1320px);opacity:0}}
+      .mark{animation:pulse 4.2s ease-in-out infinite;transform-origin:center}
+      @keyframes pulse{0%,100%{opacity:.9;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+      .ring{animation:spin 18s linear infinite;transform-origin:center}
+      .ring2{animation:spin 26s linear infinite reverse;transform-origin:center}
+      .chip{opacity:0;animation:rise .8s cubic-bezier(.2,.7,.2,1) forwards}
+      .chip.c1{animation-delay:.35s}.chip.c2{animation-delay:.55s}.chip.c3{animation-delay:.75s}
+      @keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+      .title{opacity:0;animation:fade .9s ease forwards .1s}
+      @keyframes fade{to{opacity:1}}
+      .shine{animation:shine 5s ease-in-out infinite}
+      @keyframes shine{0%,100%{opacity:.55}50%{opacity:1}}
+      .splat{animation:splat 6s ease-in-out infinite}
+      @keyframes splat{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+    ]]></style>
+  </defs>
+
+  <rect width="1200" height="320" fill="url(#bg)"/>
+  <rect width="1200" height="320" fill="url(#grid)" class="grid"/>
+  <g filter="url(#soft)" opacity=".8">
+    <circle cx="180" cy="70" r="150" fill="url(#glowC)" class="orb"/>
+    <circle cx="1020" cy="250" r="170" fill="url(#glowP)" class="orb p"/>
+    <circle cx="760" cy="40" r="120" fill="url(#glowA)" class="orb a"/>
+  </g>
+
+  <g opacity=".55">
+    <rect class="sweep" x="-420" y="0" width="260" height="320" fill="url(#cyan)" opacity=".25"/>
+  </g>
+
+  <!-- logo mark -->
+  <g transform="translate(72,96)"><g class="mark">
+    <rect x="0" y="0" width="112" height="112" rx="26" fill="#0b1430" stroke="#2a3a68"/>
+    <circle cx="56" cy="56" r="34" fill="none" stroke="url(#cyan)" stroke-width="2.4" class="ring" stroke-dasharray="10 8"/>
+    <circle cx="56" cy="56" r="24" fill="none" stroke="#8b7bff" stroke-opacity=".55" stroke-width="1.6" class="ring2" stroke-dasharray="4 7"/>
+    <path d="M56 26l26 18v24L56 86 30 68V44z" fill="none" stroke="url(#cyan)" stroke-width="2.6" class="splat"/>
+    <circle cx="56" cy="56" r="5.5" fill="#38e1ff" class="shine"/>
+  </g></g>
+
+  <!-- copy -->
+  <g class="title">
+    <text x="212" y="132" font-family="system-ui, 'Hiragino Sans', 'Noto Sans JP', 'IPAGothic', sans-serif" font-size="46" font-weight="800" fill="#f3f7ff" letter-spacing="1">Spatial Agent Studio</text>
+    <text x="214" y="168" font-family="system-ui, 'Hiragino Sans', 'Noto Sans JP', 'IPAGothic', sans-serif" font-size="17" fill="#9fb0d8" letter-spacing="3">現場を3Dで見て、AIが下書き、確定は人が行う。</text>
+    <text x="214" y="196" font-family="system-ui, 'Hiragino Sans', 'Noto Sans JP', 'IPAGothic', sans-serif" font-size="13" fill="#6b7ba8" letter-spacing="2">土木業務オートパイロット ／ 撮影 → 3DGS → AI → 人の承認 → 連携</text>
+  </g>
+
+  <!-- role chips -->
+  <g font-family="system-ui, 'Hiragino Sans', 'Noto Sans JP', 'IPAGothic', sans-serif">
+    <g transform="translate(214,214)"><g class="chip c1">
+      <rect width="252" height="42" rx="21" fill="#0e1a3a" stroke="#38e1ff" stroke-opacity=".45"/>
+      <circle cx="22" cy="21" r="6" fill="#38e1ff" class="shine"/>
+      <text x="40" y="27" font-size="13.5" fill="#cfe4ff">現場代理人・管理者</text>
+    </g></g>
+    <g transform="translate(478,214)"><g class="chip c2">
+      <rect width="232" height="42" rx="21" fill="#0e1a3a" stroke="#8b7bff" stroke-opacity=".45"/>
+      <circle cx="22" cy="21" r="6" fill="#8b7bff" class="shine"/>
+      <text x="40" y="27" font-size="13.5" fill="#d8d2ff">本社・支店内現場管理者</text>
+    </g></g>
+    <g transform="translate(722,214)"><g class="chip c3">
+      <rect width="262" height="42" rx="21" fill="#0e1a3a" stroke="#ffb547" stroke-opacity=".45"/>
+      <circle cx="22" cy="21" r="6" fill="#ffb547" class="shine"/>
+      <text x="40" y="27" font-size="13.5" fill="#ffe6bd">IT・DX推進部 管理担当者</text>
+    </g></g>
+  </g>
+
+  <!-- status line -->
+  <g font-family="system-ui, 'Hiragino Sans', 'Noto Sans JP', 'IPAGothic', sans-serif">
+    <rect x="214" y="272" width="806" height="1" fill="url(#cyan)" opacity=".35"/>
+    <text x="214" y="298" font-size="11.5" fill="#6b7ba8" letter-spacing="2">AI: DEMO ｜ HUMAN-IN-THE-LOOP ｜ 追記専用の監査ログ（ハッシュ連鎖） ｜ Cloudflare Access（メールOTP）</text>
+    <circle cx="1030" cy="293" r="4" fill="#3ee07f" class="shine"/>
+    <text x="1042" y="298" font-size="11.5" fill="#3ee07f">PREVIEW</text>
+  </g>
+</svg>

@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Spatial Agent Studio — 土木業務オートパイロット MVP（3D現場ビュー＋AI下書き＋人の承認＋監査）",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "engines": {
     "node": ">=22"
   },
