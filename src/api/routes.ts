@@ -112,6 +112,9 @@ const loginSchema = z.object({
   password: z.string().min(1).max(200),
 });
 const accessSchema = z.object({ email: z.string().trim().email().max(200) });
+// runs / approvals / reports の id は uuid。形式不正をDBへ渡すと 22P02（500）になるため先に弾く。
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isUuid = (value: string): boolean => UUID_RE.test(value);
 const runSchema = z.object({ task: z.enum(['asbuilt', 'safety']) });
 const decisionSchema = z.object({
   decision: z.enum(['approve', 'reject']),
@@ -532,6 +535,7 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
 
   app.get('/api/runs/:id', { preHandler: guard }, async (req, reply) => {
     const { id } = req.params as { id: string };
+    if (!isUuid(id)) return sendError(reply, 404, 'RUN_NOT_FOUND', '実行結果が見つかりません。');
     const result = await pool.query<{
       id: string;
       site_id: string;
@@ -578,6 +582,7 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
 
   app.get('/api/approvals/:id', { preHandler: guard }, async (req, reply) => {
     const { id } = req.params as { id: string };
+    if (!isUuid(id)) return sendError(reply, 404, 'APPROVAL_NOT_FOUND', '承認依頼が見つかりません。');
     const approval = await loadApprovalById(pool, id);
     if (!approval) return sendError(reply, 404, 'APPROVAL_NOT_FOUND', '承認依頼が見つかりません。');
     return { approval };
@@ -593,6 +598,7 @@ export function registerRoutes(app: FastifyInstance, deps: Deps): void {
     }
     const user = req.user as User;
     const { id } = req.params as { id: string };
+    if (!isUuid(id)) return sendError(reply, 404, 'APPROVAL_NOT_FOUND', '承認依頼が見つかりません。');
     const { decision, note } = parsed.data;
 
     if (!user.canApprove) {

@@ -653,6 +653,9 @@
         <div class="card"><h3>${ic('cube')}環境情報</h3>
           <dl class="kv">
             <dt>バージョン</dt><dd>${esc(info.version)}</dd>
+            <dt>配信ビルド</dt><dd style="word-break:break-all">${esc(
+              (document.querySelector('meta[name="sas-commit"]') || {}).content || 'unknown',
+            )}</dd>
             <dt>実行モード</dt><dd>${esc(info.nodeEnv)}</dd>
             <dt>AIモード</dt><dd>${esc(info.aiMode)}</dd>
             <dt>データベース</dt><dd>${esc(db.name || '—')}（${db.up ? '接続中' : '切断'}）</dd>

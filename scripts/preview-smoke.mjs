@@ -2,8 +2,9 @@
 /**
  * Cloudflare Preview smoke verification for the V2.1 UI shell.
  *
- * Verifies: API health, CORS, login, 5-site dashboard, site switch, light/dark,
- * approvals page, audit pane. Saves screenshots + JSON under docs/progress/evidence/.
+ * Verifies: API health, CORS, auto sign-in (no login screen), 5-site dashboard,
+ * site switch, light/dark, approvals page, audit pane and the AI: DEMO badge.
+ * Saves screenshots + JSON under docs/progress/evidence/.
  *
  * Usage:
  *   PREVIEW_URL=https://... node scripts/preview-smoke.mjs
@@ -64,19 +65,19 @@ const browser = await chromium.launch({ headless: true });
 const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
 try {
   await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
-  await page.locator('#sasLogin').waitFor({ state: 'visible', timeout: 30_000 });
-  await page.locator('#sasEmail').fill('manager@example.com');
-  await page.locator('#sasPassword').fill('SasManager!2026');
-  await page.locator('.sas-login-submit').click();
-  await page.locator('#boot').waitFor({ state: 'hidden', timeout: 30_000 });
+  // Access 通過後はアプリ独自のログイン画面なしで自動サインインする
   await page.locator('body[data-page="dash"]').waitFor({ timeout: 30_000 });
+  await page.locator('#boot').waitFor({ state: 'hidden', timeout: 30_000 });
   const siteCount = await page.locator('#sites .site').count();
   const navCount = await page.locator('#nav .nb').count();
+  const loginForm = await page.locator('#sasLogin').count();
+  const aiBadge = await page.locator('#bdgAi').innerText().catch(() => '');
   check(
-    'login → V2.1 dashboard',
-    siteCount === 5 && navCount === 9,
-    `sites=${siteCount} nav=${navCount}`,
+    'auto sign-in → V2.1 dashboard',
+    siteCount === 5 && navCount === 11 && loginForm === 0,
+    `sites=${siteCount} nav=${navCount} loginForm=${loginForm}`,
   );
+  check('AI: DEMO badge', /AI:\s*DEMO/.test(aiBadge), aiBadge.trim());
   await page.screenshot({ path: join(OUT, 'preview-v21-dashboard.png'), fullPage: true });
   result.screenshots.push('preview-v21-dashboard.png');
 

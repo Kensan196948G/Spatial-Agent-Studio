@@ -14,7 +14,7 @@
 ┌────────────────────────────────────────────────────────────┐
 │ Browser                                                     │
 │  V2.1 static UI shell（web-v21/）                           │
-│  ├─ 9 screens（V2.1 CSS/HTML/JS 原本）                      │
+│  ├─ 11 screens（V2.1 CSS/HTML/JS 原本＋監査ログ/設定）      │
 │  ├─ Canvas2D/WebGPU 3D viewer（v21-app.js）                 │
 │  └─ bridge.js（cookie or Bearer / approvals / audit）       │
 └──────────────────────────┬─────────────────────────────────┘
